@@ -1,0 +1,23 @@
+<script lang="ts">
+  const count = signal(0)
+  const doubled = derived(() => count.value * 2)
+
+  function increment() {
+    count.value++
+  }
+
+  function decrement() {
+    count.value--
+  }
+</script>
+
+<box width="100%" border={1} padding={1} flexDirection="column" gap={1}>
+  <text variant="accent">Counter Example</text>
+
+  <box flexDirection="row" gap={2}>
+    <text>Count: {count}</text>
+    <text variant="muted">Doubled: {doubled}</text>
+  </box>
+
+  <text variant="muted">Press +/- to change</text>
+</box>
