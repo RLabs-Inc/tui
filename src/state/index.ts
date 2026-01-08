@@ -8,6 +8,7 @@
  * - mouse: Mouse events, HitGrid, SGR protocol
  * - focus: Focus management, trapping, history
  * - scroll: Scroll state, wheel/keyboard handling
+ * - cursor: Cursor visibility, shape, position
  */
 
 // Keyboard is primary for focus navigation
@@ -33,8 +34,10 @@ export {
   focusManager,
 } from './focus'
 export * from './scroll'
+export * from './cursor'
 
 // Convenient namespace exports
 export { keyboard } from './keyboard'
 export { mouse } from './mouse'
 export { scroll } from './scroll'
+export { cursor } from './cursor'
