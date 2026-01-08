@@ -5,7 +5,7 @@
  * Clean output, source maps ready.
  */
 
-import type { TuiFile } from '../parse/ast'
+import type { TuiFile, TemplateNode, Slot } from '../parse/ast'
 import {
   createImportCollector,
   generateImports,
@@ -32,6 +32,10 @@ export interface CompileOptions {
   dev?: boolean
   /** Component name (derived from filename) */
   name?: string
+  /** Import path for TUI framework (default: 'tui' or local relative path) */
+  tuiImportPath?: string
+  /** Import path for signals (default: '@rlabs-inc/signals') */
+  signalsImportPath?: string
 }
 
 // =============================================================================
@@ -75,8 +79,11 @@ export function compile(source: string, options: CompileOptions = {}): CompileRe
   const ctx = createContext(imports)
   const templateCode = transformTemplate(ast.template, ctx)
 
+  // Check if component defines slots
+  const hasSlots = templateHasSlots(ast.template)
+
   // Generate final code
-  const code = generateCode(componentName, script, templateCode, imports, options)
+  const code = generateCode(componentName, script, templateCode, imports, options, hasSlots)
 
   return {
     code,
@@ -98,7 +105,8 @@ function generateCode(
   script: ScriptAnalysis,
   templateCode: string,
   imports: ImportCollector,
-  options: CompileOptions
+  options: CompileOptions,
+  hasSlots: boolean = false
 ): string {
   const lines: string[] = []
 
@@ -111,7 +119,10 @@ function generateCode(
   lines.push('')
 
   // Auto imports
-  const autoImports = generateImports(imports)
+  const autoImports = generateImports(imports, {
+    signalsPath: options.signalsImportPath,
+    tuiPath: options.tuiImportPath,
+  })
   if (autoImports) {
     lines.push(autoImports)
   }
@@ -122,16 +133,31 @@ function generateCode(
     lines.push('')
   }
 
+  // Slots type (if component defines slots)
+  if (hasSlots) {
+    lines.push(`interface $$Slots {`)
+    lines.push(`  default?: () => void`)
+    lines.push(`  [key: string]: (() => void) | undefined`)
+    lines.push(`}`)
+    lines.push('')
+  }
+
   // Props interface (if component has props)
   if (script.exports.length > 0) {
     lines.push(generatePropsInterface(script.exports))
     lines.push('')
   }
 
-  // Component function
-  if (script.exports.length > 0) {
-    lines.push(`export default function ${name}(props: Props) {`)
-    lines.push(`  ${generatePropsDestructure(script.exports)}`)
+  // Component function with appropriate parameters
+  const params: string[] = []
+  if (script.exports.length > 0) params.push('props: Props')
+  if (hasSlots) params.push('$$slots?: $$Slots')
+
+  if (params.length > 0) {
+    lines.push(`export default function ${name}(${params.join(', ')}) {`)
+    if (script.exports.length > 0) {
+      lines.push(`  ${generatePropsDestructure(script.exports)}`)
+    }
   } else {
     lines.push(`export default function ${name}() {`)
   }
@@ -176,4 +202,39 @@ function deriveComponentName(filename: string): string {
     .split(/[-_]/)
     .map(part => part.charAt(0).toUpperCase() + part.slice(1))
     .join('')
+}
+
+/**
+ * Check if template contains any slot definitions.
+ * This determines if we need to accept $$slots parameter.
+ */
+function templateHasSlots(nodes: TemplateNode[]): boolean {
+  for (const node of nodes) {
+    if (node.type === 'Slot') return true
+    if ('children' in node && Array.isArray((node as any).children)) {
+      if (templateHasSlots((node as any).children)) return true
+    }
+    if ('body' in node && Array.isArray((node as any).body)) {
+      if (templateHasSlots((node as any).body)) return true
+    }
+    if ('consequent' in node && Array.isArray((node as any).consequent)) {
+      if (templateHasSlots((node as any).consequent)) return true
+    }
+    if ('alternate' in node && Array.isArray((node as any).alternate)) {
+      if (templateHasSlots((node as any).alternate)) return true
+    }
+    if ('pending' in node && Array.isArray((node as any).pending)) {
+      if (templateHasSlots((node as any).pending)) return true
+    }
+    if ('fulfilled' in node && Array.isArray((node as any).fulfilled)) {
+      if (templateHasSlots((node as any).fulfilled)) return true
+    }
+    if ('rejected' in node && Array.isArray((node as any).rejected)) {
+      if (templateHasSlots((node as any).rejected)) return true
+    }
+    if ('fallback' in node && Array.isArray((node as any).fallback)) {
+      if (templateHasSlots((node as any).fallback)) return true
+    }
+  }
+  return false
 }

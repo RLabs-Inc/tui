@@ -1,0 +1,33 @@
+<script lang="ts">
+  // Theme showcase - display all variants
+  const selected = signal(0)
+
+  keyboard.onKey('j', () => selected.value = Math.min(selected.value + 1, 13))
+  keyboard.onKey('k', () => selected.value = Math.max(selected.value - 1, 0))
+</script>
+
+<box width={50} border={1} borderColor={Colors.CYAN} padding={1} flexDirection="column" gap={1}>
+  <text variant="accent">Theme Showcase - All 14 Variants</text>
+  <text fg={Colors.GRAY}>{'─'.repeat(46)}</text>
+
+  <!-- Variant display grid -->
+  <box flexDirection="row" flexWrap="wrap" gap={1}>
+    <box width={14} height={2} variant="default" padding={1}><text>default</text></box>
+    <box width={14} height={2} variant="primary" padding={1}><text>primary</text></box>
+    <box width={14} height={2} variant="secondary" padding={1}><text>secondary</text></box>
+    <box width={14} height={2} variant="tertiary" padding={1}><text>tertiary</text></box>
+    <box width={14} height={2} variant="accent" padding={1}><text>accent</text></box>
+    <box width={14} height={2} variant="muted" padding={1}><text>muted</text></box>
+    <box width={14} height={2} variant="surface" padding={1}><text>surface</text></box>
+    <box width={14} height={2} variant="elevated" padding={1}><text>elevated</text></box>
+    <box width={14} height={2} variant="success" padding={1}><text>success</text></box>
+    <box width={14} height={2} variant="warning" padding={1}><text>warning</text></box>
+    <box width={14} height={2} variant="error" padding={1}><text>error</text></box>
+    <box width={14} height={2} variant="info" padding={1}><text>info</text></box>
+    <box width={14} height={2} variant="highlight" padding={1}><text>highlight</text></box>
+    <box width={14} height={2} variant="inverse" padding={1}><text>inverse</text></box>
+  </box>
+
+  <text fg={Colors.GRAY}>{'─'.repeat(46)}</text>
+  <text variant="muted">[q] Quit</text>
+</box>

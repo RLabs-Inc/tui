@@ -190,6 +190,10 @@ export function computeLayoutTitan(
   let rootCount = 0
 
   for (const i of indices) {
+    // Skip invisible components - they don't participate in layout
+    const vis = unwrap(core.visible[i])
+    if (vis === 0 || vis === false) continue
+
     const parent = unwrap(core.parentIndex[i]) ?? -1
 
     if (parent >= 0 && indices.has(parent)) {

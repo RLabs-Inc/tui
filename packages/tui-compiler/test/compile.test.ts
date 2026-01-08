@@ -185,3 +185,29 @@ describe('Error Handling', () => {
     expect(() => parse(source)).toThrow()
   })
 })
+
+describe('Script Event Handling', () => {
+  test('preserves keyboard code in script', () => {
+    const source = `
+<script>
+  import { keyboard } from '@rlabs-inc/tui'
+  keyboard.onKey('Enter', () => console.log('enter'))
+</script>
+<box />
+`
+    const result = compile(source)
+
+    // Script body is preserved
+    expect(result.code).toContain("keyboard.onKey('Enter'")
+  })
+
+  test('event directives in template are ignored (use script instead)', () => {
+    const source = `<box on:click={handleClick} on:key:enter={submit} />`
+    const result = compile(source)
+
+    // Event directives should be silently ignored
+    expect(result.code).not.toContain('onClick')
+    expect(result.code).not.toContain('onKey')
+    expect(result.code).toContain('box()')
+  })
+})

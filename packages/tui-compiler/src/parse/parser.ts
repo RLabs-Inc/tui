@@ -18,6 +18,7 @@ import {
   type EachBlock,
   type AwaitBlock,
   type Fragment,
+  type Slot,
   type SourceLocation,
   createLocation,
   createPosition,
@@ -147,7 +148,7 @@ export class Parser {
   // ELEMENTS
   // ===========================================================================
 
-  private parseElement(): Element {
+  private parseElement(): Element | Slot {
     const start = this.position()
 
     this.consume('TagOpen')
@@ -155,6 +156,11 @@ export class Parser {
     const tag = tagToken.value
 
     const attributes = this.parseAttributes()
+
+    // Handle <slot> elements specially
+    if (tag === 'slot') {
+      return this.parseSlotElement(start, attributes)
+    }
 
     // Self-closing
     if (this.check('TagSelfClose')) {
@@ -195,6 +201,44 @@ export class Parser {
       attributes,
       children,
       selfClosing: false,
+      loc: createLocation(start, this.position()),
+    }
+  }
+
+  private parseSlotElement(
+    start: ReturnType<typeof this.position>,
+    attributes: Attribute[]
+  ): Slot {
+    // Extract slot name from attributes
+    let name: string | null = null
+    for (const attr of attributes) {
+      if (attr.type === 'StaticAttribute' && attr.name === 'name') {
+        name = attr.value
+        break
+      }
+    }
+
+    // Check for self-closing or children (fallback content)
+    let fallback: TemplateNode[] = []
+
+    if (this.check('TagSelfClose')) {
+      this.consume('TagSelfClose')
+    } else {
+      this.expect('TagClose')
+      fallback = this.parseChildren('slot')
+
+      // Consume closing tag
+      if (this.check('TagEnd')) {
+        this.consume('TagEnd')
+        this.consume('TagName') // 'slot'
+        this.expect('TagClose')
+      }
+    }
+
+    return {
+      type: 'Slot',
+      name,
+      fallback,
       loc: createLocation(start, this.position()),
     }
   }

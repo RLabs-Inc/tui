@@ -1,0 +1,38 @@
+<script lang="ts">
+  // Reactive state
+  const count = signal(0)
+  const doubled = derived(() => count.value * 2)
+  const isEven = derived(() => count.value % 2 === 0)
+
+  // Keyboard handlers
+  keyboard.onKey('+', () => count.value++)
+  keyboard.onKey('=', () => count.value++)
+  keyboard.onKey('-', () => count.value--)
+  keyboard.onKey('_', () => count.value--)
+  keyboard.onKey('r', () => count.value = 0)
+</script>
+
+<box width={50} border={1} borderColor={Colors.CYAN} padding={1} flexDirection="column" gap={1}>
+  <text variant="accent">Counter - Basic Reactivity Demo</text>
+  <text fg={Colors.GRAY}>{'─'.repeat(46)}</text>
+
+  <box flexDirection="row" gap={2}>
+    <text fg={Colors.GRAY}>Count:</text>
+    <text fg={Colors.GREEN}>{count}</text>
+  </box>
+
+  <box flexDirection="row" gap={2}>
+    <text fg={Colors.GRAY}>Doubled:</text>
+    <text fg={Colors.YELLOW}>{doubled}</text>
+  </box>
+
+  <box flexDirection="row" gap={2}>
+    <text fg={Colors.GRAY}>Even?:</text>
+    <text fg={isEven.value ? Colors.GREEN : Colors.RED}>
+      {isEven.value ? 'YES' : 'NO'}
+    </text>
+  </box>
+
+  <text fg={Colors.GRAY}>{'─'.repeat(46)}</text>
+  <text variant="muted">[+/-] Change  [r] Reset  [q] Quit</text>
+</box>

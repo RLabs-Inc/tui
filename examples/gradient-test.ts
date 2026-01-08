@@ -5,10 +5,7 @@
  * OKLCH provides perceptually uniform color transitions.
  */
 
-import { mount, keyboard } from '../src/api/mount'
-import { box, text } from '../src/primitives'
-import { oklch, Colors } from '../src/types/color'
-import { signal } from '@rlabs-inc/signals'
+import { mount, box, text, keyboard, oklch, Colors, signal } from '../index'
 
 async function main() {
   // Get terminal size
@@ -144,7 +141,7 @@ async function main() {
     { mode: 'fullscreen' }
   )
 
-  keyboard.setExitOnCtrlC(true); // cleanup)
+  keyboard.onKey('q', () => cleanup().then(() => process.exit(0)))
 }
 
 main().catch(console.error)

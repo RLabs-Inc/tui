@@ -26,6 +26,8 @@ export interface TuiPluginOptions {
   sourcemap?: boolean
   /** Custom file extensions to handle (default: ['.tui']) */
   extensions?: string[]
+  /** Path to TUI framework root (for computing relative imports) */
+  tuiRoot?: string
 }
 
 // =============================================================================
@@ -41,21 +43,22 @@ export function createTuiPlugin(options: TuiPluginOptions = {}): BunPlugin {
     name: 'tui-compiler',
 
     setup(build) {
-      build.onLoad({ filter }, async ({ path }) => {
+      build.onLoad({ filter }, async ({ path: filePath }) => {
         try {
           // Read source file
-          const source = await Bun.file(path).text()
+          const source = await Bun.file(filePath).text()
 
-          // Compile
+          // Compile - use 'tui' as import path (works with bun link)
           const result = compile(source, {
-            filename: path,
+            filename: filePath,
             dev: options.dev,
             sourcemap: options.sourcemap,
+            tuiImportPath: options.tuiRoot ?? 'tui',  // Default to linked package
           })
 
           // Log warnings in dev mode
           if (options.dev && result.warnings.length > 0) {
-            console.warn(`[TUI] Warnings in ${path}:`)
+            console.warn(`[TUI] Warnings in ${filePath}:`)
             for (const warning of result.warnings) {
               console.warn(`  ${warning}`)
             }
@@ -69,7 +72,7 @@ export function createTuiPlugin(options: TuiPluginOptions = {}): BunPlugin {
           // Format compiler errors nicely
           if (error instanceof CompilerError) {
             console.error(formatError(error))
-            throw new Error(`Failed to compile ${path}`)
+            throw new Error(`Failed to compile ${filePath}`)
           }
 
           // Re-throw other errors

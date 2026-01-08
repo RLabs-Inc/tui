@@ -9,6 +9,6 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "@rlabs-inc/signals": "1.4.3"
+    "@rlabs-inc/signals": "1.4.4"
   }
 }

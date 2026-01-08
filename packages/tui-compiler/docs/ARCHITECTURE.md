@@ -171,6 +171,7 @@ type TemplateNode =
   | EachBlock
   | AwaitBlock
   | Fragment
+  | Slot
 
 // Element
 interface Element {
@@ -313,7 +314,7 @@ Key transformations:
 | `{...props}` | `...props` |
 | `{name}` | `name` (shorthand) |
 | `bind:value={x}` | `value: x` |
-| `on:click={fn}` | `onClick: fn` |
+| `on:click={fn}` | *(not yet implemented - use keyboard/mouse APIs in script)* |
 
 ## Phase 4: Code Generation (`generate/codegen.ts`)
 

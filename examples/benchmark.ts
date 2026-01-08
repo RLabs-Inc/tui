@@ -8,7 +8,7 @@
  * 4. Bulk Update Dimensions - Update N widths/heights
  * 5. Single Update Latency - Time for one change to render
  * 6. Rapid Fire - Max updates per second
- * 7. Layout Computation - Yoga layout time
+ * 7. Layout Computation - TITAN layout time
  * 8. FrameBuffer Generation - Buffer compute time
  * 9. Full Pipeline - End-to-end reactive update
  * 10. Memory Usage - Heap size with N components
@@ -509,7 +509,7 @@ for (const size of sizes) {
 console.log()
 
 // Layout Computation
-console.log('📐 LAYOUT COMPUTATION (Yoga)')
+console.log('📐 LAYOUT COMPUTATION (TITAN)')
 console.log('─'.repeat(60))
 for (const size of sizes) {
   const r = benchmarkLayout(size)

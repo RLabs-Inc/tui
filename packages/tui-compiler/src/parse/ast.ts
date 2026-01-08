@@ -85,6 +85,7 @@ export type TemplateNode =
   | EachBlock
   | AwaitBlock
   | Fragment
+  | Slot
 
 // =============================================================================
 // ELEMENT
@@ -256,4 +257,8 @@ export function isAwaitBlock(node: TemplateNode): node is AwaitBlock {
 
 export function isFragment(node: TemplateNode): node is Fragment {
   return node.type === 'Fragment'
+}
+
+export function isSlot(node: TemplateNode): node is Slot {
+  return node.type === 'Slot'
 }

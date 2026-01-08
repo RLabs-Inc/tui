@@ -11,11 +11,9 @@
  */
 
 import { signal, derived, effect } from '@rlabs-inc/signals'
-import { box, text } from '../src/primitives'
-import { mount } from '../src/api/mount'
+import { mount, box, text, keyboard, Colors } from '../index'
 import { layoutDerived } from '../src/pipeline/layout'
 import { frameBufferDerived } from '../src/pipeline/frameBuffer'
-import { Colors } from '../src/types/color'
 
 async function main() {
   // Track which test we're showing
@@ -172,16 +170,20 @@ async function main() {
   })
 
   // Keyboard navigation
-  keyboard.setExitOnCtrlC(true); // cleanup)
-
-  process.stdin.on('data', (data) => {
-    const key = data.toString()
-    if (key === '\x1b[C' || key === 'l') { // Right arrow
-      testIndex.value = (testIndex.value + 1) % tests.length
-    } else if (key === '\x1b[D' || key === 'h') { // Left arrow
-      testIndex.value = (testIndex.value - 1 + tests.length) % tests.length
-    }
+  keyboard.onKey('Right', () => {
+    testIndex.value = (testIndex.value + 1) % tests.length
   })
+  keyboard.onKey('Left', () => {
+    testIndex.value = (testIndex.value - 1 + tests.length) % tests.length
+  })
+  keyboard.onKey('l', () => {
+    testIndex.value = (testIndex.value + 1) % tests.length
+  })
+  keyboard.onKey('h', () => {
+    testIndex.value = (testIndex.value - 1 + tests.length) % tests.length
+  })
+  keyboard.onKey('q', () => cleanup().then(() => process.exit(0)))
+  keyboard.onKey('Q', () => cleanup().then(() => process.exit(0)))
 }
 
 main().catch(console.error)

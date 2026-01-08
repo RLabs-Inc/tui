@@ -188,6 +188,12 @@ export class Lexer {
   // ===========================================================================
 
   private scanTemplateContent(): void {
+    // Skip HTML comments
+    if (this.match('<!--')) {
+      this.skipComment()
+      return
+    }
+
     // Check for fragment
     if (this.match('<>')) {
       this.addToken('FragmentOpen', '<>', this.position())
@@ -319,8 +325,8 @@ export class Lexer {
     const start = this.position()
     let name = ''
 
-    // Scan attribute name (may include : for directives)
-    while (!this.isEOF() && (this.isTagNameChar(this.peek()) || this.peek() === ':')) {
+    // Scan attribute name (may include : for directives and + for key combos like ctrl+s)
+    while (!this.isEOF() && (this.isTagNameChar(this.peek()) || this.peek() === ':' || this.peek() === '+')) {
       name += this.advance(1)
     }
 
@@ -610,6 +616,17 @@ export class Lexer {
   private skipWhitespace(): void {
     while (!this.isEOF() && /\s/.test(this.peek())) {
       this.advance(1)
+    }
+  }
+
+  private skipComment(): void {
+    // Skip <!-- ... -->
+    this.advance(4) // <!--
+    while (!this.isEOF() && !this.match('-->')) {
+      this.advance(1)
+    }
+    if (this.match('-->')) {
+      this.advance(3)
     }
   }
 

@@ -169,6 +169,15 @@ When the attribute name matches a variable:
 <text>Hello, {user.name}!</text>
 ```
 
+> **Unified Syntax**: In text content, you don't need `.value` for signals or deriveds.
+> The compiler automatically handles all reactive types:
+> - `{mySignal}` - signal values are extracted
+> - `{myDerived}` - derived values are extracted
+> - `{myState.property}` - state proxies work directly
+> - `{plainValue}` - plain values pass through
+>
+> This means `{count}` works whether `count` is a `signal()`, `derived()`, or plain value.
+
 #### Mixed Content
 
 ```tui
@@ -177,30 +186,30 @@ When the attribute name matches a variable:
 
 ### Event Handling
 
-#### Basic Events
+Use the `keyboard` and `mouse` modules in your `<script>` section:
 
 ```tui
-<box on:click={handleClick}>
-<box on:focus={handleFocus}>
-<box on:blur={handleBlur}>
+<script>
+  import { keyboard, mouse } from '@rlabs-inc/tui'
+
+  // Global key handlers
+  keyboard.onKey('Enter', () => console.log('Enter pressed'))
+  keyboard.onKey('Escape', () => console.log('Escape pressed'))
+
+  // Focus-scoped handlers (only fire when component is focused)
+  // keyboard.onFocused(componentIndex, handler)
+
+  // Mouse handlers
+  // mouse.onClick(handler)
+</script>
+
+<box focusable>
+  <text>Press Enter or Escape</text>
+</box>
 ```
 
-#### Keyboard Events
-
-```tui
-<box on:keypress={handleKey}>
-<box on:key:enter={submit}>
-<box on:key:escape={cancel}>
-<box on:key:ctrl+s={save}>
-```
-
-#### Mouse Events
-
-```tui
-<box on:click={handleClick}>
-<box on:hover={showTooltip}>
-<box on:scroll={handleScroll}>
-```
+> **Note**: Template event syntax (`on:click`, `on:key:enter`) is not yet implemented.
+> Use the keyboard/mouse APIs in `<script>` for full control.
 
 ### Two-Way Binding
 
@@ -269,6 +278,8 @@ When the attribute name matches a variable:
 {/each}
 ```
 
+> **Note**: Key expressions are parsed but not yet used for diffing optimization. They're included for future compatibility and Svelte syntax parity.
+
 #### Empty State
 
 ```tui
@@ -317,6 +328,27 @@ Render multiple elements without a wrapper:
 <Card>
   <text>Card content</text>
 </Card>
+```
+
+### Slot Fallback Content
+
+Provide default content when no slot content is provided:
+
+```tui
+<!-- Button.tui -->
+<box border={1} padding={1}>
+  <slot>
+    <text>Default button text</text>
+  </slot>
+</box>
+
+<!-- Usage without children - shows fallback -->
+<Button />
+
+<!-- Usage with children - replaces fallback -->
+<Button>
+  <text>Custom text</text>
+</Button>
 ```
 
 ### Named Slots

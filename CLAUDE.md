@@ -8,10 +8,14 @@ We're building THE terminal UI framework for TypeScript/Bun. Potentially foundat
 
 ### What's Done
 - **TITAN v3**: Complete flexbox (grow/shrink/wrap/justify/align + min/max + flex-basis + align-self)
+- **TITAN visibility**: Skips `visible=false` components in layout (no space taken)
 - **Primitives**: box, text (fully reactive with all layout props)
 - **State modules**: keyboard, mouse, focus, scroll, theme, cursor (ALL complete)
 - **Pipeline**: layoutDerived → frameBufferDerived → render effect
 - **.tui compiler**: Svelte-like DX with Bun plugin (packages/tui-compiler)
+  - `{#if}` injects `visible` prop into children (no wrapper boxes)
+  - `{#each}` compiles to plain for loops
+  - `{signal}` auto-unwraps (no `.value` needed in text content)
 
 ### What's NOT Done
 - **input, select, progress, canvas** - Types defined, no implementation
@@ -59,11 +63,12 @@ const layoutDerived = derived(() => {
 
 | Metric | Achieved |
 |--------|----------|
-| Render | 0.08ms |
-| Updates/sec | 12,500+ |
-| Idle CPU | < 2% |
+| Buffer | 0.01ms |
+| Render | 0.09ms |
+| Full update | 0.11ms |
+| Updates/sec | 40,000+ |
 
-**Why**: No reconciliation, no virtual DOM, pure deriveds, reactive-on-demand.
+**Why**: No reconciliation, no virtual DOM, pure deriveds, reactive-on-demand, TITAN skips invisible.
 
 ---
 

@@ -7,10 +7,7 @@
  *   bun run examples/render-modes-test.ts append
  */
 
-import { signal } from '@rlabs-inc/signals'
-import { mount } from '../src/api/mount'
-import { box, text } from '../src/primitives'
-import { Colors } from '../src/types/color'
+import { signal, mount, box, text, keyboard, Colors } from '../index'
 import type { RenderMode } from '../src/types'
 
 // Get mode from command line
@@ -83,4 +80,4 @@ const cleanup = await mount(() => {
 }, { mode, mouse: enableMouse })
 
 // Setup exit handler
-keyboard.setExitOnCtrlC(true); // cleanup)
+keyboard.onKey('q', () => cleanup().then(() => process.exit(0)))

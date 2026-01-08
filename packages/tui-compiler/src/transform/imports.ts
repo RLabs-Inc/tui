@@ -128,7 +128,8 @@ export function analyzeScriptImports(content: string): Set<string> {
   }
 
   // Also check for standalone identifiers (not just function calls)
-  for (const primitive of SIGNALS_PRIMITIVES) {
+  const allPrimitives = [...SIGNALS_PRIMITIVES, ...TUI_PRIMITIVES]
+  for (const primitive of allPrimitives) {
     if (content.includes(primitive)) {
       // Verify it's not part of a larger word
       const regex = new RegExp(`\\b${primitive}\\b`)
@@ -144,19 +145,30 @@ export function analyzeScriptImports(content: string): Set<string> {
 /**
  * Generate import statements
  */
-export function generateImports(collector: ImportCollector): string {
+export interface GenerateImportsOptions {
+  signalsPath?: string
+  tuiPath?: string
+}
+
+export function generateImports(
+  collector: ImportCollector,
+  options: GenerateImportsOptions = {}
+): string {
+  const signalsPath = options.signalsPath ?? '@rlabs-inc/signals'
+  const tuiPath = options.tuiPath ?? 'tui'  // Default to local package
+
   const lines: string[] = []
 
   // Signals imports
   if (collector.signals.size > 0) {
     const imports = Array.from(collector.signals).sort()
-    lines.push(`import { ${imports.join(', ')} } from '@rlabs-inc/signals'`)
+    lines.push(`import { ${imports.join(', ')} } from '${signalsPath}'`)
   }
 
   // TUI imports
   if (collector.tui.size > 0) {
     const imports = Array.from(collector.tui).sort()
-    lines.push(`import { ${imports.join(', ')} } from '@rlabs-inc/tui'`)
+    lines.push(`import { ${imports.join(', ')} } from '${tuiPath}'`)
   }
 
   // Component imports
