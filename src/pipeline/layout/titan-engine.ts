@@ -57,6 +57,9 @@ const ALIGN_END = 3
 const POS_RELATIVE = 0
 const POS_ABSOLUTE = 1
 
+// Align-self: 0 = auto (use parent's alignItems), 1+ = same as ALIGN_* constants
+const ALIGN_SELF_AUTO = 0
+
 // =============================================================================
 // DIMENSION RESOLVER - Handles both absolute and percentage values
 // =============================================================================
@@ -73,6 +76,25 @@ function resolveDim(dim: number | string | null | undefined, parentSize: number)
   if (typeof dim === 'number') return dim
   // String percentage like '50%' - parse and resolve
   return Math.floor(parentSize * parseFloat(dim) / 100)
+}
+
+/**
+ * Apply min/max constraints to a dimension.
+ * Resolves percentage constraints against parentSize.
+ */
+function clampDim(
+  value: number,
+  minVal: number | string | null | undefined,
+  maxVal: number | string | null | undefined,
+  parentSize: number
+): number {
+  const min = resolveDim(minVal, parentSize)
+  const max = resolveDim(maxVal, parentSize)
+
+  let result = value
+  if (min > 0 && result < min) result = min
+  if (max > 0 && result > max) result = max
+  return result
 }
 
 // =============================================================================
@@ -419,9 +441,14 @@ export function computeLayoutTitan(
         const fkid = flowKids[fi]!
         const ew = resolveDim(unwrap(dimensions.width[fkid]), contentW)
         const eh = resolveDim(unwrap(dimensions.height[fkid]), contentH)
-        let kidMain = isRow
-          ? (ew > 0 ? ew : intrinsicW[fkid]!)
-          : (eh > 0 ? eh : intrinsicH[fkid]!)
+
+        // flex-basis takes priority over width/height for main axis size
+        const basis = unwrap(layout.flexBasis[fkid]) ?? 0
+        let kidMain = basis > 0
+          ? basis
+          : (isRow
+              ? (ew > 0 ? ew : intrinsicW[fkid]!)
+              : (eh > 0 ? eh : intrinsicH[fkid]!))
 
         if (freeSpace > 0 && totalGrow > 0) {
           kidMain += ((unwrap(layout.flexGrow[fkid]) ?? 0) / totalGrow) * freeSpace
@@ -432,12 +459,22 @@ export function computeLayoutTitan(
         }
         kidMain = Math.max(0, Math.floor(kidMain))
 
-        const kidCross = isRow
+        // Apply min/max constraints for main axis
+        const minMain = isRow ? unwrap(dimensions.minWidth[fkid]) : unwrap(dimensions.minHeight[fkid])
+        const maxMain = isRow ? unwrap(dimensions.maxWidth[fkid]) : unwrap(dimensions.maxHeight[fkid])
+        kidMain = clampDim(kidMain, minMain, maxMain, isRow ? contentW : contentH)
+
+        let kidCross = isRow
           ? (eh > 0 ? eh : (alignItems === ALIGN_STRETCH ? crossSize / lineCount : intrinsicH[fkid]!))
           : (ew > 0 ? ew : (alignItems === ALIGN_STRETCH ? crossSize / lineCount : intrinsicW[fkid]!))
 
+        // Apply min/max constraints for cross axis
+        const minCross = isRow ? unwrap(dimensions.minHeight[fkid]) : unwrap(dimensions.minWidth[fkid])
+        const maxCross = isRow ? unwrap(dimensions.maxHeight[fkid]) : unwrap(dimensions.maxWidth[fkid])
+        kidCross = clampDim(Math.max(0, Math.floor(kidCross)), minCross, maxCross, isRow ? contentH : contentW)
+
         itemMain[fkid] = kidMain
-        itemCross[fkid] = Math.max(0, Math.floor(kidCross))
+        itemCross[fkid] = kidCross
       }
     }
 
@@ -494,8 +531,15 @@ export function computeLayoutTitan(
         const sizeMain = itemMain[fkid]!
         const sizeCross = itemCross[fkid]!
 
+        // align-self overrides parent's align-items for individual items
+        // alignSelf: 0=auto, 1=stretch, 2=flex-start, 3=center, 4=flex-end, 5=baseline
+        // alignItems: 0=stretch, 1=flex-start, 2=center, 3=flex-end
+        // When alignSelf != 0, we subtract 1 to map to alignItems values
+        const selfAlign = unwrap(layout.alignSelf[fkid]) ?? ALIGN_SELF_AUTO
+        const effectiveAlign = selfAlign !== ALIGN_SELF_AUTO ? (selfAlign - 1) : alignItems
+
         let crossPos = crossOffset
-        switch (alignItems) {
+        switch (effectiveAlign) {
           case ALIGN_CENTER:
             crossPos += Math.floor((lineHeight - sizeCross) / 2)
             break
@@ -582,8 +626,14 @@ export function computeLayoutTitan(
     // Resolve dimensions against containing block
     const ew = resolveDim(unwrap(dimensions.width[i]), containerW)
     const eh = resolveDim(unwrap(dimensions.height[i]), containerH)
-    outW[i] = ew > 0 ? ew : intrinsicW[i]!
-    outH[i] = eh > 0 ? eh : intrinsicH[i]!
+    let absW = ew > 0 ? ew : intrinsicW[i]!
+    let absH = eh > 0 ? eh : intrinsicH[i]!
+
+    // Apply min/max constraints
+    absW = clampDim(absW, unwrap(dimensions.minWidth[i]), unwrap(dimensions.maxWidth[i]), containerW)
+    absH = clampDim(absH, unwrap(dimensions.minHeight[i]), unwrap(dimensions.maxHeight[i]), containerH)
+    outW[i] = absW
+    outH[i] = absH
 
     const t = unwrap(layout.top[i])
     const r = unwrap(layout.right[i])

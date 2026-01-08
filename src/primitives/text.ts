@@ -33,6 +33,7 @@ import { getVariantStyle } from '../state/theme'
 import * as core from '../engine/arrays/core'
 import * as dimensions from '../engine/arrays/dimensions'
 import * as spacing from '../engine/arrays/spacing'
+import * as layout from '../engine/arrays/layout'
 import * as visual from '../engine/arrays/visual'
 import * as textArrays from '../engine/arrays/text'
 
@@ -122,6 +123,12 @@ export function text(props: TextProps): Cleanup {
   spacing.paddingRight[index] = bind(props.paddingRight ?? props.padding ?? 0)
   spacing.paddingBottom[index] = bind(props.paddingBottom ?? props.padding ?? 0)
   spacing.paddingLeft[index] = bind(props.paddingLeft ?? props.padding ?? 0)
+
+  // Flex item properties - text can be a flex item too!
+  layout.flexGrow[index] = bind(0)
+  layout.flexShrink[index] = bind(1)
+  layout.flexBasis[index] = bind(0)
+  layout.alignSelf[index] = bind(0)
 
   // Visual - colors with VARIANT support (all 14 variants!)
   // If variant specified, create deriveds that track theme changes

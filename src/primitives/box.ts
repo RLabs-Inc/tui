@@ -100,6 +100,18 @@ function overflowToNum(overflow: string | undefined): number {
   }
 }
 
+/** Convert align-self string to number (0 = auto) */
+function alignSelfToNum(align: string | undefined): number {
+  switch (align) {
+    case 'stretch': return 1
+    case 'flex-start': return 2
+    case 'center': return 3
+    case 'flex-end': return 4
+    case 'baseline': return 5
+    default: return 0 // auto (use parent's alignItems)
+  }
+}
+
 /**
  * Create a reactive binding for enum props.
  * If the prop is a signal/derived, creates a derived that tracks changes.
@@ -188,7 +200,11 @@ export function box(props: BoxProps = {}): Cleanup {
   // Layout numbers - BIND DIRECTLY
   layout.flexGrow[index] = bind(props.grow ?? 0)
   layout.flexShrink[index] = bind(props.shrink ?? 1)
+  layout.flexBasis[index] = bind(props.flexBasis ?? 0)
   layout.zIndex[index] = bind(props.zIndex ?? 0)
+
+  // Align self - item override of parent's alignItems
+  layout.alignSelf[index] = bindEnumProp(props.alignSelf, alignSelfToNum)
 
   // NOTE: scrollable is computed by TITAN based on overflow prop + content size
   // No need to set it here - TITAN handles overflow: 'scroll' and 'auto'

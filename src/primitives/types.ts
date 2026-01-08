@@ -92,12 +92,16 @@ export interface LayoutProps {
   flexWrap?: Reactive<'nowrap' | 'wrap' | 'wrap-reverse'>
   /** Justify content */
   justifyContent?: Reactive<'flex-start' | 'center' | 'flex-end' | 'space-between' | 'space-around' | 'space-evenly'>
-  /** Align items */
+  /** Align items (container) */
   alignItems?: Reactive<'stretch' | 'flex-start' | 'center' | 'flex-end' | 'baseline'>
+  /** Align self (item override) */
+  alignSelf?: Reactive<'auto' | 'stretch' | 'flex-start' | 'center' | 'flex-end' | 'baseline'>
   /** Flex grow */
   grow?: Reactive<number>
   /** Flex shrink */
   shrink?: Reactive<number>
+  /** Flex basis (initial size before grow/shrink) */
+  flexBasis?: Reactive<number>
   /** Overflow: 'visible' | 'hidden' | 'scroll' | 'auto' */
   overflow?: Reactive<'visible' | 'hidden' | 'scroll' | 'auto'>
   /** Z-index for stacking */
