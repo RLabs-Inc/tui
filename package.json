@@ -1,0 +1,14 @@
+{
+  "name": "tui",
+  "module": "index.ts",
+  "type": "module",
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@rlabs-inc/signals": "^1.4.0"
+  }
+}
