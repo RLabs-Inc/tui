@@ -61,22 +61,68 @@ async function main() {
         text({ content: 'BOX VARIANTS', fg: t.textBright })
         text({ content: '' })
 
-        // Row of variant boxes
+        // Row 1: Core semantic variants
         box({
           flexDirection: 'row',
           gap: 1,
           children: () => {
-            const variants: Variant[] = ['default', 'primary', 'secondary', 'success', 'warning', 'error', 'info']
+            const row1: Variant[] = ['default', 'primary', 'secondary', 'tertiary', 'accent']
 
-            for (const variant of variants) {
+            for (const variant of row1) {
               box({
                 variant,
                 border: BorderStyle.SINGLE,
                 padding: 0,
-                width: 10,
+                width: 11,
                 height: 3,
                 children: () => {
-                  text({ content: variant, fg: variant === 'warning' ? { r: 0, g: 0, b: 0, a: 255 } : undefined })
+                  const darkText = variant === 'accent'
+                  text({ content: variant, fg: darkText ? { r: 0, g: 0, b: 0, a: 255 } : undefined })
+                },
+              })
+            }
+          },
+        })
+
+        // Row 2: Status variants
+        box({
+          flexDirection: 'row',
+          gap: 1,
+          children: () => {
+            const row2: Variant[] = ['success', 'warning', 'error', 'info']
+
+            for (const variant of row2) {
+              box({
+                variant,
+                border: BorderStyle.SINGLE,
+                padding: 0,
+                width: 11,
+                height: 3,
+                children: () => {
+                  const darkText = variant === 'warning'
+                  text({ content: variant, fg: darkText ? { r: 0, g: 0, b: 0, a: 255 } : undefined })
+                },
+              })
+            }
+          },
+        })
+
+        // Row 3: Surface and subtle variants
+        box({
+          flexDirection: 'row',
+          gap: 1,
+          children: () => {
+            const row3: Variant[] = ['surface', 'elevated', 'muted', 'ghost', 'outline']
+
+            for (const variant of row3) {
+              box({
+                variant,
+                border: BorderStyle.SINGLE,
+                padding: 0,
+                width: 11,
+                height: 3,
+                children: () => {
+                  text({ content: variant })
                 },
               })
             }
@@ -85,29 +131,29 @@ async function main() {
 
         text({ content: '' })
 
-        // Ghost and Outline variants
+        // Sample usage text
         box({
           flexDirection: 'row',
           gap: 2,
           children: () => {
             box({
-              variant: 'ghost',
+              variant: 'muted',
               border: BorderStyle.SINGLE,
-              padding: 0,
-              width: 15,
-              height: 3,
+              padding: 1,
+              width: 25,
               children: () => {
-                text({ content: 'ghost' })
+                text({ content: 'Muted: De-emphasized' })
+                text({ content: 'content like hints' })
               },
             })
             box({
-              variant: 'outline',
+              variant: 'elevated',
               border: BorderStyle.SINGLE,
-              padding: 0,
-              width: 15,
-              height: 3,
+              padding: 1,
+              width: 25,
               children: () => {
-                text({ content: 'outline' })
+                text({ content: 'Elevated: Modals,' })
+                text({ content: 'dropdowns, popovers' })
               },
             })
           },

@@ -554,7 +554,12 @@ export const t = {
  * Variant style definitions.
  * Each variant defines colors for different component states.
  */
-export type Variant = 'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info' | 'ghost' | 'outline'
+export type Variant =
+  | 'default'
+  | 'primary' | 'secondary' | 'tertiary' | 'accent'
+  | 'success' | 'warning' | 'error' | 'info'
+  | 'muted' | 'surface' | 'elevated'
+  | 'ghost' | 'outline'
 
 export interface VariantStyle {
   fg: RGBA
@@ -585,6 +590,20 @@ export function getVariantStyle(variant: Variant): VariantStyle {
         border: resolved.secondary,
         borderFocus: resolved.accent,
       }
+    case 'tertiary':
+      return {
+        fg: resolved.textBright,
+        bg: resolved.tertiary,
+        border: resolved.tertiary,
+        borderFocus: resolved.accent,
+      }
+    case 'accent':
+      return {
+        fg: { r: 0, g: 0, b: 0, a: 255 }, // Dark text on accent (usually bright)
+        bg: resolved.accent,
+        border: resolved.accent,
+        borderFocus: resolved.primary,
+      }
     case 'success':
       return {
         fg: resolved.textBright,
@@ -612,6 +631,27 @@ export function getVariantStyle(variant: Variant): VariantStyle {
         bg: resolved.info,
         border: resolved.info,
         borderFocus: resolved.accent,
+      }
+    case 'muted':
+      return {
+        fg: resolved.textMuted,
+        bg: resolved.surface,
+        border: resolved.border,
+        borderFocus: resolved.borderFocus,
+      }
+    case 'surface':
+      return {
+        fg: resolved.text,
+        bg: resolved.surface,
+        border: resolved.border,
+        borderFocus: resolved.borderFocus,
+      }
+    case 'elevated':
+      return {
+        fg: resolved.textBright,
+        bg: resolved.surface,
+        border: resolved.primary,
+        borderFocus: resolved.borderFocus,
       }
     case 'ghost':
       return {
