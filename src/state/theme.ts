@@ -17,7 +17,7 @@
 
 import { state, derived } from '@rlabs-inc/signals'
 import type { RGBA } from '../types'
-import { parseColor, TERMINAL_DEFAULT } from '../types/color'
+import { parseColor, TERMINAL_DEFAULT, ansiColor } from '../types/color'
 
 // =============================================================================
 // THEME COLOR TYPE
@@ -310,8 +310,7 @@ export function getThemeNames(): string[] {
  *
  * Handles:
  * - null → TERMINAL_DEFAULT
- * - 0-15 → ANSI color approximation
- * - 16-255 → Extended palette approximation
+ * - 0-255 → ANSI color marker (respects terminal palette!)
  * - > 255 → RGB (0xRRGGBB)
  * - string → CSS color parsing (including OKLCH)
  */
@@ -324,14 +323,9 @@ export function resolveColor(color: ThemeColor): RGBA {
     return parseColor(color)
   }
 
-  // ANSI 16 colors (0-15)
-  if (color >= 0 && color <= 15) {
-    return ansi16ToRgba(color)
-  }
-
-  // Extended 256 palette (16-255)
-  if (color >= 16 && color <= 255) {
-    return ansi256ToRgba(color)
+  // ANSI colors (0-255) - return marker so renderer uses terminal's palette!
+  if (color >= 0 && color <= 255) {
+    return ansiColor(color)
   }
 
   // RGB value (0xRRGGBB)
@@ -499,3 +493,155 @@ export const resolvedTheme = derived(() => ({
   border: resolveColor(theme.border),
   borderFocus: resolveColor(theme.borderFocus),
 }))
+
+// =============================================================================
+// EASY THEME ACCESS - `t.primary` instead of `resolvedTheme.value.primary`
+// =============================================================================
+
+/**
+ * Easy access to theme colors as reactive deriveds.
+ *
+ * Usage:
+ * ```ts
+ * import { t } from 'tui/theme'
+ *
+ * box({
+ *   borderColor: t.primary,  // Reactive! Updates when theme changes
+ *   fg: t.text,
+ *   bg: t.surface,
+ * })
+ * ```
+ *
+ * Each property is a derived that resolves the theme color to RGBA.
+ * Pass directly to component props - bind() handles the rest.
+ */
+export const t = {
+  // Main palette
+  primary: derived(() => resolveColor(theme.primary)),
+  secondary: derived(() => resolveColor(theme.secondary)),
+  tertiary: derived(() => resolveColor(theme.tertiary)),
+  accent: derived(() => resolveColor(theme.accent)),
+
+  // Semantic
+  success: derived(() => resolveColor(theme.success)),
+  warning: derived(() => resolveColor(theme.warning)),
+  error: derived(() => resolveColor(theme.error)),
+  info: derived(() => resolveColor(theme.info)),
+
+  // Text
+  text: derived(() => resolveColor(theme.text)),
+  textMuted: derived(() => resolveColor(theme.textMuted)),
+  textDim: derived(() => resolveColor(theme.textDim)),
+  textDisabled: derived(() => resolveColor(theme.textDisabled)),
+  textBright: derived(() => resolveColor(theme.textBright)),
+
+  // Backgrounds
+  bg: derived(() => resolveColor(theme.background)),
+  bgMuted: derived(() => resolveColor(theme.backgroundMuted)),
+  surface: derived(() => resolveColor(theme.surface)),
+  overlay: derived(() => resolveColor(theme.overlay)),
+
+  // Borders
+  border: derived(() => resolveColor(theme.border)),
+  borderFocus: derived(() => resolveColor(theme.borderFocus)),
+}
+
+// =============================================================================
+// VARIANT DEFINITIONS
+// =============================================================================
+
+/**
+ * Variant style definitions.
+ * Each variant defines colors for different component states.
+ */
+export type Variant = 'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info' | 'ghost' | 'outline'
+
+export interface VariantStyle {
+  fg: RGBA
+  bg: RGBA
+  border: RGBA
+  borderFocus: RGBA
+}
+
+/**
+ * Get variant styles resolved to RGBA.
+ * Returns colors based on variant name and current theme.
+ */
+export function getVariantStyle(variant: Variant): VariantStyle {
+  const resolved = resolvedTheme.value
+
+  switch (variant) {
+    case 'primary':
+      return {
+        fg: resolved.textBright,
+        bg: resolved.primary,
+        border: resolved.primary,
+        borderFocus: resolved.accent,
+      }
+    case 'secondary':
+      return {
+        fg: resolved.textBright,
+        bg: resolved.secondary,
+        border: resolved.secondary,
+        borderFocus: resolved.accent,
+      }
+    case 'success':
+      return {
+        fg: resolved.textBright,
+        bg: resolved.success,
+        border: resolved.success,
+        borderFocus: resolved.accent,
+      }
+    case 'warning':
+      return {
+        fg: { r: 0, g: 0, b: 0, a: 255 }, // Dark text on warning
+        bg: resolved.warning,
+        border: resolved.warning,
+        borderFocus: resolved.accent,
+      }
+    case 'error':
+      return {
+        fg: resolved.textBright,
+        bg: resolved.error,
+        border: resolved.error,
+        borderFocus: resolved.accent,
+      }
+    case 'info':
+      return {
+        fg: resolved.textBright,
+        bg: resolved.info,
+        border: resolved.info,
+        borderFocus: resolved.accent,
+      }
+    case 'ghost':
+      return {
+        fg: resolved.text,
+        bg: TERMINAL_DEFAULT,
+        border: TERMINAL_DEFAULT,
+        borderFocus: resolved.borderFocus,
+      }
+    case 'outline':
+      return {
+        fg: resolved.primary,
+        bg: TERMINAL_DEFAULT,
+        border: resolved.primary,
+        borderFocus: resolved.borderFocus,
+      }
+    case 'default':
+    default:
+      return {
+        fg: resolved.text,
+        bg: resolved.background,
+        border: resolved.border,
+        borderFocus: resolved.borderFocus,
+      }
+  }
+}
+
+/**
+ * Reactive variant style derived.
+ * Use when you need styles to update with theme changes.
+ */
+export function variantStyle(variant: Variant) {
+  return derived(() => getVariantStyle(variant))
+}

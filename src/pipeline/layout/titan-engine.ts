@@ -336,9 +336,12 @@ export function computeLayoutTitan(
     const justify = unwrap(layout.justifyContent[parent]) ?? JUSTIFY_START
     const alignItems = unwrap(layout.alignItems[parent]) ?? ALIGN_STRETCH
     const gap = unwrap(spacing.gap[parent]) ?? 0
+    const overflow = unwrap(layout.overflow[parent]) ?? Overflow.VISIBLE
 
     const isRow = dir === FLEX_ROW || dir === FLEX_ROW_REVERSE
     const isReverse = dir === FLEX_ROW_REVERSE || dir === FLEX_COLUMN_REVERSE
+    // Scrollable containers should NOT shrink children - content scrolls instead
+    const isScrollableParent = overflow === Overflow.SCROLL || overflow === Overflow.AUTO
 
     const mainSize = isRow ? contentW : contentH
     const crossSize = isRow ? contentH : contentW
@@ -398,7 +401,9 @@ export function computeLayoutTitan(
 
         if (freeSpace > 0 && totalGrow > 0) {
           kidMain += ((unwrap(layout.flexGrow[fkid]) ?? 0) / totalGrow) * freeSpace
-        } else if (freeSpace < 0 && totalShrink > 0) {
+        } else if (freeSpace < 0 && totalShrink > 0 && !isScrollableParent) {
+          // Only shrink if parent is NOT scrollable
+          // Scrollable containers let content overflow and scroll instead
           kidMain += ((unwrap(layout.flexShrink[fkid]) ?? 1) / totalShrink) * freeSpace
         }
         kidMain = Math.max(0, Math.floor(kidMain))
@@ -516,14 +521,15 @@ export function computeLayoutTitan(
     }
 
     // Scroll detection - uses values tracked inline above (no extra loop!)
-    const overflow = unwrap(layout.overflow[parent]) ?? Overflow.VISIBLE
-    if (overflow === Overflow.SCROLL || overflow === Overflow.AUTO) {
+    // Note: overflow already read above for isScrollableParent check
+    if (isScrollableParent) {
       const childrenMaxX = isRow ? childrenMaxMain : childrenMaxCross
       const childrenMaxY = isRow ? childrenMaxCross : childrenMaxMain
       const scrollRangeX = Math.max(0, childrenMaxX - contentW)
       const scrollRangeY = Math.max(0, childrenMaxY - contentH)
 
       if (overflow === Overflow.SCROLL || scrollRangeX > 0 || scrollRangeY > 0) {
+        // overflow === SCROLL always scrollable; AUTO only if content overflows
         outScrollable[parent] = 1
         outMaxScrollX[parent] = scrollRangeX
         outMaxScrollY[parent] = scrollRangeY

@@ -141,12 +141,9 @@ export function resetAllArrays(): void {
   text.textWrap.length = 0
   text.ellipsis.length = 0
 
-  // Interaction arrays
-  interaction.scrollable.length = 0
+  // Interaction arrays (scroll offsets only - scrollable/max are computed by TITAN)
   interaction.scrollOffsetX.length = 0
   interaction.scrollOffsetY.length = 0
-  interaction.maxScrollX.length = 0
-  interaction.maxScrollY.length = 0
   interaction.focusable.length = 0
   interaction.tabIndex.length = 0
   interaction.hovered.length = 0

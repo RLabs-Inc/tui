@@ -2,8 +2,8 @@
  * TUI Framework - Scroll State Module
  *
  * Manages scrolling behavior:
- * - Per-component scroll state (via interaction arrays)
- * - Auto-scroll detection (content > container)
+ * - Per-component scroll offset (user state via interaction arrays)
+ * - Scroll bounds from layout (computed by TITAN)
  * - Scroll-into-view for focused elements
  * - Mouse wheel and keyboard arrow scrolling
  *
@@ -12,11 +12,16 @@
  * - Mouse wheel scrolls element under cursor (fallback to focused)
  * - Page Up/Down for large jumps
  * - Home/End for start/end
+ *
+ * Architecture:
+ * - scrollOffsetX/Y = user state (interaction arrays)
+ * - scrollable/maxScrollX/Y = computed by TITAN (read from layoutDerived)
  */
 
 import { unwrap } from '@rlabs-inc/signals'
 import * as interaction from '../engine/arrays/interaction'
 import { focusedIndex } from '../engine/arrays/interaction'
+import { layoutDerived } from '../pipeline/layout'
 import { hitGrid } from './mouse'
 
 // =============================================================================
@@ -36,12 +41,13 @@ export const PAGE_SCROLL_FACTOR = 0.9 // 90% of viewport
 // SCROLL STATE ACCESS
 // =============================================================================
 
-/** Check if a component is scrollable */
+/** Check if a component is scrollable (reads from computed layout) */
 export function isScrollable(index: number): boolean {
-  return unwrap(interaction.scrollable[index]) === 1
+  const computed = layoutDerived.value
+  return (computed.scrollable[index] ?? 0) === 1
 }
 
-/** Get current scroll offset for a component */
+/** Get current scroll offset for a component (user state) */
 export function getScrollOffset(index: number): { x: number; y: number } {
   return {
     x: unwrap(interaction.scrollOffsetX[index]) ?? 0,
@@ -49,11 +55,12 @@ export function getScrollOffset(index: number): { x: number; y: number } {
   }
 }
 
-/** Get maximum scroll values for a component */
+/** Get maximum scroll values for a component (reads from computed layout) */
 export function getMaxScroll(index: number): { x: number; y: number } {
+  const computed = layoutDerived.value
   return {
-    x: unwrap(interaction.maxScrollX[index]) ?? 0,
-    y: unwrap(interaction.maxScrollY[index]) ?? 0,
+    x: computed.maxScrollX[index] ?? 0,
+    y: computed.maxScrollY[index] ?? 0,
   }
 }
 

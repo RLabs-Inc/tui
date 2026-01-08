@@ -7,6 +7,7 @@
 
 import type { RGBA, CellAttrs } from '../types'
 import type { WritableSignal, Binding, ReadonlyBinding } from '@rlabs-inc/signals'
+import type { Variant } from '../state/theme'
 
 // =============================================================================
 // REACTIVE PROP TYPES
@@ -97,23 +98,35 @@ export interface LayoutProps {
   grow?: Reactive<number>
   /** Flex shrink */
   shrink?: Reactive<number>
-  /** Overflow: 'visible' | 'hidden' | 'scroll' */
-  overflow?: Reactive<'visible' | 'hidden' | 'scroll'>
+  /** Overflow: 'visible' | 'hidden' | 'scroll' | 'auto' */
+  overflow?: Reactive<'visible' | 'hidden' | 'scroll' | 'auto'>
   /** Z-index for stacking */
   zIndex?: Reactive<number>
+}
+
+export interface InteractionProps {
+  /** Can this component receive focus */
+  focusable?: Reactive<boolean>
+  /** Tab order for focus navigation (-1 = not in tab order) */
+  tabIndex?: Reactive<number>
 }
 
 // =============================================================================
 // BOX PROPS
 // =============================================================================
 
-export interface BoxProps extends StyleProps, BorderProps, DimensionProps, SpacingProps, LayoutProps {
+export interface BoxProps extends StyleProps, BorderProps, DimensionProps, SpacingProps, LayoutProps, InteractionProps {
   /** Component ID (optional, auto-generated if not provided) */
   id?: string
   /** Is visible */
   visible?: Reactive<boolean>
   /** Children renderer */
   children?: () => void
+  /**
+   * Style variant - applies theme colors automatically.
+   * Variants: 'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info' | 'ghost' | 'outline'
+   */
+  variant?: Variant
 }
 
 // =============================================================================

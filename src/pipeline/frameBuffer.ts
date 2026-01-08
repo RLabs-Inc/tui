@@ -172,7 +172,7 @@ export const frameBufferDerived = derived((): FrameBufferResult => {
 function renderComponent(
   buffer: FrameBuffer,
   index: number,
-  computedLayout: { x: number[]; y: number[]; width: number[]; height: number[] },
+  computedLayout: { x: number[]; y: number[]; width: number[]; height: number[]; scrollable: number[] },
   childMap: Map<number, number[]>,
   hitRegions: HitRegion[],
   parentClip: ClipRect | undefined,
@@ -290,9 +290,10 @@ function renderComponent(
   if (core.componentType[index] === ComponentType.BOX) {
     const children = childMap.get(index) || []
 
-    // Get this component's scroll offset
-    const scrollY = unwrap(interaction.scrollable[index]) ? (unwrap(interaction.scrollOffsetY[index]) || 0) : 0
-    const scrollX = unwrap(interaction.scrollable[index]) ? (unwrap(interaction.scrollOffsetX[index]) || 0) : 0
+    // Get this component's scroll offset (scrollable comes from layout, offset from interaction)
+    const isScrollable = (computedLayout.scrollable[index] ?? 0) === 1
+    const scrollY = isScrollable ? (unwrap(interaction.scrollOffsetY[index]) || 0) : 0
+    const scrollX = isScrollable ? (unwrap(interaction.scrollOffsetX[index]) || 0) : 0
 
     // Accumulated scroll for children
     const childScrollY = parentScrollY + scrollY

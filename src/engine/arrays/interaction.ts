@@ -7,28 +7,25 @@
  * state() proxies snapshot getter values, breaking reactivity.
  *
  * Exception: focusedIndex is a single signal, not an array.
+ *
+ * NOTE: scrollable/maxScrollX/maxScrollY are COMPUTED by TITAN layout engine
+ * and live in ComputedLayout, not here. Only scroll OFFSETS (user state) are here.
  */
 
 import { signal, bind, type Binding } from '@rlabs-inc/signals'
 
 // =============================================================================
-// SCROLL STATE
+// SCROLL STATE (user-controlled position only)
 // =============================================================================
 
-/** Is this component scrollable (has overflow content) */
-export const scrollable: Binding<number>[] = [] // 0=no, 1=yes
-
-/** Current vertical scroll offset */
+/** Current vertical scroll offset (user state) */
 export const scrollOffsetY: Binding<number>[] = []
 
-/** Current horizontal scroll offset */
+/** Current horizontal scroll offset (user state) */
 export const scrollOffsetX: Binding<number>[] = []
 
-/** Maximum vertical scroll value (content height - viewport height) */
-export const maxScrollY: Binding<number>[] = []
-
-/** Maximum horizontal scroll value */
-export const maxScrollX: Binding<number>[] = []
+// NOTE: scrollable, maxScrollX, maxScrollY are COMPUTED values from TITAN.
+// Read them from layoutDerived.value, not from interaction arrays.
 
 // =============================================================================
 // FOCUS STATE
@@ -74,12 +71,9 @@ export const selectionEnd: Binding<number>[] = []
 // =============================================================================
 
 export function ensureCapacity(index: number): void {
-  while (scrollable.length <= index) {
-    scrollable.push(bind(0))
+  while (scrollOffsetY.length <= index) {
     scrollOffsetY.push(bind(0))
     scrollOffsetX.push(bind(0))
-    maxScrollY.push(bind(0))
-    maxScrollX.push(bind(0))
     focusable.push(bind(0))
     tabIndex.push(bind(-1))
     hovered.push(bind(0))
@@ -92,12 +86,9 @@ export function ensureCapacity(index: number): void {
 }
 
 export function clearAtIndex(index: number): void {
-  if (index < scrollable.length) {
-    scrollable[index] = bind(0)
+  if (index < scrollOffsetY.length) {
     scrollOffsetY[index] = bind(0)
     scrollOffsetX[index] = bind(0)
-    maxScrollY[index] = bind(0)
-    maxScrollX[index] = bind(0)
     focusable[index] = bind(0)
     tabIndex[index] = bind(-1)
     hovered[index] = bind(0)

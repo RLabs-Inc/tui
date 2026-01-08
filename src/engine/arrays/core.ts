@@ -23,8 +23,8 @@ export const componentType: ComponentTypeValue[] = []
 /** Parent component index (-1 for root) */
 export const parentIndex: Binding<number>[] = []
 
-/** Is component visible (0 = hidden, 1 = visible) */
-export const visible: Binding<number>[] = []
+/** Is component visible (0/false = hidden, 1/true = visible) */
+export const visible: Binding<number | boolean>[] = []
 
 /** Component ID (for debugging and lookups) */
 export const componentId: Binding<string>[] = []

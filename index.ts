@@ -26,7 +26,17 @@ export * from './src/types/color'
 export { signal, state, derived, effect, bind, signals } from '@rlabs-inc/signals'
 
 // Theme
-export { theme, setTheme, resolveColor } from './src/state/theme'
+export {
+  theme,
+  themes,
+  setTheme,
+  resolveColor,
+  resolvedTheme,
+  t,
+  getVariantStyle,
+  variantStyle,
+} from './src/state/theme'
+export type { Variant, VariantStyle, ThemeColor } from './src/state/theme'
 
 // Renderer (advanced)
 export * from './src/renderer'

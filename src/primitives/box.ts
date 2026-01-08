@@ -21,7 +21,7 @@
  * ```
  */
 
-import { bind } from '@rlabs-inc/signals'
+import { bind, derived } from '@rlabs-inc/signals'
 import { ComponentType } from '../types'
 import {
   allocateIndex,
@@ -31,6 +31,7 @@ import {
   popParentContext,
 } from '../engine/registry'
 import { cleanupIndex as cleanupKeyboardListeners } from '../state/keyboard'
+import { getVariantStyle } from '../state/theme'
 
 // Import arrays
 import * as core from '../engine/arrays/core'
@@ -94,18 +95,26 @@ function overflowToNum(overflow: string | undefined): number {
   switch (overflow) {
     case 'hidden': return 1
     case 'scroll': return 2
+    case 'auto': return 3
     default: return 0 // visible
   }
 }
 
-/** Get static value for enum conversion - only use for string enums! */
-function getStaticString(prop: unknown): string | undefined {
-  if (prop === undefined) return undefined
-  if (typeof prop === 'string') return prop
-  if (typeof prop === 'object' && prop !== null && 'value' in prop) {
-    return (prop as { value: string }).value
+/**
+ * Create a reactive binding for enum props.
+ * If the prop is a signal/derived, creates a derived that tracks changes.
+ * If static, just converts directly.
+ */
+function bindEnumProp<T extends string>(
+  prop: T | { value: T } | undefined,
+  converter: (val: T | undefined) => number
+): ReturnType<typeof bind<number>> {
+  // If it's reactive (has .value), create a derived to track it
+  if (prop !== undefined && typeof prop === 'object' && prop !== null && 'value' in prop) {
+    return bind(derived(() => converter((prop as { value: T }).value)))
   }
-  return undefined
+  // Static value - just convert
+  return bind(converter(prop as T | undefined))
 }
 
 /** Get static boolean for visible prop */
@@ -143,7 +152,7 @@ export function box(props: BoxProps = {}): Cleanup {
   // Visible - bind directly, pipeline will handle truthy/falsy
   // If it's a signal/derived, bind preserves the link
   // We store as-is and check truthiness in pipeline
-  core.visible[index] = bind(props.visible ?? 1)
+  core.visible[index] = bind(props.visible ?? true)
 
   // Dimensions - BIND DIRECTLY to preserve reactive link!
   dimensions.width[index] = bind(props.width ?? 0)
@@ -169,33 +178,48 @@ export function box(props: BoxProps = {}): Cleanup {
   // Gap - BIND DIRECTLY
   spacing.gap[index] = bind(props.gap ?? 0)
 
-  // Layout enums - these need conversion, use static for now
-  // TODO: Support reactive layout props with derived bindings
-  layout.flexDirection[index] = bind(flexDirectionToNum(getStaticString(props.flexDirection)))
-  layout.flexWrap[index] = bind(flexWrapToNum(getStaticString(props.flexWrap)))
-  layout.justifyContent[index] = bind(justifyToNum(getStaticString(props.justifyContent)))
-  layout.alignItems[index] = bind(alignToNum(getStaticString(props.alignItems)))
-  layout.overflow[index] = bind(overflowToNum(getStaticString(props.overflow)))
+  // Layout enums - reactive via bindEnumProp (tracks signal changes)
+  layout.flexDirection[index] = bindEnumProp(props.flexDirection, flexDirectionToNum)
+  layout.flexWrap[index] = bindEnumProp(props.flexWrap, flexWrapToNum)
+  layout.justifyContent[index] = bindEnumProp(props.justifyContent, justifyToNum)
+  layout.alignItems[index] = bindEnumProp(props.alignItems, alignToNum)
+  layout.overflow[index] = bindEnumProp(props.overflow, overflowToNum)
 
   // Layout numbers - BIND DIRECTLY
   layout.flexGrow[index] = bind(props.grow ?? 0)
   layout.flexShrink[index] = bind(props.shrink ?? 1)
   layout.zIndex[index] = bind(props.zIndex ?? 0)
 
-  // Scrolling
-  const overflowVal = getStaticString(props.overflow)
-  if (overflowVal === 'scroll') {
-    interaction.scrollable[index] = bind(1)
-  }
+  // NOTE: scrollable is computed by TITAN based on overflow prop + content size
+  // No need to set it here - TITAN handles overflow: 'scroll' and 'auto'
 
-  // Visual - colors - BIND DIRECTLY!
-  visual.fgColor[index] = bind(props.fg ?? null)
-  visual.bgColor[index] = bind(props.bg ?? null)
+  // Interaction - focus - BIND DIRECTLY!
+  interaction.focusable[index] = bind(props.focusable ? 1 : 0)
+  interaction.tabIndex[index] = bind(props.tabIndex ?? 0)
+
+  // Visual - colors with VARIANT support
+  // If variant specified, create deriveds that track theme changes
+  // User-specified colors override variant colors
+  if (props.variant && props.variant !== 'default') {
+    // Create reactive deriveds for variant colors
+    // These will update when theme changes!
+    const variantFg = derived(() => getVariantStyle(props.variant!).fg)
+    const variantBg = derived(() => getVariantStyle(props.variant!).bg)
+    const variantBorder = derived(() => getVariantStyle(props.variant!).border)
+
+    visual.fgColor[index] = bind(props.fg ?? variantFg)
+    visual.bgColor[index] = bind(props.bg ?? variantBg)
+    visual.borderColor[index] = bind(props.borderColor ?? variantBorder)
+  } else {
+    // No variant - use props directly
+    visual.fgColor[index] = bind(props.fg ?? null)
+    visual.bgColor[index] = bind(props.bg ?? null)
+    visual.borderColor[index] = bind(props.borderColor ?? null)
+  }
   visual.opacity[index] = bind(props.opacity ?? 1)
 
-  // Visual - border - BIND DIRECTLY!
+  // Visual - border style
   visual.borderStyle[index] = bind(props.border ?? 0)
-  visual.borderColor[index] = bind(props.borderColor ?? null)
   visual.borderTop[index] = bind(props.borderTop ?? 0)
   visual.borderRight[index] = bind(props.borderRight ?? 0)
   visual.borderBottom[index] = bind(props.borderBottom ?? 0)

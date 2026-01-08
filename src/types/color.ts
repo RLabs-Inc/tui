@@ -38,6 +38,29 @@ export function isTerminalDefault(color: RGBA): boolean {
   return color.r === -1 && color.g === -1 && color.b === -1
 }
 
+/**
+ * ANSI color marker.
+ * When r = -2, the `g` field contains the ANSI color index (0-255).
+ * The renderer will output proper ANSI escape codes that respect
+ * the user's terminal color palette.
+ *
+ * - 0-7: Standard colors (black, red, green, yellow, blue, magenta, cyan, white)
+ * - 8-15: Bright colors
+ * - 16-231: 6x6x6 color cube
+ * - 232-255: Grayscale
+ */
+export function ansiColor(index: number): RGBA {
+  return { r: -2, g: index, b: 0, a: 255 }
+}
+
+export function isAnsiColor(color: RGBA): boolean {
+  return color.r === -2
+}
+
+export function getAnsiIndex(color: RGBA): number {
+  return color.g
+}
+
 // =============================================================================
 // Color Creation
 // =============================================================================
@@ -290,6 +313,19 @@ export function toAnsiFg(color: RGBA): string {
   if (isTerminalDefault(color)) {
     return '\x1b[39m' // Reset to default foreground
   }
+  if (isAnsiColor(color)) {
+    const index = getAnsiIndex(color)
+    // Standard colors 0-7
+    if (index >= 0 && index <= 7) {
+      return `\x1b[${30 + index}m`
+    }
+    // Bright colors 8-15
+    if (index >= 8 && index <= 15) {
+      return `\x1b[${90 + (index - 8)}m`
+    }
+    // Extended 256-color palette
+    return `\x1b[38;5;${index}m`
+  }
   return `\x1b[38;2;${color.r};${color.g};${color.b}m`
 }
 
@@ -297,6 +333,19 @@ export function toAnsiFg(color: RGBA): string {
 export function toAnsiBg(color: RGBA): string {
   if (isTerminalDefault(color)) {
     return '\x1b[49m' // Reset to default background
+  }
+  if (isAnsiColor(color)) {
+    const index = getAnsiIndex(color)
+    // Standard colors 0-7
+    if (index >= 0 && index <= 7) {
+      return `\x1b[${40 + index}m`
+    }
+    // Bright colors 8-15
+    if (index >= 8 && index <= 15) {
+      return `\x1b[${100 + (index - 8)}m`
+    }
+    // Extended 256-color palette
+    return `\x1b[48;5;${index}m`
   }
   return `\x1b[48;2;${color.r};${color.g};${color.b}m`
 }

@@ -11,7 +11,7 @@
 
 import type { RGBA, CellAttrs, CursorShape } from '../types'
 import { Attr } from '../types'
-import { isTerminalDefault } from '../types/color'
+import { isTerminalDefault, isAnsiColor, getAnsiIndex } from '../types/color'
 
 // =============================================================================
 // Constants & Terminal Detection
@@ -39,7 +39,7 @@ function wrapOsc(sequence: string): string {
   if (isTmux) {
     // Tmux requires OSC sequences to be wrapped with DCS tmux; <sequence> ST
     // and all ESCs in <sequence> to be replaced with ESC ESC
-    return '\u001BPtmux;' + sequence.replaceAll('\u001B', '\u001B\u001B') + '\u001B\\\\'
+    return '\u001BPtmux;' + sequence.replaceAll('\u001B', '\u001B\u001B') + '\u001B\\'
   }
   return sequence
 }
@@ -336,18 +336,44 @@ export const endSync = CSI + '?2026l'
 /** Reset all attributes and colors */
 export const reset = CSI + '0m'
 
-/** Foreground color (true color) */
+/** Foreground color (true color or ANSI palette) */
 export function fg(color: RGBA): string {
   if (isTerminalDefault(color)) {
     return CSI + '39m' // Default foreground
   }
+  if (isAnsiColor(color)) {
+    const index = getAnsiIndex(color)
+    // Standard colors 0-7: use 30-37
+    if (index >= 0 && index <= 7) {
+      return CSI + (30 + index) + 'm'
+    }
+    // Bright colors 8-15: use 90-97
+    if (index >= 8 && index <= 15) {
+      return CSI + (90 + index - 8) + 'm'
+    }
+    // Extended 256-color palette: use 38;5;n
+    return CSI + '38;5;' + index + 'm'
+  }
   return CSI + '38;2;' + color.r + ';' + color.g + ';' + color.b + 'm'
 }
 
-/** Background color (true color) */
+/** Background color (true color or ANSI palette) */
 export function bg(color: RGBA): string {
   if (isTerminalDefault(color)) {
     return CSI + '49m' // Default background
+  }
+  if (isAnsiColor(color)) {
+    const index = getAnsiIndex(color)
+    // Standard colors 0-7: use 40-47
+    if (index >= 0 && index <= 7) {
+      return CSI + (40 + index) + 'm'
+    }
+    // Bright colors 8-15: use 100-107
+    if (index >= 8 && index <= 15) {
+      return CSI + (100 + index - 8) + 'm'
+    }
+    // Extended 256-color palette: use 48;5;n
+    return CSI + '48;5;' + index + 'm'
   }
   return CSI + '48;2;' + color.r + ';' + color.g + ';' + color.b + 'm'
 }
