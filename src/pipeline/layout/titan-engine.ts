@@ -493,7 +493,12 @@ export function computeLayoutTitan(
 
       let lineMain = 0
       for (let fi = lStart; fi <= lEnd; fi++) {
-        lineMain += itemMain[flowKids[fi]!]! + gap
+        const kid = flowKids[fi]!
+        // Include margins in line size calculation (CSS box model)
+        const mMain = isRow
+          ? (unwrap(spacing.marginLeft[kid]) ?? 0) + (unwrap(spacing.marginRight[kid]) ?? 0)
+          : (unwrap(spacing.marginTop[kid]) ?? 0) + (unwrap(spacing.marginBottom[kid]) ?? 0)
+        lineMain += itemMain[kid]! + mMain + gap
       }
       lineMain -= gap
 
@@ -526,14 +531,18 @@ export function computeLayoutTitan(
         }
       }
 
-      const start = isReverse ? lEnd : lStart
-      const end = isReverse ? lStart : lEnd
-      const step = isReverse ? -1 : 1
-
-      for (let fi = start; isReverse ? fi >= end : fi <= end; fi += step) {
+      // Always iterate in DOM order - the reversed position calculation
+      // handles the visual reversal for row-reverse/column-reverse
+      for (let fi = lStart; fi <= lEnd; fi++) {
         const fkid = flowKids[fi]!
         const sizeMain = itemMain[fkid]!
         const sizeCross = itemCross[fkid]!
+
+        // Read margins for CSS-compliant positioning
+        const mTop = unwrap(spacing.marginTop[fkid]) ?? 0
+        const mRight = unwrap(spacing.marginRight[fkid]) ?? 0
+        const mBottom = unwrap(spacing.marginBottom[fkid]) ?? 0
+        const mLeft = unwrap(spacing.marginLeft[fkid]) ?? 0
 
         // align-self overrides parent's align-items for individual items
         // alignSelf: 0=auto, 1=stretch, 2=flex-start, 3=center, 4=flex-end, 5=baseline
@@ -552,14 +561,26 @@ export function computeLayoutTitan(
             break
         }
 
+        // CSS Flexbox: margins offset item position and add space between items
+        // For row-reverse/column-reverse, position from the end of the axis
         if (isRow) {
-          outX[fkid] = contentX + mainOffset
-          outY[fkid] = contentY + crossPos
+          if (dir === FLEX_ROW_REVERSE) {
+            // row-reverse: position from right edge
+            outX[fkid] = contentX + contentW - mainOffset - sizeMain - mRight
+          } else {
+            outX[fkid] = contentX + mainOffset + mLeft
+          }
+          outY[fkid] = contentY + crossPos + mTop
           outW[fkid] = sizeMain
           outH[fkid] = sizeCross
         } else {
-          outX[fkid] = contentX + crossPos
-          outY[fkid] = contentY + mainOffset
+          outX[fkid] = contentX + crossPos + mLeft
+          if (dir === FLEX_COLUMN_REVERSE) {
+            // column-reverse: position from bottom edge
+            outY[fkid] = contentY + contentH - mainOffset - sizeMain - mBottom
+          } else {
+            outY[fkid] = contentY + mainOffset + mTop
+          }
           outW[fkid] = sizeCross
           outH[fkid] = sizeMain
         }
@@ -577,16 +598,18 @@ export function computeLayoutTitan(
           }
         }
 
-        // Track max extent inline (zero overhead)
+        // Track max extent inline (zero overhead) - include margins
         if (isRow) {
-          childrenMaxMain = Math.max(childrenMaxMain, mainOffset + outW[fkid]!)
-          childrenMaxCross = Math.max(childrenMaxCross, crossPos + outH[fkid]!)
+          childrenMaxMain = Math.max(childrenMaxMain, mainOffset + mLeft + outW[fkid]! + mRight)
+          childrenMaxCross = Math.max(childrenMaxCross, crossPos + mTop + outH[fkid]! + mBottom)
         } else {
-          childrenMaxMain = Math.max(childrenMaxMain, mainOffset + outH[fkid]!)
-          childrenMaxCross = Math.max(childrenMaxCross, crossPos + outW[fkid]!)
+          childrenMaxMain = Math.max(childrenMaxMain, mainOffset + mTop + outH[fkid]! + mBottom)
+          childrenMaxCross = Math.max(childrenMaxCross, crossPos + mLeft + outW[fkid]! + mRight)
         }
 
-        mainOffset += (isRow ? outW[fkid]! : outH[fkid]!) + itemGap
+        // Advance mainOffset including margins (CSS box model)
+        const mainMargin = isRow ? (mLeft + mRight) : (mTop + mBottom)
+        mainOffset += (isRow ? outW[fkid]! : outH[fkid]!) + mainMargin + itemGap
       }
 
       crossOffset += lineHeight

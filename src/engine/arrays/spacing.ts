@@ -10,21 +10,49 @@
 
 import { bind, type Binding } from '@rlabs-inc/signals'
 
-// Margin
+// =============================================================================
+// MARGIN - Space outside the component (offsets position in parent)
+// =============================================================================
+
+/** Top margin - adds space above the component (in cells) */
 export const marginTop: Binding<number>[] = []
+
+/** Right margin - adds space to the right of the component (in cells) */
 export const marginRight: Binding<number>[] = []
+
+/** Bottom margin - adds space below the component (in cells) */
 export const marginBottom: Binding<number>[] = []
+
+/** Left margin - adds space to the left of the component (in cells) */
 export const marginLeft: Binding<number>[] = []
 
-// Padding
+// =============================================================================
+// PADDING - Space inside the component (reduces content area)
+// =============================================================================
+
+/** Top padding - pushes content down from top edge (in cells) */
 export const paddingTop: Binding<number>[] = []
+
+/** Right padding - pushes content left from right edge (in cells) */
 export const paddingRight: Binding<number>[] = []
+
+/** Bottom padding - pushes content up from bottom edge (in cells) */
 export const paddingBottom: Binding<number>[] = []
+
+/** Left padding - pushes content right from left edge (in cells) */
 export const paddingLeft: Binding<number>[] = []
 
-// Gap (for flex containers)
+// =============================================================================
+// GAP - Space between flex items (CSS gap property)
+// =============================================================================
+
+/** Gap between flex items in both directions (in cells) */
 export const gap: Binding<number>[] = []
+
+/** Row gap - vertical space between wrapped lines (in cells) */
 export const rowGap: Binding<number>[] = []
+
+/** Column gap - horizontal space between items in a row (in cells) */
 export const columnGap: Binding<number>[] = []
 
 export function ensureCapacity(index: number): void {

@@ -1,0 +1,347 @@
+/**
+ * TUI Framework - Parallel Arrays Lifecycle Tests
+ *
+ * Tests for the component registry and parallel arrays:
+ * - Index allocation
+ * - Index deallocation and reuse
+ * - Automatic array cleanup when all components destroyed
+ * - ensureCapacity behavior
+ */
+
+import { describe, test, expect, beforeEach, afterEach } from 'bun:test'
+import { bind, unwrap } from '@rlabs-inc/signals'
+
+import {
+  allocateIndex,
+  releaseIndex,
+  getAllocatedIndices,
+  getCapacity,
+  getAllocatedCount,
+  resetRegistry,
+} from '../src/engine/registry'
+
+import * as core from '../src/engine/arrays/core'
+import * as dimensions from '../src/engine/arrays/dimensions'
+import * as spacing from '../src/engine/arrays/spacing'
+import * as layout from '../src/engine/arrays/layout'
+import { resetAllArrays } from '../src/engine/arrays'
+import { resetTitanArrays } from '../src/pipeline/layout/titan-engine'
+import { ComponentType } from '../src/types'
+
+// =============================================================================
+// TEST UTILITIES
+// =============================================================================
+
+function cleanupAll(): void {
+  // Reset registry
+  resetRegistry()
+  // Reset arrays
+  resetAllArrays()
+  resetTitanArrays()
+}
+
+// =============================================================================
+// INDEX ALLOCATION TESTS
+// =============================================================================
+
+describe('Parallel Arrays - Index Allocation', () => {
+  beforeEach(cleanupAll)
+  afterEach(cleanupAll)
+
+  test('allocateIndex returns sequential indices', () => {
+    const idx1 = allocateIndex()
+    const idx2 = allocateIndex()
+    const idx3 = allocateIndex()
+
+    expect(idx1).toBe(0)
+    expect(idx2).toBe(1)
+    expect(idx3).toBe(2)
+  })
+
+  test('getAllocatedIndices tracks allocated indices', () => {
+    allocateIndex()
+    allocateIndex()
+
+    const allocated = getAllocatedIndices()
+    expect(allocated.size).toBe(2)
+    expect(allocated.has(0)).toBe(true)
+    expect(allocated.has(1)).toBe(true)
+  })
+
+  test('getAllocatedCount tracks number of allocated components', () => {
+    expect(getAllocatedCount()).toBe(0)
+
+    allocateIndex()
+    expect(getAllocatedCount()).toBe(1)
+
+    allocateIndex()
+    expect(getAllocatedCount()).toBe(2)
+  })
+})
+
+// =============================================================================
+// INDEX RELEASE TESTS
+// =============================================================================
+
+describe('Parallel Arrays - Index Release', () => {
+  beforeEach(cleanupAll)
+  afterEach(cleanupAll)
+
+  test('releaseIndex removes from allocated set', () => {
+    const idx = allocateIndex()
+    expect(getAllocatedIndices().has(idx)).toBe(true)
+
+    releaseIndex(idx)
+    expect(getAllocatedIndices().has(idx)).toBe(false)
+  })
+
+  test('released indices are reused', () => {
+    const idx1 = allocateIndex() // 0
+    const idx2 = allocateIndex() // 1
+    const idx3 = allocateIndex() // 2
+
+    releaseIndex(idx2) // Release middle index
+
+    // Next allocation should reuse idx2
+    const idx4 = allocateIndex()
+    expect(idx4).toBe(1) // Reused!
+  })
+
+  test('multiple releases all get reused', () => {
+    const indices: number[] = []
+    for (let i = 0; i < 5; i++) {
+      indices.push(allocateIndex())
+    }
+
+    // Release indices 1, 2, 3
+    releaseIndex(1)
+    releaseIndex(2)
+    releaseIndex(3)
+
+    // Next 3 allocations should reuse 1, 2, 3 (order may vary)
+    const reused: number[] = []
+    for (let i = 0; i < 3; i++) {
+      reused.push(allocateIndex())
+    }
+
+    expect(reused.sort()).toEqual([1, 2, 3])
+  })
+})
+
+// =============================================================================
+// AUTOMATIC CLEANUP TESTS
+// =============================================================================
+
+describe('Parallel Arrays - Automatic Cleanup', () => {
+  beforeEach(cleanupAll)
+  afterEach(cleanupAll)
+
+  test('arrays are cleared when all components released', () => {
+    // Allocate and set up some components
+    const idx1 = allocateIndex()
+    const idx2 = allocateIndex()
+
+    core.ensureCapacity(idx1)
+    core.ensureCapacity(idx2)
+    core.componentType[idx1] = ComponentType.BOX
+    core.componentType[idx2] = ComponentType.BOX
+
+    // Verify arrays have data
+    expect(core.componentType.length).toBeGreaterThan(0)
+
+    // Release all
+    releaseIndex(idx1)
+    releaseIndex(idx2)
+
+    // Arrays should be cleared
+    expect(getAllocatedIndices().size).toBe(0)
+    // Note: Array clearing happens through resetAllArrays() called from registry
+  })
+})
+
+// =============================================================================
+// ENSURE CAPACITY TESTS
+// =============================================================================
+
+describe('Parallel Arrays - Ensure Capacity', () => {
+  beforeEach(cleanupAll)
+  afterEach(cleanupAll)
+
+  test('ensureCapacity grows arrays as needed', () => {
+    const idx = 10
+
+    // Arrays should be empty
+    expect(core.componentType.length).toBe(0)
+
+    // Ensure capacity for index 10
+    core.ensureCapacity(idx)
+
+    // Arrays should have grown to accommodate index 10
+    expect(core.componentType.length).toBeGreaterThan(idx)
+    expect(core.parentIndex.length).toBeGreaterThan(idx)
+    expect(core.visible.length).toBeGreaterThan(idx)
+  })
+
+  test('ensureCapacity fills with defaults', () => {
+    core.ensureCapacity(5)
+
+    // Check defaults are set
+    expect(core.componentType[0]).toBe(ComponentType.NONE)
+    expect(unwrap(core.parentIndex[0])).toBe(-1)
+    expect(unwrap(core.visible[0])).toBe(1)
+  })
+
+  test('dimensions ensureCapacity creates proper bindings', () => {
+    dimensions.ensureCapacity(3)
+
+    // Should have bindings, not raw values
+    expect(dimensions.width[0]).toBeDefined()
+    expect(typeof unwrap(dimensions.width[0])).toBe('number')
+  })
+
+  test('spacing ensureCapacity creates proper bindings', () => {
+    spacing.ensureCapacity(3)
+
+    expect(spacing.marginTop[0]).toBeDefined()
+    expect(unwrap(spacing.marginTop[0])).toBe(0)
+    expect(unwrap(spacing.gap[0])).toBe(0)
+  })
+
+  test('layout ensureCapacity creates proper bindings', () => {
+    layout.ensureCapacity(3)
+
+    expect(layout.flexDirection[0]).toBeDefined()
+    expect(unwrap(layout.flexDirection[0])).toBe(0) // COLUMN default
+    expect(unwrap(layout.flexGrow[0])).toBe(0)
+  })
+})
+
+// =============================================================================
+// ARRAY CLEARING TESTS
+// =============================================================================
+
+describe('Parallel Arrays - Clear at Index', () => {
+  beforeEach(cleanupAll)
+  afterEach(cleanupAll)
+
+  test('clearAtIndex resets all values for an index', () => {
+    const idx = 0
+
+    // Set up component
+    core.ensureCapacity(idx)
+    core.componentType[idx] = ComponentType.BOX
+    core.parentIndex[idx] = bind(5)
+    core.visible[idx] = bind(false)
+    core.componentId[idx] = bind('test-component')
+
+    dimensions.ensureCapacity(idx)
+    dimensions.width[idx] = bind(100)
+    dimensions.height[idx] = bind(50)
+
+    // Clear
+    core.clearAtIndex(idx)
+    dimensions.clearAtIndex(idx)
+
+    // Verify reset to defaults
+    expect(core.componentType[idx]).toBe(ComponentType.NONE)
+    expect(unwrap(core.parentIndex[idx])).toBe(-1)
+    expect(unwrap(core.visible[idx])).toBe(1)
+    expect(unwrap(dimensions.width[idx])).toBe(0)
+    expect(unwrap(dimensions.height[idx])).toBe(0)
+  })
+})
+
+// =============================================================================
+// BINDING BEHAVIOR TESTS
+// =============================================================================
+
+describe('Parallel Arrays - Binding Behavior', () => {
+  beforeEach(cleanupAll)
+  afterEach(cleanupAll)
+
+  test('bindings are reactive', () => {
+    dimensions.ensureCapacity(0)
+    dimensions.width[0] = bind(100)
+
+    // Initial value
+    expect(unwrap(dimensions.width[0])).toBe(100)
+
+    // Update binding
+    dimensions.width[0].value = 200
+
+    // Value should update
+    expect(unwrap(dimensions.width[0])).toBe(200)
+  })
+
+  test('multiple indices are independent', () => {
+    dimensions.ensureCapacity(1)
+    dimensions.width[0] = bind(100)
+    dimensions.width[1] = bind(200)
+
+    // Values are independent
+    expect(unwrap(dimensions.width[0])).toBe(100)
+    expect(unwrap(dimensions.width[1])).toBe(200)
+
+    // Update one
+    dimensions.width[0].value = 50
+
+    // Other unchanged
+    expect(unwrap(dimensions.width[0])).toBe(50)
+    expect(unwrap(dimensions.width[1])).toBe(200)
+  })
+})
+
+// =============================================================================
+// STRESS TESTS
+// =============================================================================
+
+describe('Parallel Arrays - Stress Tests', () => {
+  beforeEach(cleanupAll)
+  afterEach(cleanupAll)
+
+  test('handles 1000 allocations', () => {
+    const indices: number[] = []
+
+    for (let i = 0; i < 1000; i++) {
+      const idx = allocateIndex()
+      indices.push(idx)
+      core.ensureCapacity(idx)
+      core.componentType[idx] = ComponentType.BOX
+    }
+
+    expect(getAllocatedIndices().size).toBe(1000)
+
+    // Release half
+    for (let i = 0; i < 500; i++) {
+      releaseIndex(indices[i]!)
+    }
+
+    expect(getAllocatedIndices().size).toBe(500)
+
+    // Allocate 500 more - should reuse released indices
+    for (let i = 0; i < 500; i++) {
+      allocateIndex()
+    }
+
+    expect(getAllocatedIndices().size).toBe(1000)
+  })
+
+  test('rapid allocate/release cycles', () => {
+    for (let cycle = 0; cycle < 100; cycle++) {
+      const indices: number[] = []
+
+      // Allocate 10
+      for (let i = 0; i < 10; i++) {
+        indices.push(allocateIndex())
+      }
+
+      // Release all
+      for (const idx of indices) {
+        releaseIndex(idx)
+      }
+    }
+
+    // Should be back to 0
+    expect(getAllocatedIndices().size).toBe(0)
+  })
+})

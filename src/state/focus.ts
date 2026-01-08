@@ -200,6 +200,17 @@ export function focusLast(): boolean {
 }
 
 // =============================================================================
+// RESET (for testing)
+// =============================================================================
+
+/** Reset all focus state (for testing) */
+export function resetFocusState(): void {
+  focusedIndex.value = -1
+  focusTrapStack.length = 0
+  focusHistory.length = 0
+}
+
+// =============================================================================
 // EXPORT
 // =============================================================================
 

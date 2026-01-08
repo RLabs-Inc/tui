@@ -542,57 +542,48 @@ function transformEach(node: EachBlock, ctx: TransformContext): string {
 function transformAwait(node: AwaitBlock, ctx: TransformContext): string {
   const indent = '  '.repeat(ctx.indent)
 
-  // For now, a simplified async handling
+  // NO EFFECTS! Use the same visibility pattern as {#if}
+  // All branches are rendered, visibility controlled by derived expressions
   ctx.imports.signals.add('signal')
-  ctx.imports.signals.add('effect')
+  ctx.imports.signals.add('derived')
 
   const stateVar = `_await_${Math.random().toString(36).slice(2, 8)}`
 
   let code = `${indent}// Await: {#await ${node.expression}}\n`
   code += `${indent}const ${stateVar} = signal({ status: 'pending', value: null, error: null })\n`
   code += `${indent};(${node.expression}).then(\n`
-  code += `${indent}  ${node.value ?? 'v'} => ${stateVar}.value = { status: 'fulfilled', value: ${node.value ?? 'v'}, error: null },\n`
-  code += `${indent}  ${node.error ?? 'e'} => ${stateVar}.value = { status: 'rejected', value: null, error: ${node.error ?? 'e'} }\n`
+  code += `${indent}  ${node.value ?? '_v'} => ${stateVar}.value = { status: 'fulfilled', value: ${node.value ?? '_v'}, error: null },\n`
+  code += `${indent}  ${node.error ?? '_e'} => ${stateVar}.value = { status: 'rejected', value: null, error: ${node.error ?? '_e'} }\n`
   code += `${indent})\n`
 
-  // Render based on state
-  code += `${indent}effect(() => {\n`
-  code += `${indent}  const s = ${stateVar}.value\n`
+  // Render ALL branches with visibility controlled by derived
+  // Same pattern as {#if} - no effects, just reactive visibility
 
+  // Pending branch
   if (node.pending.length > 0) {
-    code += `${indent}  if (s.status === 'pending') {\n`
-    const pendingCtx = { ...ctx, indent: ctx.indent + 2 }
-    for (const child of node.pending) {
-      code += transformNode(child, pendingCtx) + '\n'
-    }
-    code += `${indent}  }\n`
+    const pendingCondition = `${stateVar}.value.status === 'pending'`
+    code += transformBranchChildren(node.pending, pendingCondition, ctx)
   }
 
+  // Fulfilled branch - need to expose the value variable
   if (node.fulfilled.length > 0) {
-    code += `${indent}  if (s.status === 'fulfilled') {\n`
+    const fulfilledCondition = `${stateVar}.value.status === 'fulfilled'`
     if (node.value) {
-      code += `${indent}    const ${node.value} = s.value\n`
+      // Create a derived for the resolved value so it's always available
+      code += `${indent}const ${node.value} = derived(() => ${stateVar}.value.value)\n`
     }
-    const fulfilledCtx = { ...ctx, indent: ctx.indent + 2 }
-    for (const child of node.fulfilled) {
-      code += transformNode(child, fulfilledCtx) + '\n'
-    }
-    code += `${indent}  }\n`
+    code += transformBranchChildren(node.fulfilled, fulfilledCondition, ctx)
   }
 
+  // Rejected branch - need to expose the error variable
   if (node.rejected.length > 0) {
-    code += `${indent}  if (s.status === 'rejected') {\n`
+    const rejectedCondition = `${stateVar}.value.status === 'rejected'`
     if (node.error) {
-      code += `${indent}    const ${node.error} = s.error\n`
+      // Create a derived for the error so it's always available
+      code += `${indent}const ${node.error} = derived(() => ${stateVar}.value.error)\n`
     }
-    const rejectedCtx = { ...ctx, indent: ctx.indent + 2 }
-    for (const child of node.rejected) {
-      code += transformNode(child, rejectedCtx) + '\n'
-    }
-    code += `${indent}  }\n`
+    code += transformBranchChildren(node.rejected, rejectedCondition, ctx)
   }
-
-  code += `${indent}})`
 
   return code
 }
