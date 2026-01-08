@@ -58,6 +58,24 @@ const POS_RELATIVE = 0
 const POS_ABSOLUTE = 1
 
 // =============================================================================
+// DIMENSION RESOLVER - Handles both absolute and percentage values
+// =============================================================================
+
+/**
+ * Resolve a dimension value against a parent size.
+ * - number: Return as-is (absolute value)
+ * - string like '50%': Return parentSize * percentage / 100
+ *
+ * Performance: Inline check, no function call overhead for common case.
+ */
+function resolveDim(dim: number | string | null | undefined, parentSize: number): number {
+  if (dim == null) return 0
+  if (typeof dim === 'number') return dim
+  // String percentage like '50%' - parse and resolve
+  return Math.floor(parentSize * parseFloat(dim) / 100)
+}
+
+// =============================================================================
 // MODULE-LEVEL ARRAYS (reused for speed)
 // =============================================================================
 const outX: number[] = []
@@ -198,8 +216,9 @@ export function computeLayoutTitan(
           let availableW = terminalWidth
 
           if (parentIdx >= 0) {
-            // Use parent's explicit width if set
-            const parentExplicitW = unwrap(dimensions.width[parentIdx]) ?? 0
+            // Use parent's explicit width if set (only absolute values in measure phase)
+            const rawParentW = unwrap(dimensions.width[parentIdx])
+            const parentExplicitW = typeof rawParentW === 'number' ? rawParentW : 0
             if (parentExplicitW > 0) {
               // Subtract parent's padding and borders (rough estimate)
               const pPadL = unwrap(spacing.paddingLeft[parentIdx]) ?? 0
@@ -232,8 +251,12 @@ export function computeLayoutTitan(
           childCount++
           // Use max of explicit dimension and intrinsic size
           // This ensures children with explicit sizes contribute correctly
-          const kidExplicitW = unwrap(dimensions.width[kid]) ?? 0
-          const kidExplicitH = unwrap(dimensions.height[kid]) ?? 0
+          // Note: Percentage dimensions (strings) → 0 for intrinsic calculation
+          // They'll be resolved against parent computed size in layout phase
+          const rawKidW = unwrap(dimensions.width[kid])
+          const rawKidH = unwrap(dimensions.height[kid])
+          const kidExplicitW = typeof rawKidW === 'number' ? rawKidW : 0
+          const kidExplicitH = typeof rawKidH === 'number' ? rawKidH : 0
           const kidW = kidExplicitW > 0 ? kidExplicitW : intrinsicW[kid]!
           const kidH = kidExplicitH > 0 ? kidExplicitH : intrinsicH[kid]!
 
@@ -347,13 +370,14 @@ export function computeLayoutTitan(
     const crossSize = isRow ? contentH : contentW
 
     // STEP 1: Collect items into flex lines
+    // Child dimensions resolve percentages against parent's content area
     let lineStart = 0
     let currentMain = 0
 
     for (let fi = 0; fi < flowKids.length; fi++) {
       const fkid = flowKids[fi]!
-      const ew = unwrap(dimensions.width[fkid]) ?? 0
-      const eh = unwrap(dimensions.height[fkid]) ?? 0
+      const ew = resolveDim(unwrap(dimensions.width[fkid]), contentW)
+      const eh = resolveDim(unwrap(dimensions.height[fkid]), contentH)
       const kidMain = isRow
         ? (ew > 0 ? ew : intrinsicW[fkid]!)
         : (eh > 0 ? eh : intrinsicH[fkid]!)
@@ -393,8 +417,8 @@ export function computeLayoutTitan(
 
       for (let fi = lStart; fi <= lEnd; fi++) {
         const fkid = flowKids[fi]!
-        const ew = unwrap(dimensions.width[fkid]) ?? 0
-        const eh = unwrap(dimensions.height[fkid]) ?? 0
+        const ew = resolveDim(unwrap(dimensions.width[fkid]), contentW)
+        const eh = resolveDim(unwrap(dimensions.height[fkid]), contentH)
         let kidMain = isRow
           ? (ew > 0 ? ew : intrinsicW[fkid]!)
           : (eh > 0 ? eh : intrinsicH[fkid]!)
@@ -555,8 +579,9 @@ export function computeLayoutTitan(
       containerH = outH[container]!
     }
 
-    const ew = unwrap(dimensions.width[i]) ?? 0
-    const eh = unwrap(dimensions.height[i]) ?? 0
+    // Resolve dimensions against containing block
+    const ew = resolveDim(unwrap(dimensions.width[i]), containerW)
+    const eh = resolveDim(unwrap(dimensions.height[i]), containerH)
     outW[i] = ew > 0 ? ew : intrinsicW[i]!
     outH[i] = eh > 0 ? eh : intrinsicH[i]!
 
@@ -590,10 +615,13 @@ export function computeLayoutTitan(
   // ─────────────────────────────────────────────────────────────────────────
 
   // First, position all roots
+  // Root elements resolve percentage dimensions against terminal size
   for (let ri = 0; ri < rootCount; ri++) {
     const root = bfsQueue[ri]!
-    const ew = unwrap(dimensions.width[root]) ?? 0
-    const eh = unwrap(dimensions.height[root]) ?? 0
+    const rawW = unwrap(dimensions.width[root])
+    const rawH = unwrap(dimensions.height[root])
+    const ew = resolveDim(rawW, terminalWidth)
+    const eh = resolveDim(rawH, terminalHeight)
 
     outX[root] = 0
     outY[root] = 0

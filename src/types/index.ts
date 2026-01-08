@@ -24,6 +24,50 @@ export interface RGBA {
 }
 
 // =============================================================================
+// Dimension - Supports absolute and percentage values
+// =============================================================================
+
+/**
+ * A dimension value that can be absolute (number) or percentage (string).
+ *
+ * - number: Absolute value in terminal cells (e.g., 50 = 50 chars)
+ * - string: Percentage of parent (e.g., '50%' = half of parent)
+ * - 0 or '0': Auto-size based on content
+ *
+ * Examples:
+ *   width: 50        // 50 characters
+ *   width: '100%'    // Full parent width
+ *   width: '50%'     // Half of parent width
+ *   height: 0        // Auto-height based on content
+ */
+export type Dimension = number | `${number}%`
+
+/**
+ * Parsed dimension for internal use.
+ * TITAN resolves these against parent computed sizes.
+ */
+export interface ParsedDimension {
+  value: number
+  isPercent: boolean
+}
+
+/**
+ * Parse a Dimension into value and percent flag.
+ * Used by primitives when binding dimensions.
+ */
+export function parseDimension(dim: Dimension | undefined | null): ParsedDimension {
+  if (dim === undefined || dim === null) {
+    return { value: 0, isPercent: false }
+  }
+  if (typeof dim === 'number') {
+    return { value: dim, isPercent: false }
+  }
+  // String like '50%'
+  const num = parseFloat(dim)
+  return { value: isNaN(num) ? 0 : num, isPercent: true }
+}
+
+// =============================================================================
 // Cell Attributes (bitfield)
 // =============================================================================
 

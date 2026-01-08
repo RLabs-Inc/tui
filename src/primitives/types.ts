@@ -5,7 +5,7 @@
  * Props can be static values OR reactive (signals/bindings).
  */
 
-import type { RGBA, CellAttrs } from '../types'
+import type { RGBA, CellAttrs, Dimension } from '../types'
 import type { WritableSignal, Binding, ReadonlyBinding } from '@rlabs-inc/signals'
 import type { Variant } from '../state/theme'
 
@@ -52,18 +52,18 @@ export interface BorderProps {
 }
 
 export interface DimensionProps {
-  /** Width (0 = auto) */
-  width?: Reactive<number>
-  /** Height (0 = auto) */
-  height?: Reactive<number>
+  /** Width (0 = auto, '100%' = full parent, '50%' = half parent) */
+  width?: Reactive<Dimension>
+  /** Height (0 = auto, '100%' = full parent, '50%' = half parent) */
+  height?: Reactive<Dimension>
   /** Minimum width */
-  minWidth?: Reactive<number>
+  minWidth?: Reactive<Dimension>
   /** Maximum width (0 = no max) */
-  maxWidth?: Reactive<number>
+  maxWidth?: Reactive<Dimension>
   /** Minimum height */
-  minHeight?: Reactive<number>
+  minHeight?: Reactive<Dimension>
   /** Maximum height (0 = no max) */
-  maxHeight?: Reactive<number>
+  maxHeight?: Reactive<Dimension>
 }
 
 export interface SpacingProps {
@@ -144,6 +144,11 @@ export interface TextProps extends StyleProps, DimensionProps, SpacingProps {
   wrap?: Reactive<'wrap' | 'nowrap' | 'truncate'>
   /** Is visible */
   visible?: Reactive<boolean>
+  /**
+   * Style variant - applies theme colors automatically.
+   * Variants: 'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info' | 'ghost' | 'outline'
+   */
+  variant?: Variant
 }
 
 // =============================================================================
