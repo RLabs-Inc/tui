@@ -1,6 +1,6 @@
 {
   "name": "@rlabs-inc/tui-compiler",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Compiler for .tui template files - Svelte-like DX for terminal UIs",
   "type": "module",
   "main": "src/index.ts",
@@ -39,10 +39,6 @@
   },
   "engines": {
     "node": ">=18"
-  },
-  "dependencies": {
-    "@rlabs-inc/signals": "^1.6.0",
-    "@rlabs-inc/tui": "^0.1.0"
   },
   "devDependencies": {
     "@types/bun": "latest",
