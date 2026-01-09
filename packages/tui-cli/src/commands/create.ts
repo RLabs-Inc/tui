@@ -260,14 +260,10 @@ const APP_TUI = `<script lang="ts">
 `
 
 const COUNTER_TUI = `<script lang="ts">
-  import { keyboard } from '@rlabs-inc/tui'
-
   const count = signal(0)
 
-  keyboard.onKey((e) => {
-    if (e.key === '+' || e.key === 'ArrowUp') count.value++
-    if (e.key === '-' || e.key === 'ArrowDown') count.value--
-  })
+  keyboard.onKey(['+', 'ArrowUp'], () => count.value++)
+  keyboard.onKey(['-', 'ArrowDown'], () => count.value--)
 </script>
 
 <box
