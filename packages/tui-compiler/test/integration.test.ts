@@ -46,8 +46,8 @@ function compileAndRun(source: string, filename: string = 'Test.tui'): number {
   // Create a function from the compiled code
   // Strip imports and convert export to return
   const moduleCode = result.code
-    .replace(/import .* from ['"]@rlabs-inc\/signals['"]/g, '')
-    .replace(/import .* from ['"]tui['"]/g, '')
+    .replace(/import .* from ['"]@rlabs-inc\/signals['"];?\n?/g, '')
+    .replace(/import .* from ['"]@rlabs-inc\/tui['"];?\n?/g, '')
     .replace(/export default function/, 'return function')
 
   // Create and execute - intentional use of Function for testing
@@ -149,8 +149,8 @@ describe('Compiler Integration - Conditional Rendering', () => {
 `, { filename: 'IfElse.tui' })
 
     const moduleCode = result.code
-      .replace(/import .* from ['"]@rlabs-inc\/signals['"]/g, '')
-      .replace(/import .* from ['"]tui['"]/g, '')
+      .replace(/import .* from ['"]@rlabs-inc\/signals['"];?\n?/g, '')
+      .replace(/import .* from ['"]@rlabs-inc\/tui['"];?\n?/g, '')
       .replace(/export default function/, 'return function')
 
     const createComponent = Function('signal', 'derived', 'bind', 'box', 'text', moduleCode)
@@ -182,8 +182,8 @@ describe('Compiler Integration - Loop Rendering', () => {
 `, { filename: 'EachLoop.tui' })
 
     const moduleCode = result.code
-      .replace(/import .* from ['"]@rlabs-inc\/signals['"]/g, '')
-      .replace(/import .* from ['"]tui['"]/g, '')
+      .replace(/import .* from ['"]@rlabs-inc\/signals['"];?\n?/g, '')
+      .replace(/import .* from ['"]@rlabs-inc\/tui['"];?\n?/g, '')
       .replace(/export default function/, 'return function')
 
     const createComponent = Function('signal', 'derived', 'bind', 'box', 'text', moduleCode)
@@ -206,8 +206,8 @@ describe('Compiler Integration - Loop Rendering', () => {
 `, { filename: 'EachWithIndex.tui' })
 
     const moduleCode = result.code
-      .replace(/import .* from ['"]@rlabs-inc\/signals['"]/g, '')
-      .replace(/import .* from ['"]tui['"]/g, '')
+      .replace(/import .* from ['"]@rlabs-inc\/signals['"];?\n?/g, '')
+      .replace(/import .* from ['"]@rlabs-inc\/tui['"];?\n?/g, '')
       .replace(/export default function/, 'return function')
 
     const createComponent = Function('signal', 'derived', 'bind', 'box', 'text', moduleCode)
@@ -286,8 +286,8 @@ describe('Compiler Integration - Await (No Effects)', () => {
 `, { filename: 'AwaitFull.tui' })
 
     const moduleCode = result.code
-      .replace(/import .* from ['"]@rlabs-inc\/signals['"]/g, '')
-      .replace(/import .* from ['"]tui['"]/g, '')
+      .replace(/import .* from ['"]@rlabs-inc\/signals['"];?\n?/g, '')
+      .replace(/import .* from ['"]@rlabs-inc\/tui['"];?\n?/g, '')
       .replace(/export default function/, 'return function')
 
     const createComponent = Function('signal', 'derived', 'bind', 'box', 'text', moduleCode)
@@ -346,8 +346,8 @@ describe('Compiler Integration - Complex Components', () => {
 `, { filename: 'LoopInConditional.tui' })
 
     const moduleCode = result.code
-      .replace(/import .* from ['"]@rlabs-inc\/signals['"]/g, '')
-      .replace(/import .* from ['"]tui['"]/g, '')
+      .replace(/import .* from ['"]@rlabs-inc\/signals['"];?\n?/g, '')
+      .replace(/import .* from ['"]@rlabs-inc\/tui['"];?\n?/g, '')
       .replace(/export default function/, 'return function')
 
     const createComponent = Function('signal', 'derived', 'bind', 'box', 'text', moduleCode)

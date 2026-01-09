@@ -58,6 +58,9 @@ export const TUI_PRIMITIVES = new Set([
   'scroll',
   'cursor',
   'theme',
+  'themes',
+  'setTheme',
+  't',
   // Types
   'Colors',
   'BorderStyle',

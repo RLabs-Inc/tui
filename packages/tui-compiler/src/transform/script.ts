@@ -69,7 +69,7 @@ export function analyzeScript(
   for (const line of lines) {
     const trimmed = line.trim()
 
-    // User imports (preserve .tui imports)
+    // User imports
     if (trimmed.startsWith('import ')) {
       if (trimmed.includes('.tui')) {
         // Component import - extract and track
@@ -77,11 +77,10 @@ export function analyzeScript(
         if (match) {
           imports.components.set(match[1]!, match[2]!)
         }
-      } else if (!isAutoImportable(trimmed)) {
-        // Non-auto-importable import - preserve
+      } else {
+        // Preserve ALL user imports - don't strip anything the user wrote
         userImports.push(line)
       }
-      // Skip auto-importable imports (we'll regenerate them)
       continue
     }
 
@@ -126,14 +125,6 @@ export function analyzeScript(
 // =============================================================================
 // HELPERS
 // =============================================================================
-
-function isAutoImportable(importLine: string): boolean {
-  // Check if this import is from packages we auto-import
-  return (
-    importLine.includes('@rlabs-inc/signals') ||
-    importLine.includes('@rlabs-inc/tui')
-  )
-}
 
 function parseExport(line: string): PropExport | null {
   // Match: export let name = default

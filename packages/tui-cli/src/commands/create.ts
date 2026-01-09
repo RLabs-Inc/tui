@@ -230,8 +230,8 @@ async function main() {
     App()
   })
 
-  // Handle exit
-  keyboard.onKey((event) => {
+  // Handle exit (q or Ctrl+C)
+  keyboard.on((event) => {
     if (event.key === 'q' || (event.modifiers.ctrl && event.key === 'c')) {
       cleanup().then(() => process.exit(0))
     }
@@ -262,18 +262,21 @@ const APP_TUI = `<script lang="ts">
 const COUNTER_TUI = `<script lang="ts">
   const count = signal(0)
 
-  keyboard.onKey(['+', 'ArrowUp'], () => count.value++)
-  keyboard.onKey(['-', 'ArrowDown'], () => count.value--)
+  keyboard.onKey(['+', '=', 'ArrowUp'], () => count.value++)
+  keyboard.onKey(['-', '_', 'ArrowDown'], () => count.value--)
+  keyboard.onKey('r', () => count.value = 0)
 </script>
 
 <box
   border={1}
+  borderColor={t.primary}
   padding={1}
   flexDirection="column"
   alignItems="center"
   gap={1}
 >
-  <text>Count: {count}</text>
-  <text variant="muted">+/- to change</text>
+  <text fg={t.accent}>Counter</text>
+  <text fg={t.textBright}>{count}</text>
+  <text fg={t.textMuted}>[+/-] change  [r] reset</text>
 </box>
 `

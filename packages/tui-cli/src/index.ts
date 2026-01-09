@@ -12,7 +12,7 @@ import { parseArgs } from 'util'
 import { c, symbols } from './utils/colors'
 import { create } from './commands/create'
 
-const VERSION = '0.1.3'
+const VERSION = '0.1.4'
 
 const HELP = `
 ${c.bold('@rlabs-inc/create-tui')} ${c.muted(`v${VERSION}`)}
