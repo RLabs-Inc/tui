@@ -10,20 +10,12 @@
     "./plugin": "./src/plugin.ts",
     "./register": "./src/register.ts"
   },
+  "files": [
+    "src"
+  ],
   "scripts": {
     "test": "bun test",
     "typecheck": "tsc --noEmit"
-  },
-  "dependencies": {
-    "@rlabs-inc/signals": "^1.0.0",
-    "@rlabs-inc/tui": "workspace:*"
-  },
-  "devDependencies": {
-    "@types/bun": "latest",
-    "typescript": "^5.0.0"
-  },
-  "peerDependencies": {
-    "bun": ">=1.0.0"
   },
   "keywords": [
     "tui",
@@ -31,8 +23,32 @@
     "compiler",
     "bun",
     "svelte-like",
-    "reactive"
+    "reactive",
+    "typescript"
   ],
-  "author": "RLabs Inc",
-  "license": "MIT"
+  "author": "Rusty & Watson",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rlabs-inc/tui.git",
+    "directory": "packages/tui-compiler"
+  },
+  "homepage": "https://github.com/rlabs-inc/tui",
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@rlabs-inc/signals": "^1.6.0",
+    "@rlabs-inc/tui": "^0.1.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.0.0"
+  },
+  "peerDependencies": {
+    "bun": ">=1.0.0"
+  }
 }

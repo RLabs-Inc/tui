@@ -1,0 +1,40 @@
+{
+  "name": "create-tui",
+  "version": "0.1.0",
+  "description": "Create TUI Framework applications - The Terminal UI Framework for TypeScript/Bun",
+  "type": "module",
+  "bin": {
+    "create-tui": "./src/index.ts"
+  },
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "dev": "bun run src/index.ts"
+  },
+  "keywords": [
+    "tui",
+    "terminal",
+    "ui",
+    "cli",
+    "create",
+    "scaffold",
+    "bun",
+    "typescript",
+    "reactive"
+  ],
+  "author": "Rusty & Watson",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rlabs-inc/tui.git",
+    "directory": "packages/tui-cli"
+  },
+  "homepage": "https://github.com/rlabs-inc/tui",
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

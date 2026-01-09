@@ -1,14 +1,59 @@
 {
-  "name": "tui",
+  "name": "@rlabs-inc/tui",
+  "version": "0.1.0",
+  "description": "The Terminal UI Framework for TypeScript/Bun - Blazing-fast, fine-grained reactive terminal UI with complete flexbox layout",
   "module": "index.ts",
+  "main": "index.ts",
   "type": "module",
+  "exports": {
+    ".": "./index.ts",
+    "./primitives": "./src/primitives/index.ts",
+    "./state": "./src/state/index.ts"
+  },
+  "files": [
+    "index.ts",
+    "src"
+  ],
+  "scripts": {
+    "dev": "bun run examples/hello.ts",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "tui",
+    "terminal",
+    "ui",
+    "framework",
+    "reactive",
+    "signals",
+    "flexbox",
+    "bun",
+    "typescript",
+    "cli"
+  ],
+  "author": "Rusty & Watson",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rlabs-inc/tui.git"
+  },
+  "homepage": "https://github.com/rlabs-inc/tui",
+  "bugs": {
+    "url": "https://github.com/rlabs-inc/tui/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18"
+  },
   "devDependencies": {
     "@types/bun": "latest"
   },
   "peerDependencies": {
-    "typescript": "^5.9.3"
+    "typescript": "^5.0.0"
   },
   "dependencies": {
-    "@rlabs-inc/signals": "1.6.0"
+    "@rlabs-inc/signals": "^1.6.0"
   }
 }

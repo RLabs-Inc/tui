@@ -511,7 +511,9 @@ export function computeLayoutTitan(
 
     // STEP 3: Position items
     let crossOffset = 0
-    const lineHeight = lineCount > 0 ? Math.floor(crossSize / lineCount) : crossSize
+    // Ensure minimum lineHeight of 1 to prevent all lines stacking at same position
+    // when there are more lines than vertical space
+    const lineHeight = lineCount > 0 ? Math.max(1, Math.floor(crossSize / lineCount)) : crossSize
 
     for (let li = 0; li < lineCount; li++) {
       const lineIdx = isReverse ? lineCount - 1 - li : li

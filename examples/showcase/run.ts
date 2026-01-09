@@ -18,7 +18,7 @@ plugin(tuiPlugin)
 // Get component name and mode from args
 const componentName = process.argv[2] || 'Counter'
 const modeArg = process.argv[3]
-const validComponents = ['Counter', 'ThemeShowcase', 'FlexboxDemo', 'Dashboard']
+const validComponents = ['Counter', 'ThemeShowcase', 'FlexboxDemo', 'Dashboard', 'Benchmark']
 
 if (!validComponents.includes(componentName)) {
   console.log('Usage: bun run examples/showcase/run.ts <component> [inline]')

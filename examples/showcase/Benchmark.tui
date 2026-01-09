@@ -1,0 +1,202 @@
+<script lang="ts">
+  // ==========================================================================
+  // REAL-WORLD BENCHMARK v2
+  //
+  // This tests ACTUAL TUI components, not just data objects.
+  // Each item is a real text() component with reactive props.
+  // ==========================================================================
+
+  const SCALES = [10, 50, 100, 200, 500, 1000, 2000, 5000]
+  const SCALE_LABELS = ['10', '50', '100', '200', '500', '1K', '2K', '5K']
+
+  // Current test state
+  const scaleIndex = signal(2)  // Start at 100
+  const isRunning = signal(false)
+
+  // Metrics - these are what we measure
+  const tickCount = signal(0)
+  const fps = signal(0)
+  const avgFrameTime = signal(0)
+  const updatesPerSec = signal(0)
+  const memoryMB = signal(0)
+  const status = signal('Press 1-8 to select scale, SPACE to start')
+
+  // Timing
+  let frameTimes: number[] = []
+  let lastTickTime = 0
+  let benchmarkStart = 0
+  let totalUpdates = 0
+  let updateInterval: ReturnType<typeof setInterval> | null = null
+
+  // ==========================================================================
+  // REACTIVE ITEMS - Each one is a REAL signal that drives a text component
+  // ==========================================================================
+
+  // We create signals for each item - these are the reactive sources
+  const itemLabels: ReturnType<typeof signal<string>>[] = []
+  const itemColorIndices: ReturnType<typeof signal<number>>[] = []
+
+  // Pre-create signals for max scale
+  const maxItems = SCALES[SCALES.length - 1]!
+  for (let i = 0; i < maxItems; i++) {
+    itemLabels.push(signal(`Item ${i}`))
+    itemColorIndices.push(signal(i % 8))
+  }
+
+  const palette = [
+    Colors.RED, Colors.GREEN, Colors.BLUE, Colors.YELLOW,
+    Colors.CYAN, Colors.MAGENTA, Colors.WHITE, Colors.GRAY
+  ]
+
+  // Current scale
+  const currentScale = derived(() => SCALES[scaleIndex.value] ?? 100)
+
+  // ==========================================================================
+  // BENCHMARK LOOP
+  // ==========================================================================
+
+  function startBenchmark() {
+    isRunning.value = true
+    tickCount.value = 0
+    totalUpdates = 0
+    frameTimes = []
+    benchmarkStart = performance.now()
+    lastTickTime = benchmarkStart
+
+    const count = currentScale.value
+    status.value = `Running with ${count} components...`
+
+    // ONE central update loop
+    updateInterval = setInterval(() => {
+      if (!isRunning.value) return
+
+      const frameStart = performance.now()
+      const count = currentScale.value
+
+      // Update a rotating batch of items
+      const batchSize = Math.min(50, count)
+      const tick = tickCount.value
+
+      for (let i = 0; i < batchSize; i++) {
+        const idx = (tick * batchSize + i) % count
+        itemLabels[idx]!.value = `#${idx}@${tick}`
+        itemColorIndices[idx]!.value = (tick + idx) % 8
+      }
+
+      totalUpdates += batchSize
+      tickCount.value++
+
+      // Measure timing
+      const frameEnd = performance.now()
+      const frameTime = frameEnd - lastTickTime
+      lastTickTime = frameEnd
+
+      frameTimes.push(frameTime)
+      if (frameTimes.length > 60) frameTimes.shift()
+
+      // Update metrics every tick (so we can see them change)
+      const elapsed = (frameEnd - benchmarkStart) / 1000
+      if (elapsed > 0) {
+        fps.value = Math.round(tickCount.value / elapsed)
+        updatesPerSec.value = Math.round(totalUpdates / elapsed)
+      }
+
+      if (frameTimes.length > 0) {
+        avgFrameTime.value = Math.round(frameTimes.reduce((a, b) => a + b, 0) / frameTimes.length * 100) / 100
+      }
+
+      const mem = process.memoryUsage()
+      memoryMB.value = Math.round(mem.heapUsed / 1024 / 1024)
+
+    }, 16)
+  }
+
+  function stopBenchmark() {
+    isRunning.value = false
+    if (updateInterval) {
+      clearInterval(updateInterval)
+      updateInterval = null
+    }
+    status.value = `Stopped. ${tickCount.value} ticks, ${totalUpdates.toLocaleString()} updates, ${fps.value} FPS, ${avgFrameTime.value}ms avg`
+  }
+
+  function changeScale(idx: number) {
+    if (isRunning.value) stopBenchmark()
+    scaleIndex.value = idx
+    status.value = `Scale: ${SCALE_LABELS[idx]} (${SCALES[idx]} components). SPACE to start.`
+  }
+
+  // Keyboard
+  keyboard.onKey('1', () => changeScale(0))
+  keyboard.onKey('2', () => changeScale(1))
+  keyboard.onKey('3', () => changeScale(2))
+  keyboard.onKey('4', () => changeScale(3))
+  keyboard.onKey('5', () => changeScale(4))
+  keyboard.onKey('6', () => changeScale(5))
+  keyboard.onKey('7', () => changeScale(6))
+  keyboard.onKey('8', () => changeScale(7))
+
+  keyboard.onKey(' ', () => {
+    if (isRunning.value) stopBenchmark()
+    else startBenchmark()
+  })
+</script>
+
+<box width="100%" height="100%" flexDirection="column" bg={{ r: 15, g: 15, b: 25, a: 255 }}>
+  <!-- Header -->
+  <box height={3} bg={{ r: 30, g: 30, b: 50, a: 255 }} flexDirection="row" justifyContent="space-between" padding={1}>
+    <text fg={Colors.CYAN}>TUI BENCHMARK v2 - Real Components</text>
+    <text fg={Colors.YELLOW}>Components: {currentScale}</text>
+  </box>
+
+  <!-- Metrics -->
+  <box border={1} borderColor={Colors.GREEN} padding={1} flexDirection="column">
+    <text fg={Colors.GREEN}>LIVE METRICS</text>
+    <box flexDirection="row" gap={3}>
+      <text fg={Colors.GRAY}>FPS:</text>
+      <text fg={fps.value >= 30 ? Colors.GREEN : Colors.RED}>{fps}</text>
+      <text fg={Colors.GRAY}>Avg:</text>
+      <text fg={Colors.WHITE}>{avgFrameTime}ms</text>
+      <text fg={Colors.GRAY}>Updates/sec:</text>
+      <text fg={Colors.YELLOW}>{updatesPerSec}</text>
+      <text fg={Colors.GRAY}>Ticks:</text>
+      <text fg={Colors.WHITE}>{tickCount}</text>
+      <text fg={Colors.GRAY}>Memory:</text>
+      <text fg={Colors.BLUE}>{memoryMB}MB</text>
+    </box>
+    <box flexDirection="row" gap={2}>
+      <text fg={Colors.GRAY}>Status:</text>
+      <text fg={isRunning.value ? Colors.GREEN : Colors.RED}>{isRunning.value ? 'RUNNING' : 'STOPPED'}</text>
+    </box>
+  </box>
+
+  <!-- Scale selector -->
+  <box height={3} flexDirection="row" padding={1} gap={1}>
+    <text fg={Colors.GRAY}>Scale:</text>
+    {#each SCALE_LABELS as label, idx}
+      <box
+        width={6}
+        border={1}
+        borderColor={scaleIndex.value === idx ? Colors.CYAN : Colors.GRAY}
+      >
+        <text fg={scaleIndex.value === idx ? Colors.WHITE : Colors.GRAY} align="center">{label}</text>
+      </box>
+    {/each}
+  </box>
+
+  <!-- THE ACTUAL COMPONENTS BEING BENCHMARKED -->
+  <box grow={1} border={1} borderColor={Colors.CYAN} padding={1} flexDirection="row" flexWrap="wrap">
+    <!-- These are REAL text components, each bound to a signal -->
+    {#each Array.from({ length: currentScale.value }, (_, i) => i) as idx}
+      <text
+        fg={palette[itemColorIndices[idx]!.value]!}
+        width={10}
+      >{itemLabels[idx]!.value}</text>
+    {/each}
+  </box>
+
+  <!-- Footer -->
+  <box height={2} bg={{ r: 30, g: 30, b: 50, a: 255 }} padding={1}>
+    <text fg={Colors.WHITE}>{status}</text>
+  </box>
+</box>
