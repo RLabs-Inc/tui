@@ -4,7 +4,7 @@
     "": {
       "name": "tui",
       "dependencies": {
-        "@rlabs-inc/signals": "1.5.0",
+        "@rlabs-inc/signals": "1.6.0",
       },
       "devDependencies": {
         "@types/bun": "latest",
@@ -15,7 +15,7 @@
     },
   },
   "packages": {
-    "@rlabs-inc/signals": ["@rlabs-inc/signals@1.5.0", "", {}, "sha512-fc3BOmaniH8eR634CNuHCTgEzdEmdPKbIJZ8PcZG5yIM/NI6ALOQmSdU7+/dvQen2SkuPP8/YYvlPO5+Uk5DPA=="],
+    "@rlabs-inc/signals": ["@rlabs-inc/signals@1.6.0", "", {}, "sha512-icnX+xhA81sUw1w6hRf8GipPX1A0jzpA4a1oai0JonqdSLaRNZHDtH+walw7m4lKVQkTgJRHkFn9cVYl+mfIJQ=="],
 
     "@types/bun": ["@types/bun@1.3.5", "", { "dependencies": { "bun-types": "1.3.5" } }, "sha512-RnygCqNrd3srIPEWBd5LFeUYG7plCoH2Yw9WaZGyNmdTEei+gWaHqydbaIRkIkcbXwhBT94q78QljxN0Sk838w=="],
 

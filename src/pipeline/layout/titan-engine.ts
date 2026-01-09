@@ -125,6 +125,16 @@ const lineEnds: number[] = []
 const lineMainUsed: number[] = []
 
 // =============================================================================
+// INTRINSIC CACHE - Skip recomputation when inputs unchanged
+// =============================================================================
+// For TEXT components: cache based on text content hash + available width
+// For BOX components: cache based on children intrinsics + layout props
+const cachedTextHash: bigint[] = []
+const cachedAvailW: number[] = []
+const cachedIntrinsicW: number[] = []
+const cachedIntrinsicH: number[] = []
+
+// =============================================================================
 // RESET FUNCTION - Call after destroying all components
 // =============================================================================
 
@@ -154,6 +164,11 @@ export function resetTitanArrays(): void {
   lineStarts.length = 0
   lineEnds.length = 0
   lineMainUsed.length = 0
+  // Intrinsic cache
+  cachedTextHash.length = 0
+  cachedAvailW.length = 0
+  cachedIntrinsicW.length = 0
+  cachedIntrinsicH.length = 0
 }
 
 // =============================================================================
@@ -233,20 +248,16 @@ export function computeLayoutTitan(
       // Check for null/undefined, NOT truthiness (0 and '' are valid content!)
       if (content != null) {
         const str = String(content)
-        intrinsicW[i] = str.length > 0 ? stringWidth(str) : 0
 
-        // TEXT WRAPPING: Estimate wrapped height using parent's width
-        // This allows parent containers to size correctly for wrapped text
         if (str.length > 0) {
+          // TEXT WRAPPING: Calculate available width for height measurement
           const parentIdx = unwrap(core.parentIndex[i]) ?? -1
           let availableW = terminalWidth
 
           if (parentIdx >= 0) {
-            // Use parent's explicit width if set (only absolute values in measure phase)
             const rawParentW = unwrap(dimensions.width[parentIdx])
             const parentExplicitW = typeof rawParentW === 'number' ? rawParentW : 0
             if (parentExplicitW > 0) {
-              // Subtract parent's padding and borders (rough estimate)
               const pPadL = unwrap(spacing.paddingLeft[parentIdx]) ?? 0
               const pPadR = unwrap(spacing.paddingRight[parentIdx]) ?? 0
               const pBorderStyle = unwrap(visual.borderStyle[parentIdx]) ?? 0
@@ -256,8 +267,24 @@ export function computeLayoutTitan(
             }
           }
 
-          intrinsicH[i] = measureTextHeight(str, availableW)
+          // CACHE CHECK: Hash text content, compare with cached
+          // Only recompute stringWidth/measureTextHeight if content or availableW changed
+          const textHash = Bun.hash(str)
+          if (textHash === cachedTextHash[i] && availableW === cachedAvailW[i]) {
+            // Cache hit - reuse cached intrinsics (skip expensive computation!)
+            intrinsicW[i] = cachedIntrinsicW[i]!
+            intrinsicH[i] = cachedIntrinsicH[i]!
+          } else {
+            // Cache miss - compute and store
+            intrinsicW[i] = stringWidth(str)
+            intrinsicH[i] = measureTextHeight(str, availableW)
+            cachedTextHash[i] = textHash
+            cachedAvailW[i] = availableW
+            cachedIntrinsicW[i] = intrinsicW[i]
+            cachedIntrinsicH[i] = intrinsicH[i]
+          }
         } else {
+          intrinsicW[i] = 0
           intrinsicH[i] = 0
         }
       }
