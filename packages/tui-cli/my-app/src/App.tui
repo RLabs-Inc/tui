@@ -1,0 +1,19 @@
+<script lang="ts">
+  /**
+   * Root Application Component
+   */
+  import Counter from './components/Counter.tui'
+</script>
+
+<box
+  width="100%"
+  height="100%"
+  flexDirection="column"
+  justifyContent="center"
+  alignItems="center"
+  gap={2}
+>
+  <text variant="accent">Welcome to TUI Framework</text>
+  <Counter initialCount={0} />
+  <text variant="muted">Press Q to quit</text>
+</box>

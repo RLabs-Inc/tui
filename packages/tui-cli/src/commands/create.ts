@@ -242,9 +242,6 @@ main().catch(console.error)
 `
 
 const APP_TUI = `<script lang="ts">
-  /**
-   * Root Application Component
-   */
   import Counter from './components/Counter.tui'
 </script>
 
@@ -257,31 +254,19 @@ const APP_TUI = `<script lang="ts">
   gap={2}
 >
   <text variant="accent">Welcome to TUI Framework</text>
-  <Counter initialCount={0} />
+  <Counter />
   <text variant="muted">Press Q to quit</text>
 </box>
 `
 
 const COUNTER_TUI = `<script lang="ts">
-  /**
-   * Counter Component
-   *
-   * A simple reactive counter to demonstrate TUI Framework basics.
-   */
   import { keyboard } from '@rlabs-inc/tui'
 
-  export let initialCount: number = 0
+  const count = signal(0)
 
-  const count = signal(initialCount)
-
-  // Handle keyboard input
-  keyboard.onKey((event) => {
-    if (event.key === 'ArrowUp' || event.key === '+') {
-      count.value++
-    }
-    if (event.key === 'ArrowDown' || event.key === '-') {
-      count.value--
-    }
+  keyboard.onKey((e) => {
+    if (e.key === '+' || e.key === 'ArrowUp') count.value++
+    if (e.key === '-' || e.key === 'ArrowDown') count.value--
   })
 </script>
 
@@ -293,6 +278,6 @@ const COUNTER_TUI = `<script lang="ts">
   gap={1}
 >
   <text>Count: {count}</text>
-  <text variant="muted">Use +/- or arrow keys</text>
+  <text variant="muted">+/- to change</text>
 </box>
 `

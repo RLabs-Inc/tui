@@ -1,0 +1,33 @@
+<script lang="ts">
+  /**
+   * Counter Component
+   *
+   * A simple reactive counter to demonstrate TUI Framework basics.
+   */
+  import { keyboard } from '@rlabs-inc/tui'
+
+  export let initialCount: number = 0
+
+  const count = signal(initialCount)
+
+  // Handle keyboard input
+  keyboard.onKey((event) => {
+    if (event.key === 'ArrowUp' || event.key === '+') {
+      count.value++
+    }
+    if (event.key === 'ArrowDown' || event.key === '-') {
+      count.value--
+    }
+  })
+</script>
+
+<box
+  border={1}
+  padding={1}
+  flexDirection="column"
+  alignItems="center"
+  gap={1}
+>
+  <text>Count: {count}</text>
+  <text variant="muted">Use +/- or arrow keys</text>
+</box>

@@ -1,0 +1,4 @@
+# TUI Framework configuration
+# The compiler plugin enables .tui file imports
+
+preload = ["@rlabs-inc/tui-compiler/register"]
