@@ -1,6 +1,6 @@
 {
   "name": "@rlabs-inc/tui-compiler",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Compiler for .tui template files - Svelte-like DX for terminal UIs",
   "type": "module",
   "main": "src/index.ts",
