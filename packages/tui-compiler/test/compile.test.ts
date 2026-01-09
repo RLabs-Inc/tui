@@ -179,10 +179,160 @@ describe('Compiler', () => {
 })
 
 describe('Error Handling', () => {
-  test.skip('reports unclosed tags', () => {
-    // TODO: Improve parser to detect and report unclosed tags
+  test('reports unclosed tags', () => {
     const source = `<box><text>Unclosed`
+    expect(() => parse(source)).toThrow(/Unclosed.*text/i)
+  })
+
+  test('reports unclosed {#if} blocks (with closed content)', () => {
+    // When inner content is properly closed, the block error is reported
+    const source = `{#if condition}<text content="test" />`
+    expect(() => parse(source)).toThrow(/Unclosed.*if/i)
+  })
+
+  test('reports unclosed {#each} blocks (with closed content)', () => {
+    const source = `{#each items as item}<text content="test" />`
+    expect(() => parse(source)).toThrow(/Unclosed.*each/i)
+  })
+
+  test('reports unclosed {#await} blocks (with closed content)', () => {
+    const source = `{#await promise}<text content="Loading" />`
+    expect(() => parse(source)).toThrow(/Unclosed.*await/i)
+  })
+
+  test('reports innermost unclosed element first', () => {
+    // When inner content is unclosed, that error is reported first
+    const source = `{#if condition}<text>Missing close`
+    expect(() => parse(source)).toThrow(/Unclosed.*text/i)
+  })
+
+  test('reports mismatched closing tags', () => {
+    const source = `<box><text></box></text>`
     expect(() => parse(source)).toThrow()
+  })
+
+  test('reports duplicate attributes', () => {
+    const source = `<box width={10} width={20} />`
+    expect(() => parse(source)).toThrow(/Duplicate.*width/i)
+  })
+
+  test('reports duplicate static attributes', () => {
+    const source = `<text content="a" content="b" />`
+    expect(() => parse(source)).toThrow(/Duplicate.*content/i)
+  })
+
+  test('allows different attributes with same base name', () => {
+    // bind:value and value are different
+    const source = `<box width={10} height={20} />`
+    expect(() => parse(source)).not.toThrow()
+  })
+})
+
+describe('String-Aware Expression Parsing', () => {
+  test('handles braces inside double-quoted strings', () => {
+    const source = `<box width={foo === "}" ? 10 : 20} />`
+    const tokens = tokenize(source)
+    const expr = tokens.find(t => t.type === 'AttributeExpr')
+    expect(expr?.value).toBe('foo === "}" ? 10 : 20')
+  })
+
+  test('handles braces inside single-quoted strings', () => {
+    const source = `<box width={foo === '}' ? 10 : 20} />`
+    const tokens = tokenize(source)
+    const expr = tokens.find(t => t.type === 'AttributeExpr')
+    expect(expr?.value).toBe("foo === '}' ? 10 : 20")
+  })
+
+  test('handles template literals with interpolation', () => {
+    const source = '<text content={`Count: ${count}`} />'
+    const tokens = tokenize(source)
+    const expr = tokens.find(t => t.type === 'AttributeExpr')
+    expect(expr?.value).toBe('`Count: ${count}`')
+  })
+
+  test('handles nested braces in template literals', () => {
+    const source = '<text content={`Value: ${obj.items.map(x => x.name).join(", ")}`} />'
+    const tokens = tokenize(source)
+    const expr = tokens.find(t => t.type === 'AttributeExpr')
+    expect(expr?.value).toContain('obj.items.map')
+    expect(expr?.value).toContain('.join(", ")')
+  })
+
+  test('handles escape sequences in strings', () => {
+    const source = `<text content={foo === "\\}" ? "a" : "b"} />`
+    const tokens = tokenize(source)
+    const expr = tokens.find(t => t.type === 'AttributeExpr')
+    expect(expr?.value).toContain('\\}')
+  })
+
+  test('handles complex ternary with strings', () => {
+    const source = `<box bg={isSelected ? Colors.BLUE : undefined} />`
+    const tokens = tokenize(source)
+    const expr = tokens.find(t => t.type === 'AttributeExpr')
+    expect(expr?.value).toBe('isSelected ? Colors.BLUE : undefined')
+  })
+
+  test('handles filter with arrow function containing string', () => {
+    const source = `<box width={items.filter(x => x.type === "active").length} />`
+    const tokens = tokenize(source)
+    const expr = tokens.find(t => t.type === 'AttributeExpr')
+    expect(expr?.value).toBe('items.filter(x => x.type === "active").length')
+  })
+})
+
+describe('Script Block String Awareness', () => {
+  test('handles </script> inside double-quoted string', () => {
+    const source = `
+<script>
+  const html = "</script>"
+</script>
+<box />`
+    const result = compile(source)
+    expect(result.code).toContain('const html = "</script>"')
+  })
+
+  test('handles </script> inside single-quoted string', () => {
+    const source = `
+<script>
+  const html = '</script>'
+</script>
+<box />`
+    const result = compile(source)
+    expect(result.code).toContain("const html = '</script>'")
+  })
+
+  test('handles </script> inside template literal', () => {
+    const source = `
+<script>
+  const html = \`</script>\`
+</script>
+<box />`
+    const result = compile(source)
+    expect(result.code).toContain('const html = `</script>`')
+  })
+
+  test('handles </script> inside single-line comment', () => {
+    const source = `
+<script>
+  // </script> this is a comment
+  const x = 1
+</script>
+<box />`
+    const result = compile(source)
+    expect(result.code).toContain('const x = 1')
+  })
+
+  test('handles </script> inside multi-line comment', () => {
+    const source = `
+<script>
+  /*
+   * </script> this is a comment
+   */
+  const x = 1
+</script>
+<box />`
+    const result = compile(source)
+    expect(result.code).toContain('const x = 1')
   })
 })
 

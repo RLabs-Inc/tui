@@ -161,19 +161,92 @@ export class Lexer {
   private scanScriptContent(): void {
     const start = this.position()
     let content = ''
+    let inString: string | null = null // null, '"', "'", or '`'
+    let escapeNext = false
 
     while (!this.isEOF()) {
-      if (this.match('</script>')) {
-        // End of script
-        if (content.trim()) {
-          this.addToken('ScriptContent', content, start)
-        }
-        const endStart = this.position()
-        this.advance(9) // </script>
-        this.addToken('ScriptEnd', '</script>', endStart)
-        this.mode = 'template'
-        return
+      const ch = this.peek()
+
+      // Handle escape sequences in strings
+      if (escapeNext) {
+        escapeNext = false
+        content += this.advance(1)
+        continue
       }
+
+      if (ch === '\\' && inString !== null) {
+        escapeNext = true
+        content += this.advance(1)
+        continue
+      }
+
+      // String state transitions
+      if (inString === null) {
+        // Not in a string - check for string start
+        if (ch === '"' || ch === "'" || ch === '`') {
+          inString = ch
+          content += this.advance(1)
+          continue
+        }
+
+        // Check for single-line comment
+        if (ch === '/' && this.peek(1) === '/') {
+          // Skip until end of line
+          while (!this.isEOF() && this.peek() !== '\n') {
+            content += this.advance(1)
+          }
+          continue
+        }
+
+        // Check for multi-line comment
+        if (ch === '/' && this.peek(1) === '*') {
+          content += this.advance(2) // /*
+          while (!this.isEOF() && !(this.peek() === '*' && this.peek(1) === '/')) {
+            content += this.advance(1)
+          }
+          if (!this.isEOF()) {
+            content += this.advance(2) // */
+          }
+          continue
+        }
+
+        // Only check for </script> when not in a string or comment
+        if (this.match('</script>')) {
+          if (content.trim()) {
+            this.addToken('ScriptContent', content, start)
+          }
+          const endStart = this.position()
+          this.advance(9) // </script>
+          this.addToken('ScriptEnd', '</script>', endStart)
+          this.mode = 'template'
+          return
+        }
+      } else {
+        // Inside a string - check for string end
+        if (ch === inString) {
+          inString = null
+          content += this.advance(1)
+          continue
+        }
+
+        // Handle template literal interpolation ${...}
+        if (inString === '`' && ch === '$' && this.peek(1) === '{') {
+          content += this.advance(2) // ${
+          let depth = 1
+          while (!this.isEOF() && depth > 0) {
+            const ich = this.peek()
+            if (ich === '\\') {
+              content += this.advance(2)
+              continue
+            }
+            if (ich === '{') depth++
+            if (ich === '}') depth--
+            content += this.advance(1)
+          }
+          continue
+        }
+      }
+
       content += this.advance(1)
     }
 
@@ -377,62 +450,21 @@ export class Lexer {
   private scanAttributeExpression(): void {
     const start = this.position()
     this.advance(1) // {
-
-    let expr = ''
-    let depth = 1
-
-    while (!this.isEOF() && depth > 0) {
-      const ch = this.peek()
-      if (ch === '{') depth++
-      if (ch === '}') depth--
-      if (depth > 0) {
-        expr += this.advance(1)
-      } else {
-        this.advance(1)
-      }
-    }
-
+    const expr = this.scanExpressionContent()
     this.addToken('AttributeExpr', expr, start)
   }
 
   private scanSpread(): void {
     const start = this.position()
     this.advance(4) // {...
-
-    let expr = ''
-    let depth = 1
-
-    while (!this.isEOF() && depth > 0) {
-      const ch = this.peek()
-      if (ch === '{') depth++
-      if (ch === '}') depth--
-      if (depth > 0) {
-        expr += this.advance(1)
-      } else {
-        this.advance(1)
-      }
-    }
-
+    const expr = this.scanExpressionContent()
     this.addToken('Spread', expr, start)
   }
 
   private scanShorthandOrExpr(): void {
     const start = this.position()
     this.advance(1) // {
-
-    let expr = ''
-    let depth = 1
-
-    while (!this.isEOF() && depth > 0) {
-      const ch = this.peek()
-      if (ch === '{') depth++
-      if (ch === '}') depth--
-      if (depth > 0) {
-        expr += this.advance(1)
-      } else {
-        this.advance(1)
-      }
-    }
+    const expr = this.scanExpressionContent()
 
     // If it's a simple identifier, it's a shorthand
     if (/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(expr.trim())) {
@@ -449,21 +481,7 @@ export class Lexer {
   private scanExpression(): void {
     const start = this.position()
     this.advance(1) // {
-
-    let expr = ''
-    let depth = 1
-
-    while (!this.isEOF() && depth > 0) {
-      const ch = this.peek()
-      if (ch === '{') depth++
-      if (ch === '}') depth--
-      if (depth > 0) {
-        expr += this.advance(1)
-      } else {
-        this.advance(1)
-      }
-    }
-
+    const expr = this.scanExpressionContent()
     this.addToken('Expression', expr, start)
   }
 
@@ -502,22 +520,10 @@ export class Lexer {
     }
     this.addToken('BlockKeyword', keyword, keywordStart)
 
-    // Scan expression until }
+    // Scan expression until } (string-aware)
     this.skipWhitespace()
     const exprStart = this.position()
-    let expr = ''
-    let depth = 1
-
-    while (!this.isEOF() && depth > 0) {
-      const ch = this.peek()
-      if (ch === '{') depth++
-      if (ch === '}') depth--
-      if (depth > 0) {
-        expr += this.advance(1)
-      } else {
-        this.advance(1)
-      }
-    }
+    const expr = this.scanExpressionContent()
 
     if (expr.trim()) {
       this.addToken('BlockExpression', expr.trim(), exprStart)
@@ -537,22 +543,10 @@ export class Lexer {
     }
     this.addToken('BlockKeyword', keyword, keywordStart)
 
-    // Scan expression until }
+    // Scan expression until } (string-aware)
     this.skipWhitespace()
     const exprStart = this.position()
-    let expr = ''
-    let depth = 1
-
-    while (!this.isEOF() && depth > 0) {
-      const ch = this.peek()
-      if (ch === '{') depth++
-      if (ch === '}') depth--
-      if (depth > 0) {
-        expr += this.advance(1)
-      } else {
-        this.advance(1)
-      }
-    }
+    const expr = this.scanExpressionContent()
 
     if (expr.trim()) {
       this.addToken('BlockExpression', expr.trim(), exprStart)
@@ -579,6 +573,90 @@ export class Lexer {
     if (this.peek() === '}') {
       this.advance(1)
     }
+  }
+
+  // ===========================================================================
+  // EXPRESSION SCANNING (String-Aware)
+  // ===========================================================================
+
+  /**
+   * Scan an expression with proper string awareness.
+   * Tracks brace depth but ignores braces inside strings/template literals.
+   * Returns the expression content (without outer braces).
+   */
+  private scanExpressionContent(): string {
+    let expr = ''
+    let depth = 1
+    let inString: string | null = null // null, '"', "'", or '`'
+    let escapeNext = false
+
+    while (!this.isEOF() && depth > 0) {
+      const ch = this.peek()
+
+      // Handle escape sequences in strings
+      if (escapeNext) {
+        escapeNext = false
+        expr += this.advance(1)
+        continue
+      }
+
+      if (ch === '\\' && inString !== null) {
+        escapeNext = true
+        expr += this.advance(1)
+        continue
+      }
+
+      // String state transitions
+      if (inString === null) {
+        // Not in a string - check for string start
+        if (ch === '"' || ch === "'" || ch === '`') {
+          inString = ch
+          expr += this.advance(1)
+          continue
+        }
+        // Track braces only when not in a string
+        if (ch === '{') depth++
+        if (ch === '}') depth--
+      } else {
+        // Inside a string - check for string end
+        if (ch === inString) {
+          inString = null
+          expr += this.advance(1)
+          continue
+        }
+        // Handle template literal interpolation ${...}
+        if (inString === '`' && ch === '$' && this.peek(1) === '{') {
+          // Inside template literal, ${ starts an interpolation
+          // We need to track the nested braces within the interpolation
+          expr += this.advance(2) // consume ${
+          let interpDepth = 1
+          while (!this.isEOF() && interpDepth > 0) {
+            const ich = this.peek()
+            if (ich === '\\') {
+              expr += this.advance(2) // escape sequence
+              continue
+            }
+            if (ich === '{') interpDepth++
+            if (ich === '}') interpDepth--
+            if (interpDepth > 0) {
+              expr += this.advance(1)
+            } else {
+              expr += this.advance(1) // closing }
+            }
+          }
+          continue
+        }
+      }
+
+      // Accumulate or finish
+      if (depth > 0) {
+        expr += this.advance(1)
+      } else {
+        this.advance(1) // consume closing brace
+      }
+    }
+
+    return expr
   }
 
   // ===========================================================================

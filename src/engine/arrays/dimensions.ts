@@ -38,24 +38,25 @@ export const maxWidth: Binding<Dimension>[] = []
 /** Maximum height constraint (0 = no max) */
 export const maxHeight: Binding<Dimension>[] = []
 
+/** LAZY BINDING: Push undefined, primitives create bindings for used props only */
 export function ensureCapacity(index: number): void {
   while (width.length <= index) {
-    width.push(bind(0))
-    height.push(bind(0))
-    minWidth.push(bind(0))
-    minHeight.push(bind(0))
-    maxWidth.push(bind(0))
-    maxHeight.push(bind(0))
+    width.push(undefined as any)
+    height.push(undefined as any)
+    minWidth.push(undefined as any)
+    minHeight.push(undefined as any)
+    maxWidth.push(undefined as any)
+    maxHeight.push(undefined as any)
   }
 }
 
 export function clearAtIndex(index: number): void {
   if (index < width.length) {
-    width[index] = bind(0)
-    height[index] = bind(0)
-    minWidth[index] = bind(0)
-    minHeight[index] = bind(0)
-    maxWidth[index] = bind(0)
-    maxHeight[index] = bind(0)
+    width[index] = undefined as any
+    height[index] = undefined as any
+    minWidth[index] = undefined as any
+    minHeight[index] = undefined as any
+    maxWidth[index] = undefined as any
+    maxHeight[index] = undefined as any
   }
 }

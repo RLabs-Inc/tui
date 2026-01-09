@@ -139,31 +139,31 @@ function parseOklch(value: string): RGBA | null {
   const match = value.match(/^oklch\s*\(\s*([^)]+)\s*\)$/)
   if (!match) return null
 
-  const parts = match[1].split(/[\s/]+/).filter(Boolean)
+  const parts = match[1]!.split(/[\s/]+/).filter(Boolean)
   if (parts.length < 3) return null
 
   // Parse L (lightness)
-  let l = parseFloat(parts[0])
-  if (parts[0].endsWith('%')) {
-    l = parseFloat(parts[0]) / 100
+  let l = parseFloat(parts[0]!)
+  if (parts[0]!.endsWith('%')) {
+    l = parseFloat(parts[0]!) / 100
   }
 
   // Parse C (chroma)
-  const c = parseFloat(parts[1])
+  const c = parseFloat(parts[1]!)
 
   // Parse H (hue)
-  let h = parseFloat(parts[2])
-  if (parts[2].endsWith('rad')) {
-    h = parseFloat(parts[2]) * (180 / Math.PI)
-  } else if (parts[2].endsWith('turn')) {
-    h = parseFloat(parts[2]) * 360
+  let h = parseFloat(parts[2]!)
+  if (parts[2]!.endsWith('rad')) {
+    h = parseFloat(parts[2]!) * (180 / Math.PI)
+  } else if (parts[2]!.endsWith('turn')) {
+    h = parseFloat(parts[2]!) * 360
   }
 
   // Parse A (alpha) if present
   let a = 255
   if (parts.length > 3) {
-    const alphaValue = parseFloat(parts[3])
-    a = parts[3].endsWith('%')
+    const alphaValue = parseFloat(parts[3]!)
+    a = parts[3]!.endsWith('%')
       ? Math.round((alphaValue / 100) * 255)
       : Math.round(alphaValue * 255)
   }

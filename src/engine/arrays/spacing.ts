@@ -55,34 +55,35 @@ export const rowGap: Binding<number>[] = []
 /** Column gap - horizontal space between items in a row (in cells) */
 export const columnGap: Binding<number>[] = []
 
+/** LAZY BINDING: Push undefined, primitives create bindings for used props only */
 export function ensureCapacity(index: number): void {
   while (marginTop.length <= index) {
-    marginTop.push(bind(0))
-    marginRight.push(bind(0))
-    marginBottom.push(bind(0))
-    marginLeft.push(bind(0))
-    paddingTop.push(bind(0))
-    paddingRight.push(bind(0))
-    paddingBottom.push(bind(0))
-    paddingLeft.push(bind(0))
-    gap.push(bind(0))
-    rowGap.push(bind(0))
-    columnGap.push(bind(0))
+    marginTop.push(undefined as any)
+    marginRight.push(undefined as any)
+    marginBottom.push(undefined as any)
+    marginLeft.push(undefined as any)
+    paddingTop.push(undefined as any)
+    paddingRight.push(undefined as any)
+    paddingBottom.push(undefined as any)
+    paddingLeft.push(undefined as any)
+    gap.push(undefined as any)
+    rowGap.push(undefined as any)
+    columnGap.push(undefined as any)
   }
 }
 
 export function clearAtIndex(index: number): void {
   if (index < marginTop.length) {
-    marginTop[index] = bind(0)
-    marginRight[index] = bind(0)
-    marginBottom[index] = bind(0)
-    marginLeft[index] = bind(0)
-    paddingTop[index] = bind(0)
-    paddingRight[index] = bind(0)
-    paddingBottom[index] = bind(0)
-    paddingLeft[index] = bind(0)
-    gap[index] = bind(0)
-    rowGap[index] = bind(0)
-    columnGap[index] = bind(0)
+    marginTop[index] = undefined as any
+    marginRight[index] = undefined as any
+    marginBottom[index] = undefined as any
+    marginLeft[index] = undefined as any
+    paddingTop[index] = undefined as any
+    paddingRight[index] = undefined as any
+    paddingBottom[index] = undefined as any
+    paddingLeft[index] = undefined as any
+    gap[index] = undefined as any
+    rowGap[index] = undefined as any
+    columnGap[index] = undefined as any
   }
 }

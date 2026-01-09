@@ -243,7 +243,7 @@ export function truncateStart(
   let currentWidth = 0
 
   for (let i = chars.length - 1; i >= 0; i--) {
-    const char = chars[i]
+    const char = chars[i]!
     const cw = charWidth(char)
     if (currentWidth + cw > targetWidth) {
       break
@@ -296,7 +296,7 @@ export function truncateMiddle(
   let end = ''
   let ew = 0
   for (let i = chars.length - 1; i >= 0; i--) {
-    const char = chars[i]
+    const char = chars[i]!
     const cw = charWidth(char)
     if (ew + cw > endWidth) break
     end = char + end
@@ -409,7 +409,7 @@ export function indexToColumn(text: string, index: number): number {
   let column = 0
 
   for (let i = 0; i < index && i < chars.length; i++) {
-    column += charWidth(chars[i])
+    column += charWidth(chars[i]!)
   }
 
   return column

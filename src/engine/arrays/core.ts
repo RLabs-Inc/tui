@@ -32,13 +32,17 @@ export const componentId: Binding<string>[] = []
 /**
  * Ensure array has capacity for the given index.
  * Called by registry when allocating.
+ *
+ * LAZY BINDING: We push undefined here, not bindings.
+ * Primitives create bindings only for props they actually use.
+ * This reduces memory from ~70 bindings/component to ~5-10.
  */
 export function ensureCapacity(index: number): void {
   while (componentType.length <= index) {
     componentType.push(ComponentType.NONE)
-    parentIndex.push(bind(-1))
-    visible.push(bind(1))
-    componentId.push(bind(''))
+    parentIndex.push(undefined as any)
+    visible.push(undefined as any)
+    componentId.push(undefined as any)
   }
 }
 
@@ -46,8 +50,8 @@ export function ensureCapacity(index: number): void {
 export function clearAtIndex(index: number): void {
   if (index < componentType.length) {
     componentType[index] = ComponentType.NONE
-    parentIndex[index] = bind(-1)
-    visible[index] = bind(1)
-    componentId[index] = bind('')
+    parentIndex[index] = undefined as any
+    visible[index] = undefined as any
+    componentId[index] = undefined as any
   }
 }

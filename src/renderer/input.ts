@@ -107,7 +107,7 @@ export class InputBuffer {
     }
 
     // Regular character
-    const char = data[0]
+    const char = data[0]!
     const codepoint = char.codePointAt(0) ?? 0
 
     // Control characters
@@ -128,8 +128,8 @@ export class InputBuffer {
 
     // Normal character (handles multi-byte Unicode)
     return {
-      event: { type: 'key', event: this.simpleKey(char) },
-      consumed: char.length,
+      event: { type: 'key', event: this.simpleKey(char!) },
+      consumed: char!.length,
     }
   }
 
@@ -142,7 +142,7 @@ export class InputBuffer {
       return { consumed: 0, incomplete: true }
     }
 
-    const second = data[1]
+    const second = data[1]!
 
     // CSI sequence: ESC [
     if (second === '[') {
@@ -195,7 +195,7 @@ export class InputBuffer {
     }
 
     const sequence = data.slice(2, i)
-    const terminator = data[i]
+    const terminator = data[i]!
     const consumed = i + 1
 
     // Focus events
@@ -229,7 +229,9 @@ export class InputBuffer {
       return { consumed }
     }
 
-    const [buttonCode, x, y] = params
+    const buttonCode = params[0]!
+    const x = params[1]!
+    const y = params[2]!
 
     // Decode button and action
     const baseButton = buttonCode & 3
@@ -248,7 +250,7 @@ export class InputBuffer {
       button = 'none'
       action = 'move'
     } else {
-      button = (['left', 'middle', 'right', 'none'] as const)[baseButton]
+      button = (['left', 'middle', 'right', 'none'] as const)[baseButton] ?? 'none'
       action = terminator === 'M' ? 'down' : 'up'
     }
 
@@ -289,7 +291,7 @@ export class InputBuffer {
     // Parse modifiers from sequence (e.g., "1;5" means Ctrl)
     const parts = sequence.split(';')
     if (parts.length >= 2) {
-      const mod = parseInt(parts[1], 10) - 1
+      const mod = parseInt(parts[1]!, 10) - 1
       modifiers.shift = (mod & 1) !== 0
       modifiers.alt = (mod & 2) !== 0
       modifiers.ctrl = (mod & 4) !== 0
@@ -312,7 +314,7 @@ export class InputBuffer {
     }
     // Function keys (~ terminator)
     else if (terminator === '~') {
-      const code = parseInt(parts[0], 10)
+      const code = parseInt(parts[0]!, 10)
       switch (code) {
         case 1: key = 'Home'; break
         case 2: key = 'Insert'; break
@@ -360,21 +362,21 @@ export class InputBuffer {
    */
   private parseKittyKey(sequence: string, consumed: number): { event?: ParsedInput; consumed: number } {
     const parts = sequence.split(';')
-    const codepoint = parseInt(parts[0], 10)
+    const codepoint = parseInt(parts[0]!, 10)
     const modifiers = this.defaultModifiers()
     let state: KeyState = 'press'
 
     if (parts.length >= 2) {
       // Modifiers may include event type after colon
-      const modParts = parts[1].split(':')
-      const modBits = parseInt(modParts[0], 10) - 1
+      const modParts = parts[1]!.split(':')
+      const modBits = parseInt(modParts[0]!, 10) - 1
       modifiers.shift = (modBits & 1) !== 0
       modifiers.alt = (modBits & 2) !== 0
       modifiers.ctrl = (modBits & 4) !== 0
       modifiers.meta = (modBits & 8) !== 0
 
       if (modParts.length >= 2) {
-        const eventType = parseInt(modParts[1], 10)
+        const eventType = parseInt(modParts[1]!, 10)
         if (eventType === 1) state = 'press'
         else if (eventType === 2) state = 'repeat'
         else if (eventType === 3) state = 'release'

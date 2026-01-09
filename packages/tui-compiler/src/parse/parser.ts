@@ -181,19 +181,22 @@ export class Parser {
     // Children
     const children = this.parseChildren(tag)
 
-    // Closing tag
-    if (this.check('TagEnd')) {
-      this.consume('TagEnd')
-      const closingTag = this.consume('TagName').value
-      if (closingTag !== tag) {
-        throw this.errors.unexpectedToken(
-          `</${tag}>`,
-          `</${closingTag}>`,
-          this.peek().loc
-        )
-      }
-      this.expect('TagClose')
+    // Closing tag - REQUIRED for non-self-closing tags
+    if (!this.check('TagEnd')) {
+      // No closing tag found - throw helpful error
+      throw this.errors.unclosedTag(tag, createLocation(start, this.position()))
     }
+
+    this.consume('TagEnd')
+    const closingTag = this.consume('TagName').value
+    if (closingTag !== tag) {
+      throw this.errors.unexpectedToken(
+        `</${tag}>`,
+        `</${closingTag}>`,
+        this.peek().loc
+      )
+    }
+    this.expect('TagClose')
 
     return {
       type: 'Element',
@@ -245,15 +248,39 @@ export class Parser {
 
   private parseAttributes(): Attribute[] {
     const attributes: Attribute[] = []
+    const seen = new Set<string>()
 
     while (!this.check('TagClose') && !this.check('TagSelfClose') && !this.isEOF()) {
       const attr = this.parseAttribute()
       if (attr) {
+        // Check for duplicates (except spread attributes)
+        const name = this.getAttributeName(attr)
+        if (name && seen.has(name)) {
+          throw this.errors.duplicateAttribute(name, attr.loc)
+        }
+        if (name) {
+          seen.add(name)
+        }
         attributes.push(attr)
       }
     }
 
     return attributes
+  }
+
+  private getAttributeName(attr: Attribute): string | null {
+    switch (attr.type) {
+      case 'StaticAttribute':
+      case 'DynamicAttribute':
+      case 'ShorthandAttribute':
+        return attr.name
+      case 'BindDirective':
+        return `bind:${attr.name}`
+      case 'EventDirective':
+        return `on:${attr.name}`
+      case 'SpreadAttribute':
+        return null // Spreads don't have a unique name
+    }
   }
 
   private parseAttribute(): Attribute | null {
@@ -496,12 +523,13 @@ export class Parser {
       }
     }
 
-    // Consume {/if}
-    if (this.check('BlockClose')) {
-      this.consume('BlockClose')
-      if (this.check('BlockKeyword')) {
-        this.consume('BlockKeyword') // 'if'
-      }
+    // Consume {/if} - REQUIRED
+    if (!this.check('BlockClose')) {
+      throw this.errors.unclosedBlock('if', createLocation(start, this.position()))
+    }
+    this.consume('BlockClose')
+    if (this.check('BlockKeyword')) {
+      this.consume('BlockKeyword') // 'if'
     }
 
     return {
@@ -520,6 +548,8 @@ export class Parser {
       : ''
 
     // Parse "items as item, index (key)"
+    // Note: Destructuring patterns ([a, b] or {name}) are not yet supported.
+    // Use simple variable names and access properties: {#each items as item} → item.name
     const asMatch = exprToken.match(/^(.+?)\s+as\s+(\w+)(?:\s*,\s*(\w+))?(?:\s*\((.+)\))?$/)
 
     let expression = exprToken
@@ -547,12 +577,13 @@ export class Parser {
       }
     }
 
-    // Consume {/each}
-    if (this.check('BlockClose')) {
-      this.consume('BlockClose')
-      if (this.check('BlockKeyword')) {
-        this.consume('BlockKeyword') // 'each'
-      }
+    // Consume {/each} - REQUIRED
+    if (!this.check('BlockClose')) {
+      throw this.errors.unclosedBlock('each', createLocation(start, this.position()))
+    }
+    this.consume('BlockClose')
+    if (this.check('BlockKeyword')) {
+      this.consume('BlockKeyword') // 'each'
     }
 
     return {
@@ -605,12 +636,13 @@ export class Parser {
       }
     }
 
-    // Consume {/await}
-    if (this.check('BlockClose')) {
-      this.consume('BlockClose')
-      if (this.check('BlockKeyword')) {
-        this.consume('BlockKeyword') // 'await'
-      }
+    // Consume {/await} - REQUIRED
+    if (!this.check('BlockClose')) {
+      throw this.errors.unclosedBlock('await', createLocation(start, this.position()))
+    }
+    this.consume('BlockClose')
+    if (this.check('BlockKeyword')) {
+      this.consume('BlockKeyword') // 'await'
     }
 
     return {

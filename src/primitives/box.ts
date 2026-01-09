@@ -157,89 +157,111 @@ function getStaticBool(prop: unknown, defaultVal: boolean): boolean {
 export function box(props: BoxProps = {}): Cleanup {
   const index = allocateIndex(props.id)
 
-  // Internal state
+  // ==========================================================================
+  // CORE - Always needed
+  // ==========================================================================
   core.componentType[index] = ComponentType.BOX
   core.parentIndex[index] = bind(getCurrentParentIndex())
 
-  // Visible - bind directly, pipeline will handle truthy/falsy
-  // If it's a signal/derived, bind preserves the link
-  // We store as-is and check truthiness in pipeline
-  core.visible[index] = bind(props.visible ?? true)
+  // Visible - only bind if passed (default is visible, handled by TITAN)
+  if (props.visible !== undefined) {
+    core.visible[index] = bind(props.visible)
+  }
 
-  // Dimensions - BIND DIRECTLY to preserve reactive link!
-  dimensions.width[index] = bind(props.width ?? 0)
-  dimensions.height[index] = bind(props.height ?? 0)
-  dimensions.minWidth[index] = bind(props.minWidth ?? 0)
-  dimensions.maxWidth[index] = bind(props.maxWidth ?? 0)
-  dimensions.minHeight[index] = bind(props.minHeight ?? 0)
-  dimensions.maxHeight[index] = bind(props.maxHeight ?? 0)
+  // ==========================================================================
+  // DIMENSIONS - Only bind what's passed (TITAN uses ?? 0 for undefined)
+  // ==========================================================================
+  if (props.width !== undefined) dimensions.width[index] = bind(props.width)
+  if (props.height !== undefined) dimensions.height[index] = bind(props.height)
+  if (props.minWidth !== undefined) dimensions.minWidth[index] = bind(props.minWidth)
+  if (props.maxWidth !== undefined) dimensions.maxWidth[index] = bind(props.maxWidth)
+  if (props.minHeight !== undefined) dimensions.minHeight[index] = bind(props.minHeight)
+  if (props.maxHeight !== undefined) dimensions.maxHeight[index] = bind(props.maxHeight)
 
-  // Padding - BIND DIRECTLY
-  const defaultPad = typeof props.padding === 'number' ? props.padding : 0
-  spacing.paddingTop[index] = bind(props.paddingTop ?? props.padding ?? 0)
-  spacing.paddingRight[index] = bind(props.paddingRight ?? props.padding ?? 0)
-  spacing.paddingBottom[index] = bind(props.paddingBottom ?? props.padding ?? 0)
-  spacing.paddingLeft[index] = bind(props.paddingLeft ?? props.padding ?? 0)
+  // ==========================================================================
+  // PADDING - Shorthand support: padding sets all 4, individual overrides
+  // ==========================================================================
+  if (props.padding !== undefined) {
+    // Shorthand - set all 4 sides
+    spacing.paddingTop[index] = bind(props.paddingTop ?? props.padding)
+    spacing.paddingRight[index] = bind(props.paddingRight ?? props.padding)
+    spacing.paddingBottom[index] = bind(props.paddingBottom ?? props.padding)
+    spacing.paddingLeft[index] = bind(props.paddingLeft ?? props.padding)
+  } else {
+    // Individual only - bind only what's passed
+    if (props.paddingTop !== undefined) spacing.paddingTop[index] = bind(props.paddingTop)
+    if (props.paddingRight !== undefined) spacing.paddingRight[index] = bind(props.paddingRight)
+    if (props.paddingBottom !== undefined) spacing.paddingBottom[index] = bind(props.paddingBottom)
+    if (props.paddingLeft !== undefined) spacing.paddingLeft[index] = bind(props.paddingLeft)
+  }
 
-  // Margin - BIND DIRECTLY
-  spacing.marginTop[index] = bind(props.marginTop ?? props.margin ?? 0)
-  spacing.marginRight[index] = bind(props.marginRight ?? props.margin ?? 0)
-  spacing.marginBottom[index] = bind(props.marginBottom ?? props.margin ?? 0)
-  spacing.marginLeft[index] = bind(props.marginLeft ?? props.margin ?? 0)
+  // ==========================================================================
+  // MARGIN - Shorthand support: margin sets all 4, individual overrides
+  // ==========================================================================
+  if (props.margin !== undefined) {
+    // Shorthand - set all 4 sides
+    spacing.marginTop[index] = bind(props.marginTop ?? props.margin)
+    spacing.marginRight[index] = bind(props.marginRight ?? props.margin)
+    spacing.marginBottom[index] = bind(props.marginBottom ?? props.margin)
+    spacing.marginLeft[index] = bind(props.marginLeft ?? props.margin)
+  } else {
+    // Individual only - bind only what's passed
+    if (props.marginTop !== undefined) spacing.marginTop[index] = bind(props.marginTop)
+    if (props.marginRight !== undefined) spacing.marginRight[index] = bind(props.marginRight)
+    if (props.marginBottom !== undefined) spacing.marginBottom[index] = bind(props.marginBottom)
+    if (props.marginLeft !== undefined) spacing.marginLeft[index] = bind(props.marginLeft)
+  }
 
-  // Gap - BIND DIRECTLY
-  spacing.gap[index] = bind(props.gap ?? 0)
+  // Gap - only bind if passed
+  if (props.gap !== undefined) spacing.gap[index] = bind(props.gap)
 
-  // Layout enums - reactive via bindEnumProp (tracks signal changes)
-  layout.flexDirection[index] = bindEnumProp(props.flexDirection, flexDirectionToNum)
-  layout.flexWrap[index] = bindEnumProp(props.flexWrap, flexWrapToNum)
-  layout.justifyContent[index] = bindEnumProp(props.justifyContent, justifyToNum)
-  layout.alignItems[index] = bindEnumProp(props.alignItems, alignToNum)
-  layout.overflow[index] = bindEnumProp(props.overflow, overflowToNum)
+  // ==========================================================================
+  // LAYOUT - Only bind what's passed (TITAN uses sensible defaults)
+  // ==========================================================================
+  if (props.flexDirection !== undefined) layout.flexDirection[index] = bindEnumProp(props.flexDirection, flexDirectionToNum)
+  if (props.flexWrap !== undefined) layout.flexWrap[index] = bindEnumProp(props.flexWrap, flexWrapToNum)
+  if (props.justifyContent !== undefined) layout.justifyContent[index] = bindEnumProp(props.justifyContent, justifyToNum)
+  if (props.alignItems !== undefined) layout.alignItems[index] = bindEnumProp(props.alignItems, alignToNum)
+  if (props.overflow !== undefined) layout.overflow[index] = bindEnumProp(props.overflow, overflowToNum)
+  if (props.grow !== undefined) layout.flexGrow[index] = bind(props.grow)
+  if (props.shrink !== undefined) layout.flexShrink[index] = bind(props.shrink)
+  if (props.flexBasis !== undefined) layout.flexBasis[index] = bind(props.flexBasis)
+  if (props.zIndex !== undefined) layout.zIndex[index] = bind(props.zIndex)
+  if (props.alignSelf !== undefined) layout.alignSelf[index] = bindEnumProp(props.alignSelf, alignSelfToNum)
 
-  // Layout numbers - BIND DIRECTLY
-  layout.flexGrow[index] = bind(props.grow ?? 0)
-  layout.flexShrink[index] = bind(props.shrink ?? 1)
-  layout.flexBasis[index] = bind(props.flexBasis ?? 0)
-  layout.zIndex[index] = bind(props.zIndex ?? 0)
+  // ==========================================================================
+  // INTERACTION - Only bind if focusable
+  // ==========================================================================
+  if (props.focusable) {
+    interaction.focusable[index] = bind(1)
+    if (props.tabIndex !== undefined) interaction.tabIndex[index] = bind(props.tabIndex)
+  }
 
-  // Align self - item override of parent's alignItems
-  layout.alignSelf[index] = bindEnumProp(props.alignSelf, alignSelfToNum)
-
-  // NOTE: scrollable is computed by TITAN based on overflow prop + content size
-  // No need to set it here - TITAN handles overflow: 'scroll' and 'auto'
-
-  // Interaction - focus - BIND DIRECTLY!
-  interaction.focusable[index] = bind(props.focusable ? 1 : 0)
-  interaction.tabIndex[index] = bind(props.tabIndex ?? 0)
-
-  // Visual - colors with VARIANT support
-  // If variant specified, create deriveds that track theme changes
-  // User-specified colors override variant colors
+  // ==========================================================================
+  // VISUAL - Colors and borders (only bind what's passed)
+  // ==========================================================================
   if (props.variant && props.variant !== 'default') {
-    // Create reactive deriveds for variant colors
-    // These will update when theme changes!
+    // Variant colors - create deriveds that track theme changes
     const variantFg = derived(() => getVariantStyle(props.variant!).fg)
     const variantBg = derived(() => getVariantStyle(props.variant!).bg)
     const variantBorder = derived(() => getVariantStyle(props.variant!).border)
-
     visual.fgColor[index] = bind(props.fg ?? variantFg)
     visual.bgColor[index] = bind(props.bg ?? variantBg)
     visual.borderColor[index] = bind(props.borderColor ?? variantBorder)
   } else {
-    // No variant - use props directly
-    visual.fgColor[index] = bind(props.fg ?? null)
-    visual.bgColor[index] = bind(props.bg ?? null)
-    visual.borderColor[index] = bind(props.borderColor ?? null)
+    // Direct colors - only bind if passed
+    if (props.fg !== undefined) visual.fgColor[index] = bind(props.fg)
+    if (props.bg !== undefined) visual.bgColor[index] = bind(props.bg)
+    if (props.borderColor !== undefined) visual.borderColor[index] = bind(props.borderColor)
   }
-  visual.opacity[index] = bind(props.opacity ?? 1)
+  if (props.opacity !== undefined) visual.opacity[index] = bind(props.opacity)
 
-  // Visual - border style
-  visual.borderStyle[index] = bind(props.border ?? 0)
-  visual.borderTop[index] = bind(props.borderTop ?? 0)
-  visual.borderRight[index] = bind(props.borderRight ?? 0)
-  visual.borderBottom[index] = bind(props.borderBottom ?? 0)
-  visual.borderLeft[index] = bind(props.borderLeft ?? 0)
+  // Border style - shorthand and individual
+  if (props.border !== undefined) visual.borderStyle[index] = bind(props.border)
+  if (props.borderTop !== undefined) visual.borderTop[index] = bind(props.borderTop)
+  if (props.borderRight !== undefined) visual.borderRight[index] = bind(props.borderRight)
+  if (props.borderBottom !== undefined) visual.borderBottom[index] = bind(props.borderBottom)
+  if (props.borderLeft !== undefined) visual.borderLeft[index] = bind(props.borderLeft)
 
   // Render children with this box as parent context
   if (props.children) {

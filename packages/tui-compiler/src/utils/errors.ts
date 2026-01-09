@@ -116,7 +116,7 @@ export class CompilerError extends Error {
     return lines.join('\n')
   }
 
-  toString(): string {
+  override toString(): string {
     return this.format()
   }
 }

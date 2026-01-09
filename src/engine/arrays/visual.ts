@@ -83,42 +83,43 @@ export const focusRingColor: Binding<RGBA>[] = []
 
 const DEFAULT_FOCUS_COLOR: RGBA = { r: 100, g: 149, b: 237, a: 255 } // cornflowerblue
 
+/** LAZY BINDING: Push undefined, primitives create bindings for used props only */
 export function ensureCapacity(index: number): void {
   while (fgColor.length <= index) {
-    fgColor.push(bind(null))
-    bgColor.push(bind(null))
-    opacity.push(bind(1))
-    borderStyle.push(bind(0))
-    borderColor.push(bind(null))
-    borderTop.push(bind(0))
-    borderRight.push(bind(0))
-    borderBottom.push(bind(0))
-    borderLeft.push(bind(0))
-    borderColorTop.push(bind(null))
-    borderColorRight.push(bind(null))
-    borderColorBottom.push(bind(null))
-    borderColorLeft.push(bind(null))
-    showFocusRing.push(bind(1))
-    focusRingColor.push(bind({ ...DEFAULT_FOCUS_COLOR }))
+    fgColor.push(undefined as any)
+    bgColor.push(undefined as any)
+    opacity.push(undefined as any)
+    borderStyle.push(undefined as any)
+    borderColor.push(undefined as any)
+    borderTop.push(undefined as any)
+    borderRight.push(undefined as any)
+    borderBottom.push(undefined as any)
+    borderLeft.push(undefined as any)
+    borderColorTop.push(undefined as any)
+    borderColorRight.push(undefined as any)
+    borderColorBottom.push(undefined as any)
+    borderColorLeft.push(undefined as any)
+    showFocusRing.push(undefined as any)
+    focusRingColor.push(undefined as any)
   }
 }
 
 export function clearAtIndex(index: number): void {
   if (index < fgColor.length) {
-    fgColor[index] = bind(null)
-    bgColor[index] = bind(null)
-    opacity[index] = bind(1)
-    borderStyle[index] = bind(0)
-    borderColor[index] = bind(null)
-    borderTop[index] = bind(0)
-    borderRight[index] = bind(0)
-    borderBottom[index] = bind(0)
-    borderLeft[index] = bind(0)
-    borderColorTop[index] = bind(null)
-    borderColorRight[index] = bind(null)
-    borderColorBottom[index] = bind(null)
-    borderColorLeft[index] = bind(null)
-    showFocusRing[index] = bind(1)
-    focusRingColor[index] = bind({ ...DEFAULT_FOCUS_COLOR })
+    fgColor[index] = undefined as any
+    bgColor[index] = undefined as any
+    opacity[index] = undefined as any
+    borderStyle[index] = undefined as any
+    borderColor[index] = undefined as any
+    borderTop[index] = undefined as any
+    borderRight[index] = undefined as any
+    borderBottom[index] = undefined as any
+    borderLeft[index] = undefined as any
+    borderColorTop[index] = undefined as any
+    borderColorRight[index] = undefined as any
+    borderColorBottom[index] = undefined as any
+    borderColorLeft[index] = undefined as any
+    showFocusRing[index] = undefined as any
+    focusRingColor[index] = undefined as any
   }
 }

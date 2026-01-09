@@ -70,32 +70,33 @@ export const selectionEnd: Binding<number>[] = []
 // CAPACITY MANAGEMENT
 // =============================================================================
 
+/** LAZY BINDING: Push undefined, primitives create bindings for used props only */
 export function ensureCapacity(index: number): void {
   while (scrollOffsetY.length <= index) {
-    scrollOffsetY.push(bind(0))
-    scrollOffsetX.push(bind(0))
-    focusable.push(bind(0))
-    tabIndex.push(bind(-1))
-    hovered.push(bind(0))
-    pressed.push(bind(0))
-    mouseEnabled.push(bind(1))
-    cursorPosition.push(bind(0))
-    selectionStart.push(bind(-1))
-    selectionEnd.push(bind(-1))
+    scrollOffsetY.push(undefined as any)
+    scrollOffsetX.push(undefined as any)
+    focusable.push(undefined as any)
+    tabIndex.push(undefined as any)
+    hovered.push(undefined as any)
+    pressed.push(undefined as any)
+    mouseEnabled.push(undefined as any)
+    cursorPosition.push(undefined as any)
+    selectionStart.push(undefined as any)
+    selectionEnd.push(undefined as any)
   }
 }
 
 export function clearAtIndex(index: number): void {
   if (index < scrollOffsetY.length) {
-    scrollOffsetY[index] = bind(0)
-    scrollOffsetX[index] = bind(0)
-    focusable[index] = bind(0)
-    tabIndex[index] = bind(-1)
-    hovered[index] = bind(0)
-    pressed[index] = bind(0)
-    mouseEnabled[index] = bind(1)
-    cursorPosition[index] = bind(0)
-    selectionStart[index] = bind(-1)
-    selectionEnd[index] = bind(-1)
+    scrollOffsetY[index] = undefined as any
+    scrollOffsetX[index] = undefined as any
+    focusable[index] = undefined as any
+    tabIndex[index] = undefined as any
+    hovered[index] = undefined as any
+    pressed[index] = undefined as any
+    mouseEnabled[index] = undefined as any
+    cursorPosition[index] = undefined as any
+    selectionStart[index] = undefined as any
+    selectionEnd[index] = undefined as any
   }
 }

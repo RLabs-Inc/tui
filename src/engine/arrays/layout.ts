@@ -100,54 +100,55 @@ export const zIndex: Binding<number>[] = []
 /** Overflow handling: 0=visible, 1=hidden, 2=scroll, 3=auto */
 export const overflow: Binding<number>[] = []
 
+/** LAZY BINDING: Push undefined, primitives create bindings for used props only */
 export function ensureCapacity(index: number): void {
   while (flexDirection.length <= index) {
-    flexDirection.push(bind(0))
-    flexWrap.push(bind(0))
-    justifyContent.push(bind(0))
-    alignItems.push(bind(0))
-    alignContent.push(bind(0))
-    flexGrow.push(bind(0))
-    flexShrink.push(bind(1)) // Default shrink is 1
-    flexBasis.push(bind(0))
-    alignSelf.push(bind(0))
-    order.push(bind(0))
-    position.push(bind(0))
-    top.push(bind(0))
-    right.push(bind(0))
-    bottom.push(bind(0))
-    left.push(bind(0))
-    borderTop.push(bind(0))
-    borderRight.push(bind(0))
-    borderBottom.push(bind(0))
-    borderLeft.push(bind(0))
-    zIndex.push(bind(0))
-    overflow.push(bind(0))
+    flexDirection.push(undefined as any)
+    flexWrap.push(undefined as any)
+    justifyContent.push(undefined as any)
+    alignItems.push(undefined as any)
+    alignContent.push(undefined as any)
+    flexGrow.push(undefined as any)
+    flexShrink.push(undefined as any)
+    flexBasis.push(undefined as any)
+    alignSelf.push(undefined as any)
+    order.push(undefined as any)
+    position.push(undefined as any)
+    top.push(undefined as any)
+    right.push(undefined as any)
+    bottom.push(undefined as any)
+    left.push(undefined as any)
+    borderTop.push(undefined as any)
+    borderRight.push(undefined as any)
+    borderBottom.push(undefined as any)
+    borderLeft.push(undefined as any)
+    zIndex.push(undefined as any)
+    overflow.push(undefined as any)
   }
 }
 
 export function clearAtIndex(index: number): void {
   if (index < flexDirection.length) {
-    flexDirection[index] = bind(0)
-    flexWrap[index] = bind(0)
-    justifyContent[index] = bind(0)
-    alignItems[index] = bind(0)
-    alignContent[index] = bind(0)
-    flexGrow[index] = bind(0)
-    flexShrink[index] = bind(1)
-    flexBasis[index] = bind(0)
-    alignSelf[index] = bind(0)
-    order[index] = bind(0)
-    position[index] = bind(0)
-    top[index] = bind(0)
-    right[index] = bind(0)
-    bottom[index] = bind(0)
-    left[index] = bind(0)
-    borderTop[index] = bind(0)
-    borderRight[index] = bind(0)
-    borderBottom[index] = bind(0)
-    borderLeft[index] = bind(0)
-    zIndex[index] = bind(0)
-    overflow[index] = bind(0)
+    flexDirection[index] = undefined as any
+    flexWrap[index] = undefined as any
+    justifyContent[index] = undefined as any
+    alignItems[index] = undefined as any
+    alignContent[index] = undefined as any
+    flexGrow[index] = undefined as any
+    flexShrink[index] = undefined as any
+    flexBasis[index] = undefined as any
+    alignSelf[index] = undefined as any
+    order[index] = undefined as any
+    position[index] = undefined as any
+    top[index] = undefined as any
+    right[index] = undefined as any
+    bottom[index] = undefined as any
+    left[index] = undefined as any
+    borderTop[index] = undefined as any
+    borderRight[index] = undefined as any
+    borderBottom[index] = undefined as any
+    borderLeft[index] = undefined as any
+    zIndex[index] = undefined as any
+    overflow[index] = undefined as any
   }
 }

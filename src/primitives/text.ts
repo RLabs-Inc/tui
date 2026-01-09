@@ -97,63 +97,79 @@ function bindEnumProp<T extends string>(
 export function text(props: TextProps): Cleanup {
   const index = allocateIndex()
 
-  // Component metadata
+  // ==========================================================================
+  // CORE - Always needed
+  // ==========================================================================
   core.componentType[index] = ComponentType.TEXT
   core.parentIndex[index] = bind(getCurrentParentIndex())
-  core.visible[index] = bind(props.visible ?? true)
 
-  // TEXT CONTENT - BIND DIRECTLY to preserve reactive link!
+  // Visible - only bind if passed
+  if (props.visible !== undefined) {
+    core.visible[index] = bind(props.visible)
+  }
+
+  // ==========================================================================
+  // TEXT CONTENT - Always needed (this is a text component!)
+  // ==========================================================================
   textArrays.textContent[index] = bind(props.content)
 
-  // Text styling - use bindEnumProp for reactive enum support!
-  textArrays.textAttrs[index] = bind(props.attrs ?? Attr.NONE)
-  textArrays.textAlign[index] = bindEnumProp(props.align, alignToNum)
-  textArrays.textWrap[index] = bindEnumProp(props.wrap, wrapToNum)
+  // Text styling - only bind if passed
+  if (props.attrs !== undefined) textArrays.textAttrs[index] = bind(props.attrs)
+  if (props.align !== undefined) textArrays.textAlign[index] = bindEnumProp(props.align, alignToNum)
+  if (props.wrap !== undefined) textArrays.textWrap[index] = bindEnumProp(props.wrap, wrapToNum)
 
-  // Dimensions - BIND DIRECTLY
-  dimensions.width[index] = bind(props.width ?? 0)
-  dimensions.height[index] = bind(props.height ?? 0)
-  dimensions.minWidth[index] = bind(props.minWidth ?? 0)
-  dimensions.maxWidth[index] = bind(props.maxWidth ?? 0)
-  dimensions.minHeight[index] = bind(props.minHeight ?? 0)
-  dimensions.maxHeight[index] = bind(props.maxHeight ?? 0)
+  // ==========================================================================
+  // DIMENSIONS - Only bind what's passed (TITAN uses ?? 0 for undefined)
+  // ==========================================================================
+  if (props.width !== undefined) dimensions.width[index] = bind(props.width)
+  if (props.height !== undefined) dimensions.height[index] = bind(props.height)
+  if (props.minWidth !== undefined) dimensions.minWidth[index] = bind(props.minWidth)
+  if (props.maxWidth !== undefined) dimensions.maxWidth[index] = bind(props.maxWidth)
+  if (props.minHeight !== undefined) dimensions.minHeight[index] = bind(props.minHeight)
+  if (props.maxHeight !== undefined) dimensions.maxHeight[index] = bind(props.maxHeight)
 
-  // Padding - BIND DIRECTLY
-  spacing.paddingTop[index] = bind(props.paddingTop ?? props.padding ?? 0)
-  spacing.paddingRight[index] = bind(props.paddingRight ?? props.padding ?? 0)
-  spacing.paddingBottom[index] = bind(props.paddingBottom ?? props.padding ?? 0)
-  spacing.paddingLeft[index] = bind(props.paddingLeft ?? props.padding ?? 0)
+  // ==========================================================================
+  // PADDING - Shorthand support
+  // ==========================================================================
+  if (props.padding !== undefined) {
+    spacing.paddingTop[index] = bind(props.paddingTop ?? props.padding)
+    spacing.paddingRight[index] = bind(props.paddingRight ?? props.padding)
+    spacing.paddingBottom[index] = bind(props.paddingBottom ?? props.padding)
+    spacing.paddingLeft[index] = bind(props.paddingLeft ?? props.padding)
+  } else {
+    if (props.paddingTop !== undefined) spacing.paddingTop[index] = bind(props.paddingTop)
+    if (props.paddingRight !== undefined) spacing.paddingRight[index] = bind(props.paddingRight)
+    if (props.paddingBottom !== undefined) spacing.paddingBottom[index] = bind(props.paddingBottom)
+    if (props.paddingLeft !== undefined) spacing.paddingLeft[index] = bind(props.paddingLeft)
+  }
 
-  // Flex item properties - text can be a flex item too!
-  layout.flexGrow[index] = bind(0)
-  layout.flexShrink[index] = bind(1)
-  layout.flexBasis[index] = bind(0)
-  layout.alignSelf[index] = bind(0)
+  // ==========================================================================
+  // FLEX ITEM - Only bind if passed (text can be a flex item)
+  // ==========================================================================
+  if (props.grow !== undefined) layout.flexGrow[index] = bind(props.grow)
+  if (props.shrink !== undefined) layout.flexShrink[index] = bind(props.shrink)
+  if (props.flexBasis !== undefined) layout.flexBasis[index] = bind(props.flexBasis)
+  if (props.alignSelf !== undefined) layout.alignSelf[index] = bind(props.alignSelf)
 
-  // Visual - colors with VARIANT support (all 14 variants!)
-  // If variant specified, create deriveds that track theme changes
-  // User-specified colors override variant colors
-  // Variants: default, primary, secondary, tertiary, accent,
-  //           success, warning, error, info,
-  //           muted, surface, elevated, ghost, outline
+  // ==========================================================================
+  // VISUAL - Colors with variant support (only bind what's needed)
+  // ==========================================================================
   if (props.variant && props.variant !== 'default') {
-    // Create reactive deriveds for variant colors
-    // These will update when theme changes!
+    // Variant colors - create deriveds that track theme changes
     const variantFg = derived(() => getVariantStyle(props.variant!).fg)
     const variantBg = derived(() => getVariantStyle(props.variant!).bg)
-
     visual.fgColor[index] = bind(props.fg ?? variantFg)
     visual.bgColor[index] = bind(props.bg ?? variantBg)
   } else {
-    // No variant - use props directly
-    visual.fgColor[index] = bind(props.fg ?? null)
-    visual.bgColor[index] = bind(props.bg ?? null)
+    // Direct colors - only bind if passed
+    if (props.fg !== undefined) visual.fgColor[index] = bind(props.fg)
+    if (props.bg !== undefined) visual.bgColor[index] = bind(props.bg)
   }
-  visual.opacity[index] = bind(props.opacity ?? 1)
+  if (props.opacity !== undefined) visual.opacity[index] = bind(props.opacity)
 
   // Cleanup function
   return () => {
-    cleanupKeyboardListeners(index)  // Remove any focused key handlers
+    cleanupKeyboardListeners(index)
     releaseIndex(index)
   }
 }

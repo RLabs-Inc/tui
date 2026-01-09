@@ -28,22 +28,23 @@ export const textWrap: Binding<number>[] = []
 // Ellipsis for truncated text
 export const ellipsis: Binding<string>[] = []
 
+/** LAZY BINDING: Push undefined, primitives create bindings for used props only */
 export function ensureCapacity(index: number): void {
   while (textContent.length <= index) {
-    textContent.push(bind(''))
-    textAttrs.push(bind(Attr.NONE))
-    textAlign.push(bind(0))
-    textWrap.push(bind(1)) // Default wrap
-    ellipsis.push(bind('…'))
+    textContent.push(undefined as any)
+    textAttrs.push(undefined as any)
+    textAlign.push(undefined as any)
+    textWrap.push(undefined as any)
+    ellipsis.push(undefined as any)
   }
 }
 
 export function clearAtIndex(index: number): void {
   if (index < textContent.length) {
-    textContent[index] = bind('')
-    textAttrs[index] = bind(Attr.NONE)
-    textAlign[index] = bind(0)
-    textWrap[index] = bind(1)
-    ellipsis[index] = bind('…')
+    textContent[index] = undefined as any
+    textAttrs[index] = undefined as any
+    textAlign[index] = undefined as any
+    textWrap[index] = undefined as any
+    ellipsis[index] = undefined as any
   }
 }
