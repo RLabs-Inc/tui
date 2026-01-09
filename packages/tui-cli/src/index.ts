@@ -15,23 +15,22 @@ import { create } from './commands/create'
 const VERSION = '0.1.0'
 
 const HELP = `
-${c.bold('create-tui')} ${c.muted(`v${VERSION}`)}
+${c.bold('@rlabs-inc/create-tui')} ${c.muted(`v${VERSION}`)}
 
 ${c.dim('Create TUI Framework applications')}
 ${c.dim('The Terminal UI Framework for TypeScript/Bun')}
 
 ${c.bold('Usage:')}
-  ${c.info('bun create tui')} ${c.muted('<project-name>')}
-  ${c.info('bunx create-tui')} ${c.muted('<project-name>')}
-  ${c.info('npx create-tui')} ${c.muted('<project-name>')}
+  ${c.info('bunx @rlabs-inc/create-tui')} ${c.muted('<project-name>')}
+  ${c.info('npx @rlabs-inc/create-tui')} ${c.muted('<project-name>')}
 
 ${c.bold('Options:')}
   ${c.muted('-h, --help')}       Show this help message
   ${c.muted('-v, --version')}    Show version
 
 ${c.bold('Examples:')}
-  ${c.dim('$')} ${c.info('bun create tui')} my-app
-  ${c.dim('$')} ${c.info('bunx create-tui')} dashboard
+  ${c.dim('$')} ${c.info('bunx @rlabs-inc/create-tui')} my-app
+  ${c.dim('$')} ${c.info('bunx @rlabs-inc/create-tui')} dashboard
 
 ${c.muted('Documentation: https://github.com/rlabs-inc/tui')}
 `
@@ -57,7 +56,7 @@ async function main() {
 
     // Version flag
     if (values.version) {
-      console.log(`${c.bold('create-tui')} ${c.muted(`v${VERSION}`)}`)
+      console.log(`${c.bold('@rlabs-inc/create-tui')} ${c.muted(`v${VERSION}`)}`)
       return
     }
 
