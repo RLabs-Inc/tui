@@ -260,23 +260,41 @@ const APP_TUI = `<script lang="ts">
 `
 
 const COUNTER_TUI = `<script lang="ts">
+  // Reactive state
   const count = signal(0)
+  const doubled = derived(() => count.value * 2)
+  const isEven = derived(() => count.value % 2 === 0)
 
-  keyboard.onKey(['+', '=', 'ArrowUp'], () => count.value++)
-  keyboard.onKey(['-', '_', 'ArrowDown'], () => count.value--)
+  // Keyboard handlers
+  keyboard.onKey('+', () => count.value++)
+  keyboard.onKey('=', () => count.value++)
+  keyboard.onKey('-', () => count.value--)
+  keyboard.onKey('_', () => count.value--)
   keyboard.onKey('r', () => count.value = 0)
 </script>
 
-<box
-  border={1}
-  borderColor={t.primary}
-  padding={1}
-  flexDirection="column"
-  alignItems="center"
-  gap={1}
->
-  <text fg={t.accent}>Counter</text>
-  <text fg={t.textBright}>{count}</text>
-  <text fg={t.textMuted}>[+/-] change  [r] reset</text>
+<box width={50} border={1} borderColor={t.primary} padding={1} flexDirection="column" gap={1}>
+  <text variant="accent">Counter - Basic Reactivity Demo</text>
+  <text fg={t.textMuted}>{'─'.repeat(46)}</text>
+
+  <box flexDirection="row" gap={2}>
+    <text fg={t.primary}>Count:</text>
+    <text fg={t.success}>{count}</text>
+  </box>
+
+  <box flexDirection="row" gap={2}>
+    <text fg={t.textMuted}>Doubled:</text>
+    <text fg={t.warning}>{doubled}</text>
+  </box>
+
+  <box flexDirection="row" gap={2}>
+    <text fg={t.textMuted}>Even?:</text>
+    <text fg={isEven.value ? t.success : t.error}>
+      {isEven.value ? 'YES' : 'NO'}
+    </text>
+  </box>
+
+  <text fg={t.secondary}>{'─'.repeat(46)}</text>
+  <text fg={t.textMuted}>[+/-] Change  [r] Reset  [q] Quit</text>
 </box>
 `
