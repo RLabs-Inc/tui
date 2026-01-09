@@ -8,7 +8,7 @@
  * state() proxies snapshot getter values, breaking reactivity.
  */
 
-import { bind, type Binding } from '@rlabs-inc/signals'
+import { bind, disconnectBinding, type Binding } from '@rlabs-inc/signals'
 
 // =============================================================================
 // MARGIN - Space outside the component (offsets position in parent)
@@ -74,6 +74,17 @@ export function ensureCapacity(index: number): void {
 
 export function clearAtIndex(index: number): void {
   if (index < marginTop.length) {
+    disconnectBinding(marginTop[index])
+    disconnectBinding(marginRight[index])
+    disconnectBinding(marginBottom[index])
+    disconnectBinding(marginLeft[index])
+    disconnectBinding(paddingTop[index])
+    disconnectBinding(paddingRight[index])
+    disconnectBinding(paddingBottom[index])
+    disconnectBinding(paddingLeft[index])
+    disconnectBinding(gap[index])
+    disconnectBinding(rowGap[index])
+    disconnectBinding(columnGap[index])
     marginTop[index] = undefined as any
     marginRight[index] = undefined as any
     marginBottom[index] = undefined as any

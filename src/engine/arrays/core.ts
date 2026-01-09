@@ -13,7 +13,7 @@
  * componentType is the exception - it stores values directly, not bindings.
  */
 
-import { bind, type Binding } from '@rlabs-inc/signals'
+import { bind, disconnectBinding, type Binding } from '@rlabs-inc/signals'
 import { ComponentType } from '../../types'
 import type { ComponentTypeValue } from '../../types'
 
@@ -50,6 +50,9 @@ export function ensureCapacity(index: number): void {
 export function clearAtIndex(index: number): void {
   if (index < componentType.length) {
     componentType[index] = ComponentType.NONE
+    disconnectBinding(parentIndex[index])
+    disconnectBinding(visible[index])
+    disconnectBinding(componentId[index])
     parentIndex[index] = undefined as any
     visible[index] = undefined as any
     componentId[index] = undefined as any

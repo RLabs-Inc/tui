@@ -17,7 +17,7 @@
  * Note: 0 means "auto" for width/height, "no constraint" for min/max.
  */
 
-import { bind, type Binding } from '@rlabs-inc/signals'
+import { bind, disconnectBinding, type Binding } from '@rlabs-inc/signals'
 import type { Dimension } from '../../types'
 
 /** Requested width (0 = auto, '100%' = full parent width) */
@@ -52,6 +52,12 @@ export function ensureCapacity(index: number): void {
 
 export function clearAtIndex(index: number): void {
   if (index < width.length) {
+    disconnectBinding(width[index])
+    disconnectBinding(height[index])
+    disconnectBinding(minWidth[index])
+    disconnectBinding(minHeight[index])
+    disconnectBinding(maxWidth[index])
+    disconnectBinding(maxHeight[index])
     width[index] = undefined as any
     height[index] = undefined as any
     minWidth[index] = undefined as any

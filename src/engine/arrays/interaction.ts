@@ -12,7 +12,7 @@
  * and live in ComputedLayout, not here. Only scroll OFFSETS (user state) are here.
  */
 
-import { signal, bind, type Binding } from '@rlabs-inc/signals'
+import { signal, bind, disconnectBinding, type Binding } from '@rlabs-inc/signals'
 
 // =============================================================================
 // SCROLL STATE (user-controlled position only)
@@ -88,6 +88,16 @@ export function ensureCapacity(index: number): void {
 
 export function clearAtIndex(index: number): void {
   if (index < scrollOffsetY.length) {
+    disconnectBinding(scrollOffsetY[index])
+    disconnectBinding(scrollOffsetX[index])
+    disconnectBinding(focusable[index])
+    disconnectBinding(tabIndex[index])
+    disconnectBinding(hovered[index])
+    disconnectBinding(pressed[index])
+    disconnectBinding(mouseEnabled[index])
+    disconnectBinding(cursorPosition[index])
+    disconnectBinding(selectionStart[index])
+    disconnectBinding(selectionEnd[index])
     scrollOffsetY[index] = undefined as any
     scrollOffsetX[index] = undefined as any
     focusable[index] = undefined as any

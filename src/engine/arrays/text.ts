@@ -9,7 +9,7 @@
  * Flow: user signal → bind() → Binding stored → unwrap() reads .value → dependency!
  */
 
-import { bind, type Binding } from '@rlabs-inc/signals'
+import { bind, disconnectBinding, type Binding } from '@rlabs-inc/signals'
 import type { CellAttrs } from '../../types'
 import { Attr } from '../../types'
 
@@ -41,6 +41,11 @@ export function ensureCapacity(index: number): void {
 
 export function clearAtIndex(index: number): void {
   if (index < textContent.length) {
+    disconnectBinding(textContent[index])
+    disconnectBinding(textAttrs[index])
+    disconnectBinding(textAlign[index])
+    disconnectBinding(textWrap[index])
+    disconnectBinding(ellipsis[index])
     textContent[index] = undefined as any
     textAttrs[index] = undefined as any
     textAlign[index] = undefined as any

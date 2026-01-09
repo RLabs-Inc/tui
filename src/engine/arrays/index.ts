@@ -25,6 +25,7 @@ export * as visual from './visual'
 export * as text from './text'
 export * as interaction from './interaction'
 
+import { disconnectBinding } from '@rlabs-inc/signals'
 import * as core from './core'
 import * as dimensions from './dimensions'
 import * as spacing from './spacing'
@@ -61,95 +62,105 @@ export function clearAllAtIndex(index: number): void {
   interaction.clearAtIndex(index)
 }
 
+/** Disconnect all bindings in an array before truncating */
+function disconnectArray(arr: unknown[]): void {
+  for (let i = 0; i < arr.length; i++) {
+    disconnectBinding(arr[i] as any)
+  }
+  arr.length = 0
+}
+
 /**
  * Reset all parallel arrays to release memory.
  * Called automatically when all components are destroyed (allocatedIndices.size === 0).
  * This is the "reset on zero" cleanup - no manual API needed!
+ *
+ * IMPORTANT: Disconnects all bindings before truncating to break circular refs.
  */
 export function resetAllArrays(): void {
   // Core arrays
   core.componentType.length = 0
-  core.parentIndex.length = 0
-  core.visible.length = 0
-  core.componentId.length = 0
+  disconnectArray(core.parentIndex)
+  disconnectArray(core.visible)
+  disconnectArray(core.componentId)
 
   // Dimension arrays
-  dimensions.width.length = 0
-  dimensions.height.length = 0
-  dimensions.minWidth.length = 0
-  dimensions.minHeight.length = 0
-  dimensions.maxWidth.length = 0
-  dimensions.maxHeight.length = 0
+  disconnectArray(dimensions.width)
+  disconnectArray(dimensions.height)
+  disconnectArray(dimensions.minWidth)
+  disconnectArray(dimensions.minHeight)
+  disconnectArray(dimensions.maxWidth)
+  disconnectArray(dimensions.maxHeight)
 
   // Spacing arrays
-  spacing.marginTop.length = 0
-  spacing.marginRight.length = 0
-  spacing.marginBottom.length = 0
-  spacing.marginLeft.length = 0
-  spacing.paddingTop.length = 0
-  spacing.paddingRight.length = 0
-  spacing.paddingBottom.length = 0
-  spacing.paddingLeft.length = 0
-  spacing.gap.length = 0
-  spacing.rowGap.length = 0
-  spacing.columnGap.length = 0
+  disconnectArray(spacing.marginTop)
+  disconnectArray(spacing.marginRight)
+  disconnectArray(spacing.marginBottom)
+  disconnectArray(spacing.marginLeft)
+  disconnectArray(spacing.paddingTop)
+  disconnectArray(spacing.paddingRight)
+  disconnectArray(spacing.paddingBottom)
+  disconnectArray(spacing.paddingLeft)
+  disconnectArray(spacing.gap)
+  disconnectArray(spacing.rowGap)
+  disconnectArray(spacing.columnGap)
 
   // Layout arrays
-  layout.flexDirection.length = 0
-  layout.flexWrap.length = 0
-  layout.justifyContent.length = 0
-  layout.alignItems.length = 0
-  layout.alignContent.length = 0
-  layout.flexGrow.length = 0
-  layout.flexShrink.length = 0
-  layout.flexBasis.length = 0
-  layout.alignSelf.length = 0
-  layout.order.length = 0
-  layout.position.length = 0
-  layout.top.length = 0
-  layout.right.length = 0
-  layout.bottom.length = 0
-  layout.left.length = 0
-  layout.borderTop.length = 0
-  layout.borderRight.length = 0
-  layout.borderBottom.length = 0
-  layout.borderLeft.length = 0
-  layout.zIndex.length = 0
-  layout.overflow.length = 0
+  disconnectArray(layout.flexDirection)
+  disconnectArray(layout.flexWrap)
+  disconnectArray(layout.justifyContent)
+  disconnectArray(layout.alignItems)
+  disconnectArray(layout.alignContent)
+  disconnectArray(layout.flexGrow)
+  disconnectArray(layout.flexShrink)
+  disconnectArray(layout.flexBasis)
+  disconnectArray(layout.alignSelf)
+  disconnectArray(layout.order)
+  disconnectArray(layout.position)
+  disconnectArray(layout.top)
+  disconnectArray(layout.right)
+  disconnectArray(layout.bottom)
+  disconnectArray(layout.left)
+  disconnectArray(layout.borderTop)
+  disconnectArray(layout.borderRight)
+  disconnectArray(layout.borderBottom)
+  disconnectArray(layout.borderLeft)
+  disconnectArray(layout.zIndex)
+  disconnectArray(layout.overflow)
 
   // Visual arrays
-  visual.fgColor.length = 0
-  visual.bgColor.length = 0
-  visual.opacity.length = 0
-  visual.borderStyle.length = 0
-  visual.borderColor.length = 0
-  visual.borderTop.length = 0
-  visual.borderRight.length = 0
-  visual.borderBottom.length = 0
-  visual.borderLeft.length = 0
-  visual.borderColorTop.length = 0
-  visual.borderColorRight.length = 0
-  visual.borderColorBottom.length = 0
-  visual.borderColorLeft.length = 0
-  visual.showFocusRing.length = 0
-  visual.focusRingColor.length = 0
+  disconnectArray(visual.fgColor)
+  disconnectArray(visual.bgColor)
+  disconnectArray(visual.opacity)
+  disconnectArray(visual.borderStyle)
+  disconnectArray(visual.borderColor)
+  disconnectArray(visual.borderTop)
+  disconnectArray(visual.borderRight)
+  disconnectArray(visual.borderBottom)
+  disconnectArray(visual.borderLeft)
+  disconnectArray(visual.borderColorTop)
+  disconnectArray(visual.borderColorRight)
+  disconnectArray(visual.borderColorBottom)
+  disconnectArray(visual.borderColorLeft)
+  disconnectArray(visual.showFocusRing)
+  disconnectArray(visual.focusRingColor)
 
   // Text arrays
-  text.textContent.length = 0
-  text.textAttrs.length = 0
-  text.textAlign.length = 0
-  text.textWrap.length = 0
-  text.ellipsis.length = 0
+  disconnectArray(text.textContent)
+  disconnectArray(text.textAttrs)
+  disconnectArray(text.textAlign)
+  disconnectArray(text.textWrap)
+  disconnectArray(text.ellipsis)
 
-  // Interaction arrays (scroll offsets only - scrollable/max are computed by TITAN)
-  interaction.scrollOffsetX.length = 0
-  interaction.scrollOffsetY.length = 0
-  interaction.focusable.length = 0
-  interaction.tabIndex.length = 0
-  interaction.hovered.length = 0
-  interaction.pressed.length = 0
-  interaction.mouseEnabled.length = 0
-  interaction.cursorPosition.length = 0
-  interaction.selectionStart.length = 0
-  interaction.selectionEnd.length = 0
+  // Interaction arrays
+  disconnectArray(interaction.scrollOffsetX)
+  disconnectArray(interaction.scrollOffsetY)
+  disconnectArray(interaction.focusable)
+  disconnectArray(interaction.tabIndex)
+  disconnectArray(interaction.hovered)
+  disconnectArray(interaction.pressed)
+  disconnectArray(interaction.mouseEnabled)
+  disconnectArray(interaction.cursorPosition)
+  disconnectArray(interaction.selectionStart)
+  disconnectArray(interaction.selectionEnd)
 }

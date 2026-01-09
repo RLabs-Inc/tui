@@ -23,7 +23,7 @@
  * Per-side borders can have independent styles.
  */
 
-import { bind, type Binding } from '@rlabs-inc/signals'
+import { bind, disconnectBinding, type Binding } from '@rlabs-inc/signals'
 import type { RGBA } from '../../types'
 
 // =============================================================================
@@ -106,6 +106,21 @@ export function ensureCapacity(index: number): void {
 
 export function clearAtIndex(index: number): void {
   if (index < fgColor.length) {
+    disconnectBinding(fgColor[index])
+    disconnectBinding(bgColor[index])
+    disconnectBinding(opacity[index])
+    disconnectBinding(borderStyle[index])
+    disconnectBinding(borderColor[index])
+    disconnectBinding(borderTop[index])
+    disconnectBinding(borderRight[index])
+    disconnectBinding(borderBottom[index])
+    disconnectBinding(borderLeft[index])
+    disconnectBinding(borderColorTop[index])
+    disconnectBinding(borderColorRight[index])
+    disconnectBinding(borderColorBottom[index])
+    disconnectBinding(borderColorLeft[index])
+    disconnectBinding(showFocusRing[index])
+    disconnectBinding(focusRingColor[index])
     fgColor[index] = undefined as any
     bgColor[index] = undefined as any
     opacity[index] = undefined as any

@@ -21,7 +21,7 @@
  * ```
  */
 
-import { bind, derived } from '@rlabs-inc/signals'
+import { bind, BINDING_SYMBOL } from '@rlabs-inc/signals'
 import { ComponentType } from '../types'
 import {
   allocateIndex,
@@ -113,19 +113,28 @@ function alignSelfToNum(align: string | undefined): number {
 }
 
 /**
- * Create a reactive binding for enum props.
- * If the prop is a signal/derived, creates a derived that tracks changes.
- * If static, just converts directly.
+ * Create a binding for enum props that converts at read time.
+ * No derived needed - reads signal directly and converts inline.
+ * This creates dependency directly on user's signal, no intermediate objects.
  */
 function bindEnumProp<T extends string>(
   prop: T | { value: T } | undefined,
   converter: (val: T | undefined) => number
 ): ReturnType<typeof bind<number>> {
-  // If it's reactive (has .value), create a derived to track it
+  // If it's reactive (has .value), create binding that converts at read time
   if (prop !== undefined && typeof prop === 'object' && prop !== null && 'value' in prop) {
-    return bind(derived(() => converter((prop as { value: T }).value)))
+    const reactiveSource = prop as { value: T }
+    return {
+      [BINDING_SYMBOL]: true,
+      get value(): number {
+        return converter(reactiveSource.value)
+      },
+      set value(_: number) {
+        // Enum props are read-only from number side
+      },
+    } as unknown as ReturnType<typeof bind<number>>
   }
-  // Static value - just convert
+  // Static value - just convert and bind
   return bind(converter(prop as T | undefined))
 }
 
@@ -241,13 +250,35 @@ export function box(props: BoxProps = {}): Cleanup {
   // VISUAL - Colors and borders (only bind what's passed)
   // ==========================================================================
   if (props.variant && props.variant !== 'default') {
-    // Variant colors - create deriveds that track theme changes
-    const variantFg = derived(() => getVariantStyle(props.variant!).fg)
-    const variantBg = derived(() => getVariantStyle(props.variant!).bg)
-    const variantBorder = derived(() => getVariantStyle(props.variant!).border)
-    visual.fgColor[index] = bind(props.fg ?? variantFg)
-    visual.bgColor[index] = bind(props.bg ?? variantBg)
-    visual.borderColor[index] = bind(props.borderColor ?? variantBorder)
+    // Variant colors - inline bindings that read theme at read time (no deriveds!)
+    const variant = props.variant
+    if (props.fg !== undefined) {
+      visual.fgColor[index] = bind(props.fg)
+    } else {
+      visual.fgColor[index] = {
+        [BINDING_SYMBOL]: true,
+        get value() { return getVariantStyle(variant).fg },
+        set value(_) {},
+      } as any
+    }
+    if (props.bg !== undefined) {
+      visual.bgColor[index] = bind(props.bg)
+    } else {
+      visual.bgColor[index] = {
+        [BINDING_SYMBOL]: true,
+        get value() { return getVariantStyle(variant).bg },
+        set value(_) {},
+      } as any
+    }
+    if (props.borderColor !== undefined) {
+      visual.borderColor[index] = bind(props.borderColor)
+    } else {
+      visual.borderColor[index] = {
+        [BINDING_SYMBOL]: true,
+        get value() { return getVariantStyle(variant).border },
+        set value(_) {},
+      } as any
+    }
   } else {
     // Direct colors - only bind if passed
     if (props.fg !== undefined) visual.fgColor[index] = bind(props.fg)

@@ -15,7 +15,7 @@
  * Overflow: 0=visible, 1=hidden, 2=scroll
  */
 
-import { bind, type Binding } from '@rlabs-inc/signals'
+import { bind, disconnectBinding, type Binding } from '@rlabs-inc/signals'
 
 // =============================================================================
 // FLEX CONTAINER PROPERTIES
@@ -129,6 +129,27 @@ export function ensureCapacity(index: number): void {
 
 export function clearAtIndex(index: number): void {
   if (index < flexDirection.length) {
+    disconnectBinding(flexDirection[index])
+    disconnectBinding(flexWrap[index])
+    disconnectBinding(justifyContent[index])
+    disconnectBinding(alignItems[index])
+    disconnectBinding(alignContent[index])
+    disconnectBinding(flexGrow[index])
+    disconnectBinding(flexShrink[index])
+    disconnectBinding(flexBasis[index])
+    disconnectBinding(alignSelf[index])
+    disconnectBinding(order[index])
+    disconnectBinding(position[index])
+    disconnectBinding(top[index])
+    disconnectBinding(right[index])
+    disconnectBinding(bottom[index])
+    disconnectBinding(left[index])
+    disconnectBinding(borderTop[index])
+    disconnectBinding(borderRight[index])
+    disconnectBinding(borderBottom[index])
+    disconnectBinding(borderLeft[index])
+    disconnectBinding(zIndex[index])
+    disconnectBinding(overflow[index])
     flexDirection[index] = undefined as any
     flexWrap[index] = undefined as any
     justifyContent[index] = undefined as any
