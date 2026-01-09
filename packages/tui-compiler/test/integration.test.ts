@@ -51,8 +51,8 @@ function compileAndRun(source: string, filename: string = 'Test.tui'): number {
     .replace(/export default function/, 'return function')
 
   // Create and execute - intentional use of Function for testing
-  const createComponent = Function('signal', 'derived', 'bind', 'box', 'text', moduleCode)
-  const Component = createComponent(signal, derived, bind, box, text)
+  const createComponent = Function('signal', 'derived', 'bind', 'unwrap', 'box', 'text', moduleCode)
+  const Component = createComponent(signal, derived, bind, unwrap, box, text)
   Component()
 
   return getAllocatedIndices().size
@@ -153,8 +153,8 @@ describe('Compiler Integration - Conditional Rendering', () => {
       .replace(/import .* from ['"]@rlabs-inc\/tui['"];?\n?/g, '')
       .replace(/export default function/, 'return function')
 
-    const createComponent = Function('signal', 'derived', 'bind', 'box', 'text', moduleCode)
-    const Component = createComponent(signal, derived, bind, box, text)
+    const createComponent = Function('signal', 'derived', 'bind', 'unwrap', 'box', 'text', moduleCode)
+    const Component = createComponent(signal, derived, bind, unwrap, box, text)
     Component()
 
     // Both branches create components (visibility controls which shows)
@@ -186,8 +186,8 @@ describe('Compiler Integration - Loop Rendering', () => {
       .replace(/import .* from ['"]@rlabs-inc\/tui['"];?\n?/g, '')
       .replace(/export default function/, 'return function')
 
-    const createComponent = Function('signal', 'derived', 'bind', 'box', 'text', moduleCode)
-    const Component = createComponent(signal, derived, bind, box, text)
+    const createComponent = Function('signal', 'derived', 'bind', 'unwrap', 'box', 'text', moduleCode)
+    const Component = createComponent(signal, derived, bind, unwrap, box, text)
     Component()
 
     // 3 items = 3 text components
@@ -210,8 +210,8 @@ describe('Compiler Integration - Loop Rendering', () => {
       .replace(/import .* from ['"]@rlabs-inc\/tui['"];?\n?/g, '')
       .replace(/export default function/, 'return function')
 
-    const createComponent = Function('signal', 'derived', 'bind', 'box', 'text', moduleCode)
-    const Component = createComponent(signal, derived, bind, box, text)
+    const createComponent = Function('signal', 'derived', 'bind', 'unwrap', 'box', 'text', moduleCode)
+    const Component = createComponent(signal, derived, bind, unwrap, box, text)
     Component()
 
     expect(getAllocatedIndices().size).toBe(3)
@@ -290,8 +290,8 @@ describe('Compiler Integration - Await (No Effects)', () => {
       .replace(/import .* from ['"]@rlabs-inc\/tui['"];?\n?/g, '')
       .replace(/export default function/, 'return function')
 
-    const createComponent = Function('signal', 'derived', 'bind', 'box', 'text', moduleCode)
-    const Component = createComponent(signal, derived, bind, box, text)
+    const createComponent = Function('signal', 'derived', 'bind', 'unwrap', 'box', 'text', moduleCode)
+    const Component = createComponent(signal, derived, bind, unwrap, box, text)
     Component()
 
     // All 3 branches created (visibility controls which shows)
@@ -350,8 +350,8 @@ describe('Compiler Integration - Complex Components', () => {
       .replace(/import .* from ['"]@rlabs-inc\/tui['"];?\n?/g, '')
       .replace(/export default function/, 'return function')
 
-    const createComponent = Function('signal', 'derived', 'bind', 'box', 'text', moduleCode)
-    const Component = createComponent(signal, derived, bind, box, text)
+    const createComponent = Function('signal', 'derived', 'bind', 'unwrap', 'box', 'text', moduleCode)
+    const Component = createComponent(signal, derived, bind, unwrap, box, text)
     Component()
 
     // 3 text components from the loop

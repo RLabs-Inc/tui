@@ -257,7 +257,9 @@ function transformAttributes(attrs: Attribute[], ctx: TransformContext): string 
         // Only wrap in derived() if it's a computed expression that reads signals
         if (needsDerived(attr.expression)) {
           ctx.imports.signals.add('derived')
-          parts.push(`${attr.name}: derived(() => ${attr.expression})`)
+          ctx.imports.signals.add('unwrap')
+          // Use unwrap() so ternaries returning deriveds (like t.success) get unwrapped
+          parts.push(`${attr.name}: derived(() => unwrap(${attr.expression}))`)
         } else {
           parts.push(`${attr.name}: ${attr.expression}`)
         }

@@ -62,6 +62,7 @@ export function analyzeScript(
   const lines = content.split('\n')
 
   const userImports: string[] = []
+  const userImportedIds = new Set<string>()  // Track what user already imports
   const exports: PropExport[] = []
   const bodyLines: string[] = []
 
@@ -80,6 +81,8 @@ export function analyzeScript(
       } else {
         // Preserve ALL user imports - don't strip anything the user wrote
         userImports.push(line)
+        // Extract identifiers from this import to avoid duplicates in auto-imports
+        extractImportedIds(trimmed, userImportedIds)
       }
       continue
     }
@@ -103,8 +106,9 @@ export function analyzeScript(
   const body = bodyLines.join('\n')
   const usedIdentifiers = analyzeScriptImports(body)
 
-  // Add to import collector
+  // Add to import collector (but skip what user already imports)
   for (const id of usedIdentifiers) {
+    if (userImportedIds.has(id)) continue  // User already imports this
     if (isSignalsPrimitive(id)) {
       imports.signals.add(id)
     } else if (isTuiPrimitive(id)) {
@@ -125,6 +129,40 @@ export function analyzeScript(
 // =============================================================================
 // HELPERS
 // =============================================================================
+
+/**
+ * Extract imported identifiers from an import statement
+ * e.g. "import { t, theme } from '@rlabs-inc/tui'" -> adds 't', 'theme' to set
+ */
+function extractImportedIds(importLine: string, ids: Set<string>): void {
+  // Named imports: import { a, b, c } from '...'
+  const namedMatch = importLine.match(/import\s*\{([^}]+)\}\s*from/)
+  if (namedMatch) {
+    const names = namedMatch[1]!.split(',')
+    for (const name of names) {
+      // Handle "x as y" - take the local name (y)
+      const asMatch = name.trim().match(/(\w+)\s+as\s+(\w+)/)
+      if (asMatch) {
+        ids.add(asMatch[2]!)
+      } else {
+        const clean = name.trim()
+        if (clean) ids.add(clean)
+      }
+    }
+  }
+
+  // Default import: import Foo from '...'
+  const defaultMatch = importLine.match(/import\s+(\w+)\s+from/)
+  if (defaultMatch && !importLine.includes('{')) {
+    ids.add(defaultMatch[1]!)
+  }
+
+  // Namespace import: import * as foo from '...'
+  const namespaceMatch = importLine.match(/import\s*\*\s*as\s+(\w+)\s+from/)
+  if (namespaceMatch) {
+    ids.add(namespaceMatch[1]!)
+  }
+}
 
 function parseExport(line: string): PropExport | null {
   // Match: export let name = default
