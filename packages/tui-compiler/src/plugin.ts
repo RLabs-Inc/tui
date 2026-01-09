@@ -48,12 +48,12 @@ export function createTuiPlugin(options: TuiPluginOptions = {}): BunPlugin {
           // Read source file
           const source = await Bun.file(filePath).text()
 
-          // Compile - use 'tui' as import path (works with bun link)
+          // Compile
           const result = compile(source, {
             filename: filePath,
             dev: options.dev,
             sourcemap: options.sourcemap,
-            tuiImportPath: options.tuiRoot ?? 'tui',  // Default to linked package
+            tuiImportPath: options.tuiRoot,  // Uses @rlabs-inc/tui by default
           })
 
           // Log warnings in dev mode
