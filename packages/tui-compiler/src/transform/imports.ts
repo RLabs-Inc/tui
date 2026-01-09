@@ -155,7 +155,7 @@ export function generateImports(
   options: GenerateImportsOptions = {}
 ): string {
   const signalsPath = options.signalsPath ?? '@rlabs-inc/signals'
-  const tuiPath = options.tuiPath ?? 'tui'  // Default to local package
+  const tuiPath = options.tuiPath ?? '@rlabs-inc/tui'
 
   const lines: string[] = []
 
