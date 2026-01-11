@@ -312,12 +312,11 @@ export function finalizeAppendMode(output: OutputBuffer, height: number): void {
 // =============================================================================
 
 /**
- * Inline renderer matching Ink's log-update approach.
- * Uses our own ansi.ts (zero dependencies).
+ * Inline renderer for non-fullscreen mode.
+ * Uses clearTerminal for reliable rendering without ghost lines.
  */
 export class InlineRenderer {
   private output = new OutputBuffer()
-  private previousLineCount = 0
   private previousOutput = ''
 
   // Cell rendering state (for ANSI optimization)
@@ -327,18 +326,14 @@ export class InlineRenderer {
 
   /**
    * Render a frame buffer for inline mode.
-   * Follows log-update's algorithm:
-   * 1. Build output with trailing newline
-   * 2. eraseLines(previousLineCount) + output
-   * 3. Track new line count
    *
-   * KEY INSIGHT FROM INK:
-   * When content height >= terminal rows, eraseLines can't reach content
-   * that scrolled off the top into scrollback. In this case, use clearTerminal
-   * to wipe everything including scrollback, then redraw.
+   * Uses clearTerminal (clears screen + scrollback) before each render.
+   * This is simpler and more reliable than tracking line counts:
+   * - No ghost lines from eraseLines edge cases
+   * - Once content exceeds terminal height, scrollback is cleared anyway
+   * - The slight overhead of clearing is negligible with fast renders
    */
   render(buffer: FrameBuffer): void {
-    // Build the output string
     const output = this.buildOutput(buffer)
 
     // Skip if output unchanged
@@ -346,26 +341,11 @@ export class InlineRenderer {
       return
     }
 
-    // Get terminal viewport height
-    const terminalRows = process.stdout.rows || 24
-
-    // When content height >= terminal rows, eraseLines can't reach content
-    // that scrolled off into scrollback. Use clearTerminal instead.
-    if (this.previousLineCount >= terminalRows) {
-      this.output.write(ansi.clearTerminal + output)
-    } else {
-      this.output.write(ansi.eraseLines(this.previousLineCount) + output)
-    }
+    // Clear everything and render fresh
+    this.output.write(ansi.clearTerminal + output)
     this.output.flushSync()
 
-    // Track for next render
     this.previousOutput = output
-    // buffer.height + 1 because:
-    // - We output buffer.height lines of content
-    // - Plus a trailing newline that puts cursor on the next line
-    // - eraseLines works from cursor position upward, so we need to erase
-    //   buffer.height lines PLUS the empty line we're currently on
-    this.previousLineCount = buffer.height + 1
   }
 
   /**
@@ -431,10 +411,8 @@ export class InlineRenderer {
    * Clear all rendered content and reset state.
    */
   clear(): void {
-    if (this.previousLineCount > 0) {
-      this.output.write(ansi.eraseLines(this.previousLineCount))
-      this.output.flushSync()
-    }
+    this.output.write(ansi.clearTerminal)
+    this.output.flushSync()
     this.reset()
   }
 
@@ -442,7 +420,6 @@ export class InlineRenderer {
    * Reset the renderer state.
    */
   reset(): void {
-    this.previousLineCount = 0
     this.previousOutput = ''
     this.lastFg = null
     this.lastBg = null

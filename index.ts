@@ -25,7 +25,7 @@ export * from './src/types'
 export * from './src/types/color'
 
 // Signals re-export for convenience
-export { signal, state, derived, effect, bind, signals } from '@rlabs-inc/signals'
+export { signal, state, derived, effect, bind, signals, batch } from '@rlabs-inc/signals'
 
 // Theme
 export {
@@ -45,3 +45,6 @@ export * from './src/renderer'
 
 // Engine (advanced)
 export * from './src/engine'
+
+// Layout (advanced - for debugging)
+export { layoutDerived } from './src/pipeline/layout'

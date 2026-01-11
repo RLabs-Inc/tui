@@ -143,7 +143,7 @@ export async function mount(
 
     // Time layout separately (reading .value triggers computation if needed)
     const layoutStart = Bun.nanoseconds()
-    const _layout = layoutDerived.value
+    const computedLayout = layoutDerived.value
     const layoutNs = Bun.nanoseconds() - layoutStart
 
     // Time buffer computation (layout is cached, so this is just framebuffer)
@@ -179,7 +179,7 @@ export async function mount(
     const bufferMs = bufferNs / 1_000_000
     const renderMs = renderNs / 1_000_000
     const totalMs = totalNs / 1_000_000
-    process.stdout.write(`\x1b]0;TUI | ${mode} | layout: ${layoutMs.toFixed(3)}ms | buffer: ${bufferMs.toFixed(3)}ms | render: ${renderMs.toFixed(3)}ms | total: ${totalMs.toFixed(3)}ms\x07`)
+    process.stdout.write(`\x1b]0;TUI | h:${computedLayout.contentHeight} | layout: ${layoutMs.toFixed(3)}ms | buffer: ${bufferMs.toFixed(3)}ms | render: ${renderMs.toFixed(3)}ms | total: ${totalMs.toFixed(3)}ms\x07`)
     } catch (err) {
       console.error('[TUI] Render effect error:', err)
     }
