@@ -19,9 +19,9 @@ export function getInheritedFg(index: number): RGBA {
   let current: number = index
 
   while (current >= 0) {
-    const fg = unwrap(visual.fgColor[current])
+    const fg = visual.fgColor[current]
     if (fg !== null && fg !== undefined) return fg
-    const parent = unwrap(core.parentIndex[current])
+    const parent = core.parentIndex[current]
     if (parent === undefined || parent < 0) break
     current = parent
   }
@@ -37,9 +37,9 @@ export function getInheritedBg(index: number): RGBA {
   let current: number = index
 
   while (current >= 0) {
-    const bg = unwrap(visual.bgColor[current])
+    const bg = visual.bgColor[current]
     if (bg !== null && bg !== undefined) return bg
-    const parent = unwrap(core.parentIndex[current])
+    const parent = core.parentIndex[current]
     if (parent === undefined || parent < 0) break
     current = parent
   }
@@ -59,11 +59,11 @@ export function getInheritedBorderColor(index: number, side: 'top' | 'right' | '
     left: visual.borderColorLeft,
   }[side]
 
-  const color = unwrap(colorArray[index])
+  const color = colorArray[index]
   if (color !== null && color !== undefined) return color
 
   // Try unified border color
-  const unifiedColor = unwrap(visual.borderColor[index])
+  const unifiedColor = visual.borderColor[index]
   if (unifiedColor !== null && unifiedColor !== undefined) return unifiedColor
 
   // Fall back to foreground color
@@ -80,14 +80,14 @@ export function getBorderColors(index: number): {
   left: RGBA
 } {
   const fg = getInheritedFg(index)
-  const unified = unwrap(visual.borderColor[index])
+  const unified = visual.borderColor[index]
   const fallback = unified ?? fg
 
   return {
-    top: unwrap(visual.borderColorTop[index]) ?? fallback,
-    right: unwrap(visual.borderColorRight[index]) ?? fallback,
-    bottom: unwrap(visual.borderColorBottom[index]) ?? fallback,
-    left: unwrap(visual.borderColorLeft[index]) ?? fallback,
+    top: visual.borderColorTop[index] ?? fallback,
+    right: visual.borderColorRight[index] ?? fallback,
+    bottom: visual.borderColorBottom[index] ?? fallback,
+    left: visual.borderColorLeft[index] ?? fallback,
   }
 }
 
@@ -101,13 +101,13 @@ export function getBorderStyles(index: number): {
   bottom: number
   left: number
 } {
-  const unified = unwrap(visual.borderStyle[index]) || 0
+  const unified = visual.borderStyle[index] || 0
 
   return {
-    top: unwrap(visual.borderTop[index]) || unified,
-    right: unwrap(visual.borderRight[index]) || unified,
-    bottom: unwrap(visual.borderBottom[index]) || unified,
-    left: unwrap(visual.borderLeft[index]) || unified,
+    top: visual.borderTop[index] || unified,
+    right: visual.borderRight[index] || unified,
+    bottom: visual.borderBottom[index] || unified,
+    left: visual.borderLeft[index] || unified,
   }
 }
 
@@ -127,11 +127,11 @@ export function getEffectiveOpacity(index: number): number {
   let current: number | undefined = index
 
   while (current !== undefined && current >= 0) {
-    const nodeOpacity = unwrap(visual.opacity[current])
+    const nodeOpacity = visual.opacity[current]
     if (nodeOpacity !== undefined && nodeOpacity !== 1) {
       opacity *= nodeOpacity
     }
-    current = unwrap(core.parentIndex[current])
+    current = core.parentIndex[current]
   }
 
   return opacity

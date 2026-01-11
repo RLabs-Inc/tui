@@ -16,7 +16,7 @@
  * HitGrid updates are returned as data to be applied by the render effect.
  */
 
-import { derived, unwrap } from '@rlabs-inc/signals'
+import { derived, neverEquals } from '@rlabs-inc/signals'
 import type { FrameBuffer, RGBA } from '../types'
 import { ComponentType } from '../types'
 import { Colors, TERMINAL_DEFAULT, rgbaBlend, rgbaLerp } from '../types/color'
@@ -46,10 +46,10 @@ import {
 // Import arrays
 import * as core from '../engine/arrays/core'
 import * as visual from '../engine/arrays/visual'
-import * as text from '../engine/arrays/text'
-import * as spacing from '../engine/arrays/spacing'
-import * as layout from '../engine/arrays/layout'
-import * as interaction from '../engine/arrays/interaction'
+import *as text from '../engine/arrays/text'
+import *as spacing from '../engine/arrays/spacing'
+import *as layout from '../engine/arrays/layout'
+import *as interaction from '../engine/arrays/interaction'
 
 // Import layout derived
 import { layoutDerived, terminalWidth, terminalHeight, renderMode } from './layout'
@@ -119,10 +119,10 @@ export const frameBufferDerived = derived((): FrameBufferResult => {
 
   for (const i of indices) {
     if (core.componentType[i] === ComponentType.NONE) continue
-    const vis = unwrap(core.visible[i])
+    const vis = core.visible[i]
     if (vis === 0 || vis === false) continue
 
-    const parent = unwrap(core.parentIndex[i]) ?? -1
+    const parent = core.parentIndex[i] ?? -1
     if (parent === -1) {
       rootIndices.push(i)
     } else {
@@ -136,11 +136,11 @@ export const frameBufferDerived = derived((): FrameBufferResult => {
   }
 
   // Sort roots by zIndex
-  rootIndices.sort((a, b) => (unwrap(layout.zIndex[a]) || 0) - (unwrap(layout.zIndex[b]) || 0))
+  rootIndices.sort((a, b) => (layout.zIndex[a] || 0) - (layout.zIndex[b] || 0))
 
   // Sort children by zIndex
   for (const children of childMap.values()) {
-    children.sort((a, b) => (unwrap(layout.zIndex[a]) || 0) - (unwrap(layout.zIndex[b]) || 0))
+    children.sort((a, b) => (layout.zIndex[a] || 0) - (layout.zIndex[b] || 0))
   }
 
   // Render tree recursively
@@ -180,7 +180,7 @@ function renderComponent(
   parentScrollX: number
 ): void {
   // Skip invisible/invalid components
-  const vis = unwrap(core.visible[index])
+  const vis = core.visible[index]
   if (vis === 0 || vis === false) return
   if (core.componentType[index] === ComponentType.NONE) return
 
@@ -239,10 +239,10 @@ function renderComponent(
   }
 
   // Calculate content area (inside borders and padding)
-  const padTop = (unwrap(spacing.paddingTop[index]) || 0) + (hasAnyBorder && borderStyles.top > 0 ? 1 : 0)
-  const padRight = (unwrap(spacing.paddingRight[index]) || 0) + (hasAnyBorder && borderStyles.right > 0 ? 1 : 0)
-  const padBottom = (unwrap(spacing.paddingBottom[index]) || 0) + (hasAnyBorder && borderStyles.bottom > 0 ? 1 : 0)
-  const padLeft = (unwrap(spacing.paddingLeft[index]) || 0) + (hasAnyBorder && borderStyles.left > 0 ? 1 : 0)
+  const padTop = (spacing.paddingTop[index] || 0) + (hasAnyBorder && borderStyles.top > 0 ? 1 : 0)
+  const padRight = (spacing.paddingRight[index] || 0) + (hasAnyBorder && borderStyles.right > 0 ? 1 : 0)
+  const padBottom = (spacing.paddingBottom[index] || 0) + (hasAnyBorder && borderStyles.bottom > 0 ? 1 : 0)
+  const padLeft = (spacing.paddingLeft[index] || 0) + (hasAnyBorder && borderStyles.left > 0 ? 1 : 0)
 
   const contentX = x + padLeft
   const contentY = y + padTop
@@ -292,8 +292,8 @@ function renderComponent(
 
     // Get this component's scroll offset (scrollable comes from layout, offset from interaction)
     const isScrollable = (computedLayout.scrollable[index] ?? 0) === 1
-    const scrollY = isScrollable ? (unwrap(interaction.scrollOffsetY[index]) || 0) : 0
-    const scrollX = isScrollable ? (unwrap(interaction.scrollOffsetX[index]) || 0) : 0
+    const scrollY = isScrollable ? (interaction.scrollOffsetY[index] || 0) : 0
+    const scrollX = isScrollable ? (interaction.scrollOffsetX[index] || 0) : 0
 
     // Accumulated scroll for children
     const childScrollY = parentScrollY + scrollY
@@ -331,13 +331,13 @@ function renderText(
   fg: RGBA,
   clip: ClipRect
 ): void {
+  // Read through slotArray proxy - same pattern as color reads in inheritance.ts
   const rawValue = text.textContent[index]
-  const unwrapped = unwrap(rawValue)
-  const content = unwrapped == null ? '' : String(unwrapped)
+  const content = rawValue == null ? '' : String(rawValue)
   if (!content) return
 
-  const attrs = unwrap(text.textAttrs[index]) || 0
-  const align = unwrap(text.textAlign[index]) || 0
+  const attrs = text.textAttrs[index] || 0
+  const align = text.textAlign[index] || 0
 
   // Word wrap the text
   const lines = wrapText(content, w)
@@ -376,9 +376,9 @@ function renderInput(
   fg: RGBA,
   clip: ClipRect
 ): void {
-  const content = unwrap(text.textContent[index]) || ''
-  const attrs = unwrap(text.textAttrs[index]) || 0
-  const cursorPos = unwrap(interaction.cursorPosition[index]) || 0
+  const content = text.textContent[index] || ''  // SlotArray auto-unwraps
+  const attrs = text.textAttrs[index] || 0
+  const cursorPos = interaction.cursorPosition[index] || 0
 
   if (w <= 0) return
 
@@ -427,7 +427,7 @@ function renderProgress(
   fg: RGBA,
   clip?: ClipRect
 ): void {
-  const valueStr = unwrap(text.textContent[index]) || '0'
+  const valueStr = text.textContent[index] || '0'  // SlotArray auto-unwraps
   const progress = Math.max(0, Math.min(1, parseFloat(valueStr) || 0))
   const filled = Math.round(progress * w)
 
@@ -458,8 +458,8 @@ function renderSelect(
   fg: RGBA,
   clip: ClipRect
 ): void {
-  const content = unwrap(text.textContent[index]) || ''
-  const attrs = unwrap(text.textAttrs[index]) || 0
+  const content = text.textContent[index] || ''  // SlotArray auto-unwraps
+  const attrs = text.textAttrs[index] || 0
 
   // For now, just show current selection
   const displayText = truncateText(content, w - 2) // Leave room for dropdown indicator

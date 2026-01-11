@@ -18,7 +18,7 @@
  * - scrollable/maxScrollX/Y = computed by TITAN (read from layoutDerived)
  */
 
-import { unwrap } from '@rlabs-inc/signals'
+// SlotArray auto-unwraps, no unwrap() needed
 import * as interaction from '../engine/arrays/interaction'
 import { focusedIndex } from '../engine/arrays/interaction'
 import { layoutDerived } from '../pipeline/layout'
@@ -50,8 +50,8 @@ export function isScrollable(index: number): boolean {
 /** Get current scroll offset for a component (user state) */
 export function getScrollOffset(index: number): { x: number; y: number } {
   return {
-    x: unwrap(interaction.scrollOffsetX[index]) ?? 0,
-    y: unwrap(interaction.scrollOffsetY[index]) ?? 0,
+    x: interaction.scrollOffsetX[index] ?? 0,
+    y: interaction.scrollOffsetY[index] ?? 0,
   }
 }
 
@@ -78,12 +78,9 @@ export function setScrollOffset(index: number, x: number, y: number): void {
   const clampedX = Math.max(0, Math.min(x, max.x))
   const clampedY = Math.max(0, Math.min(y, max.y))
 
-  if (interaction.scrollOffsetX[index]) {
-    interaction.scrollOffsetX[index]!.value = clampedX
-  }
-  if (interaction.scrollOffsetY[index]) {
-    interaction.scrollOffsetY[index]!.value = clampedY
-  }
+  // SlotArray uses setValue() for direct value updates
+  interaction.scrollOffsetX.setValue(index, clampedX)
+  interaction.scrollOffsetY.setValue(index, clampedY)
 }
 
 /** Scroll by a delta amount */
@@ -186,6 +183,7 @@ export function getFocusedScrollable(): number {
 export function handleArrowScroll(
   direction: 'up' | 'down' | 'left' | 'right'
 ): boolean {
+  const focused = focusedIndex.value
   const scrollable = getFocusedScrollable()
   if (scrollable < 0) return false
 

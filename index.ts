@@ -9,14 +9,16 @@
 export { mount } from './src/api'
 
 // Primitives - UI building blocks
-export { box, text } from './src/primitives'
+export { box, text, each, show, when } from './src/primitives'
 export type { BoxProps, TextProps, Cleanup } from './src/primitives'
 
 // State modules - Input handling
-export { keyboard } from './src/state/keyboard'
+export { keyboard, lastKey, lastEvent } from './src/state/keyboard'
+export { mouse, hitGrid, lastMouseEvent, mouseX, mouseY, isMouseDown } from './src/state/mouse'
 export { focusManager, focusedIndex } from './src/state/focus'
 export { scroll } from './src/state/scroll'
-export { mouse, hitGrid } from './src/state/mouse'
+export { globalKeys } from './src/state/global-keys'
+export { cursor } from './src/state/cursor'
 
 // Types
 export * from './src/types'

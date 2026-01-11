@@ -15,7 +15,7 @@
  * - Return plain output arrays
  */
 
-import { derived, signal } from '@rlabs-inc/signals'
+import { derived, signal, neverEquals } from '@rlabs-inc/signals'
 import { getAllocatedIndices } from '../../engine/registry'
 import { computeLayoutTitan, resetTitanArrays } from './titan-engine'
 import type { ComputedLayout } from './types'
@@ -87,7 +87,7 @@ export const layoutDerived = derived((): ComputedLayout => {
   // TITAN ENGINE: Read arrays, compute, return.
   // Reactivity tracks dependencies as we read - no manual tracking needed.
   return computeLayoutTitan(tw, th, indices, constrainHeight)
-})
+}, { equals: neverEquals })
 
 // =============================================================================
 // EXPORTS

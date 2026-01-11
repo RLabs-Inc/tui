@@ -206,10 +206,10 @@ export function computeLayoutTitan(
 
   for (const i of indices) {
     // Skip invisible components - they don't participate in layout
-    const vis = unwrap(core.visible[i])
+    const vis = core.visible[i]
     if (vis === 0 || vis === false) continue
 
-    const parent = unwrap(core.parentIndex[i]) ?? -1
+    const parent = core.parentIndex[i] ?? -1
 
     if (parent >= 0 && indices.has(parent)) {
       if (firstChild[parent] === -1) {
@@ -244,32 +244,32 @@ export function computeLayoutTitan(
     const type = core.componentType[i]
 
     if (type === ComponentType.TEXT) {
-      const content = unwrap(text.textContent[i])
+      const content = text.textContent[i]  // SlotArray auto-unwraps & tracks
       // Check for null/undefined, NOT truthiness (0 and '' are valid content!)
       if (content != null) {
         const str = String(content)
 
         if (str.length > 0) {
           // TEXT WRAPPING: Calculate available width for height measurement
-          const parentIdx = unwrap(core.parentIndex[i]) ?? -1
+          const parentIdx = core.parentIndex[i] ?? -1
           let availableW = terminalWidth
 
           if (parentIdx >= 0) {
-            const rawParentW = unwrap(dimensions.width[parentIdx])
+            const rawParentW = dimensions.width[parentIdx]
             const parentExplicitW = typeof rawParentW === 'number' ? rawParentW : 0
             if (parentExplicitW > 0) {
-              const pPadL = unwrap(spacing.paddingLeft[parentIdx]) ?? 0
-              const pPadR = unwrap(spacing.paddingRight[parentIdx]) ?? 0
-              const pBorderStyle = unwrap(visual.borderStyle[parentIdx]) ?? 0
-              const pBorderL = pBorderStyle > 0 || (unwrap(visual.borderLeft[parentIdx]) ?? 0) > 0 ? 1 : 0
-              const pBorderR = pBorderStyle > 0 || (unwrap(visual.borderRight[parentIdx]) ?? 0) > 0 ? 1 : 0
+              const pPadL = spacing.paddingLeft[parentIdx] ?? 0
+              const pPadR = spacing.paddingRight[parentIdx] ?? 0
+              const pBorderStyle = visual.borderStyle[parentIdx] ?? 0
+              const pBorderL = pBorderStyle > 0 || (visual.borderLeft[parentIdx] ?? 0) > 0 ? 1 : 0
+              const pBorderR = pBorderStyle > 0 || (visual.borderRight[parentIdx] ?? 0) > 0 ? 1 : 0
               availableW = Math.max(1, parentExplicitW - pPadL - pPadR - pBorderL - pBorderR)
             }
           }
 
           // CACHE CHECK: Hash text content, compare with cached
           // Only recompute stringWidth/measureTextHeight if content or availableW changed
-          const textHash = Bun.hash(str)
+          const textHash = BigInt(Bun.hash(str))
           if (textHash === cachedTextHash[i] && availableW === cachedAvailW[i]) {
             // Cache hit - reuse cached intrinsics (skip expensive computation!)
             intrinsicW[i] = cachedIntrinsicW[i]!
@@ -290,11 +290,17 @@ export function computeLayoutTitan(
       }
     } else {
       // BOX/Container - calculate intrinsic from children + padding + borders
+      // EXCEPTION: Scrollable containers should have minimal intrinsic height
+      // so they don't force parents to expand - content scrolls instead
+      const overflow = layout.overflow[i] ?? Overflow.VISIBLE
+      const isScrollable = overflow === Overflow.SCROLL || overflow === Overflow.AUTO
+
       let kid = firstChild[i]!
-      if (kid !== -1) {
-        const dir = unwrap(layout.flexDirection[i]) ?? FLEX_COLUMN
+      if (kid !== -1 && !isScrollable) {
+        // Normal containers: intrinsic size includes all children
+        const dir = layout.flexDirection[i] ?? FLEX_COLUMN
         const isRow = dir === FLEX_ROW || dir === FLEX_ROW_REVERSE
-        const gap = unwrap(spacing.gap[i]) ?? 0
+        const gap = spacing.gap[i] ?? 0
 
         let sumMain = 0
         let maxCross = 0
@@ -306,8 +312,8 @@ export function computeLayoutTitan(
           // This ensures children with explicit sizes contribute correctly
           // Note: Percentage dimensions (strings) → 0 for intrinsic calculation
           // They'll be resolved against parent computed size in layout phase
-          const rawKidW = unwrap(dimensions.width[kid])
-          const rawKidH = unwrap(dimensions.height[kid])
+          const rawKidW = dimensions.width[kid]
+          const rawKidH = dimensions.height[kid]
           const kidExplicitW = typeof rawKidW === 'number' ? rawKidW : 0
           const kidExplicitH = typeof rawKidH === 'number' ? rawKidH : 0
           const kidW = kidExplicitW > 0 ? kidExplicitW : intrinsicW[kid]!
@@ -318,11 +324,11 @@ export function computeLayoutTitan(
           // Adding borders here was DOUBLE-COUNTING and inflating contentHeight.
           //
           // OLD CODE (double-counted borders):
-          // const kidBs = unwrap(visual.borderStyle[kid]) ?? 0
-          // const kidBordT = kidBs > 0 || (unwrap(visual.borderTop[kid]) ?? 0) > 0 ? 1 : 0
-          // const kidBordB = kidBs > 0 || (unwrap(visual.borderBottom[kid]) ?? 0) > 0 ? 1 : 0
-          // const kidBordL = kidBs > 0 || (unwrap(visual.borderLeft[kid]) ?? 0) > 0 ? 1 : 0
-          // const kidBordR = kidBs > 0 || (unwrap(visual.borderRight[kid]) ?? 0) > 0 ? 1 : 0
+          // const kidBs = visual.borderStyle[kid] ?? 0
+          // const kidBordT = kidBs > 0 || (visual.borderTop[kid] ?? 0) > 0 ? 1 : 0
+          // const kidBordB = kidBs > 0 || (visual.borderBottom[kid] ?? 0) > 0 ? 1 : 0
+          // const kidBordL = kidBs > 0 || (visual.borderLeft[kid] ?? 0) > 0 ? 1 : 0
+          // const kidBordR = kidBs > 0 || (visual.borderRight[kid] ?? 0) > 0 ? 1 : 0
           // const kidTotalW = kidW + kidBordL + kidBordR
           // const kidTotalH = kidH + kidBordT + kidBordB
 
@@ -339,15 +345,15 @@ export function computeLayoutTitan(
         if (childCount > 0) sumMain -= gap
 
         // Add padding and borders to intrinsic size
-        const padTop = unwrap(spacing.paddingTop[i]) ?? 0
-        const padRight = unwrap(spacing.paddingRight[i]) ?? 0
-        const padBottom = unwrap(spacing.paddingBottom[i]) ?? 0
-        const padLeft = unwrap(spacing.paddingLeft[i]) ?? 0
-        const borderStyle = unwrap(visual.borderStyle[i]) ?? 0
-        const borderT = borderStyle > 0 || (unwrap(visual.borderTop[i]) ?? 0) > 0 ? 1 : 0
-        const borderR = borderStyle > 0 || (unwrap(visual.borderRight[i]) ?? 0) > 0 ? 1 : 0
-        const borderB = borderStyle > 0 || (unwrap(visual.borderBottom[i]) ?? 0) > 0 ? 1 : 0
-        const borderL = borderStyle > 0 || (unwrap(visual.borderLeft[i]) ?? 0) > 0 ? 1 : 0
+        const padTop = spacing.paddingTop[i] ?? 0
+        const padRight = spacing.paddingRight[i] ?? 0
+        const padBottom = spacing.paddingBottom[i] ?? 0
+        const padLeft = spacing.paddingLeft[i] ?? 0
+        const borderStyle = visual.borderStyle[i] ?? 0
+        const borderT = borderStyle > 0 || (visual.borderTop[i] ?? 0) > 0 ? 1 : 0
+        const borderR = borderStyle > 0 || (visual.borderRight[i] ?? 0) > 0 ? 1 : 0
+        const borderB = borderStyle > 0 || (visual.borderBottom[i] ?? 0) > 0 ? 1 : 0
+        const borderL = borderStyle > 0 || (visual.borderLeft[i] ?? 0) > 0 ? 1 : 0
 
         const extraWidth = padLeft + padRight + borderL + borderR
         const extraHeight = padTop + padBottom + borderT + borderB
@@ -359,6 +365,21 @@ export function computeLayoutTitan(
           intrinsicW[i] = maxCross + extraWidth
           intrinsicH[i] = sumMain + extraHeight
         }
+      } else if (isScrollable) {
+        // Scrollable containers: minimal intrinsic size (just padding + borders)
+        // Children will overflow and be scrollable, not force container to expand
+        const padTop = spacing.paddingTop[i] ?? 0
+        const padRight = spacing.paddingRight[i] ?? 0
+        const padBottom = spacing.paddingBottom[i] ?? 0
+        const padLeft = spacing.paddingLeft[i] ?? 0
+        const borderStyle = visual.borderStyle[i] ?? 0
+        const borderT = borderStyle > 0 || (visual.borderTop[i] ?? 0) > 0 ? 1 : 0
+        const borderR = borderStyle > 0 || (visual.borderRight[i] ?? 0) > 0 ? 1 : 0
+        const borderB = borderStyle > 0 || (visual.borderBottom[i] ?? 0) > 0 ? 1 : 0
+        const borderL = borderStyle > 0 || (visual.borderLeft[i] ?? 0) > 0 ? 1 : 0
+
+        intrinsicW[i] = padLeft + padRight + borderL + borderR
+        intrinsicH[i] = padTop + padBottom + borderT + borderB
       }
     }
   }
@@ -381,7 +402,7 @@ export function computeLayoutTitan(
     // Collect flow children
     let kid = firstChild[parent]!
     while (kid !== -1) {
-      if ((unwrap(layout.position[kid]) ?? POS_RELATIVE) !== POS_ABSOLUTE) {
+      if ((layout.position[kid] ?? POS_RELATIVE) !== POS_ABSOLUTE) {
         flowKids.push(kid)
       }
       kid = nextSibling[kid]!
@@ -390,16 +411,16 @@ export function computeLayoutTitan(
     if (flowKids.length === 0) return
 
     // Parent's content area
-    const pPadT = unwrap(spacing.paddingTop[parent]) ?? 0
-    const pPadR = unwrap(spacing.paddingRight[parent]) ?? 0
-    const pPadB = unwrap(spacing.paddingBottom[parent]) ?? 0
-    const pPadL = unwrap(spacing.paddingLeft[parent]) ?? 0
+    const pPadT = spacing.paddingTop[parent] ?? 0
+    const pPadR = spacing.paddingRight[parent] ?? 0
+    const pPadB = spacing.paddingBottom[parent] ?? 0
+    const pPadL = spacing.paddingLeft[parent] ?? 0
 
-    const pBs = unwrap(visual.borderStyle[parent]) ?? 0
-    const pBordT = pBs > 0 || (unwrap(visual.borderTop[parent]) ?? 0) > 0 ? 1 : 0
-    const pBordR = pBs > 0 || (unwrap(visual.borderRight[parent]) ?? 0) > 0 ? 1 : 0
-    const pBordB = pBs > 0 || (unwrap(visual.borderBottom[parent]) ?? 0) > 0 ? 1 : 0
-    const pBordL = pBs > 0 || (unwrap(visual.borderLeft[parent]) ?? 0) > 0 ? 1 : 0
+    const pBs = visual.borderStyle[parent] ?? 0
+    const pBordT = pBs > 0 || (visual.borderTop[parent] ?? 0) > 0 ? 1 : 0
+    const pBordR = pBs > 0 || (visual.borderRight[parent] ?? 0) > 0 ? 1 : 0
+    const pBordB = pBs > 0 || (visual.borderBottom[parent] ?? 0) > 0 ? 1 : 0
+    const pBordL = pBs > 0 || (visual.borderLeft[parent] ?? 0) > 0 ? 1 : 0
 
     const contentX = outX[parent]! + pPadL + pBordL
     const contentY = outY[parent]! + pPadT + pBordT
@@ -407,17 +428,19 @@ export function computeLayoutTitan(
     const contentH = Math.max(0, outH[parent]! - pPadT - pPadB - pBordT - pBordB)
 
     // Flex properties
-    const dir = unwrap(layout.flexDirection[parent]) ?? FLEX_COLUMN
-    const wrap = unwrap(layout.flexWrap[parent]) ?? WRAP_NOWRAP
-    const justify = unwrap(layout.justifyContent[parent]) ?? JUSTIFY_START
-    const alignItems = unwrap(layout.alignItems[parent]) ?? ALIGN_STRETCH
-    const gap = unwrap(spacing.gap[parent]) ?? 0
-    const overflow = unwrap(layout.overflow[parent]) ?? Overflow.VISIBLE
+    const dir = layout.flexDirection[parent] ?? FLEX_COLUMN
+    const wrap = layout.flexWrap[parent] ?? WRAP_NOWRAP
+    const justify = layout.justifyContent[parent] ?? JUSTIFY_START
+    const alignItems = layout.alignItems[parent] ?? ALIGN_STRETCH
+    const gap = spacing.gap[parent] ?? 0
+    const overflow = layout.overflow[parent] ?? Overflow.VISIBLE
 
     const isRow = dir === FLEX_ROW || dir === FLEX_ROW_REVERSE
     const isReverse = dir === FLEX_ROW_REVERSE || dir === FLEX_COLUMN_REVERSE
     // Scrollable containers should NOT shrink children - content scrolls instead
-    const isScrollableParent = overflow === Overflow.SCROLL || overflow === Overflow.AUTO
+    // In fullscreen mode, root boxes (parentIndex === -1) are auto-scrollable
+    const isRoot = (core.parentIndex[parent] ?? -1) < 0
+    const isScrollableParent = overflow === Overflow.SCROLL || overflow === Overflow.AUTO || (isRoot && constrainHeight)
 
     const mainSize = isRow ? contentW : contentH
     const crossSize = isRow ? contentH : contentW
@@ -429,8 +452,8 @@ export function computeLayoutTitan(
 
     for (let fi = 0; fi < flowKids.length; fi++) {
       const fkid = flowKids[fi]!
-      const ew = resolveDim(unwrap(dimensions.width[fkid]), contentW)
-      const eh = resolveDim(unwrap(dimensions.height[fkid]), contentH)
+      const ew = resolveDim(dimensions.width[fkid], contentW)
+      const eh = resolveDim(dimensions.height[fkid], contentH)
       const kidMain = isRow
         ? (ew > 0 ? ew : intrinsicW[fkid]!)
         : (eh > 0 ? eh : intrinsicH[fkid]!)
@@ -464,17 +487,17 @@ export function computeLayoutTitan(
 
       for (let fi = lStart; fi <= lEnd; fi++) {
         const fkid = flowKids[fi]!
-        totalGrow += unwrap(layout.flexGrow[fkid]) ?? 0
-        totalShrink += unwrap(layout.flexShrink[fkid]) ?? 1
+        totalGrow += layout.flexGrow[fkid] ?? 0
+        totalShrink += layout.flexShrink[fkid] ?? 1
       }
 
       for (let fi = lStart; fi <= lEnd; fi++) {
         const fkid = flowKids[fi]!
-        const ew = resolveDim(unwrap(dimensions.width[fkid]), contentW)
-        const eh = resolveDim(unwrap(dimensions.height[fkid]), contentH)
+        const ew = resolveDim(dimensions.width[fkid], contentW)
+        const eh = resolveDim(dimensions.height[fkid], contentH)
 
         // flex-basis takes priority over width/height for main axis size
-        const basis = unwrap(layout.flexBasis[fkid]) ?? 0
+        const basis = layout.flexBasis[fkid] ?? 0
         let kidMain = basis > 0
           ? basis
           : (isRow
@@ -482,17 +505,17 @@ export function computeLayoutTitan(
               : (eh > 0 ? eh : intrinsicH[fkid]!))
 
         if (freeSpace > 0 && totalGrow > 0) {
-          kidMain += ((unwrap(layout.flexGrow[fkid]) ?? 0) / totalGrow) * freeSpace
+          kidMain += ((layout.flexGrow[fkid] ?? 0) / totalGrow) * freeSpace
         } else if (freeSpace < 0 && totalShrink > 0 && !isScrollableParent) {
           // Only shrink if parent is NOT scrollable
           // Scrollable containers let content overflow and scroll instead
-          kidMain += ((unwrap(layout.flexShrink[fkid]) ?? 1) / totalShrink) * freeSpace
+          kidMain += ((layout.flexShrink[fkid] ?? 1) / totalShrink) * freeSpace
         }
         kidMain = Math.max(0, Math.floor(kidMain))
 
         // Apply min/max constraints for main axis
-        const minMain = isRow ? unwrap(dimensions.minWidth[fkid]) : unwrap(dimensions.minHeight[fkid])
-        const maxMain = isRow ? unwrap(dimensions.maxWidth[fkid]) : unwrap(dimensions.maxHeight[fkid])
+        const minMain = isRow ? dimensions.minWidth[fkid] : dimensions.minHeight[fkid]
+        const maxMain = isRow ? dimensions.maxWidth[fkid] : dimensions.maxHeight[fkid]
         kidMain = clampDim(kidMain, minMain, maxMain, isRow ? contentW : contentH)
 
         let kidCross = isRow
@@ -500,8 +523,8 @@ export function computeLayoutTitan(
           : (ew > 0 ? ew : (alignItems === ALIGN_STRETCH ? crossSize / lineCount : intrinsicW[fkid]!))
 
         // Apply min/max constraints for cross axis
-        const minCross = isRow ? unwrap(dimensions.minHeight[fkid]) : unwrap(dimensions.minWidth[fkid])
-        const maxCross = isRow ? unwrap(dimensions.maxHeight[fkid]) : unwrap(dimensions.maxWidth[fkid])
+        const minCross = isRow ? dimensions.minHeight[fkid] : dimensions.minWidth[fkid]
+        const maxCross = isRow ? dimensions.maxHeight[fkid] : dimensions.maxWidth[fkid]
         kidCross = clampDim(Math.max(0, Math.floor(kidCross)), minCross, maxCross, isRow ? contentH : contentW)
 
         itemMain[fkid] = kidMain
@@ -525,8 +548,8 @@ export function computeLayoutTitan(
         const kid = flowKids[fi]!
         // Include margins in line size calculation (CSS box model)
         const mMain = isRow
-          ? (unwrap(spacing.marginLeft[kid]) ?? 0) + (unwrap(spacing.marginRight[kid]) ?? 0)
-          : (unwrap(spacing.marginTop[kid]) ?? 0) + (unwrap(spacing.marginBottom[kid]) ?? 0)
+          ? (spacing.marginLeft[kid] ?? 0) + (spacing.marginRight[kid] ?? 0)
+          : (spacing.marginTop[kid] ?? 0) + (spacing.marginBottom[kid] ?? 0)
         lineMain += itemMain[kid]! + mMain + gap
       }
       lineMain -= gap
@@ -568,16 +591,16 @@ export function computeLayoutTitan(
         const sizeCross = itemCross[fkid]!
 
         // Read margins for CSS-compliant positioning
-        const mTop = unwrap(spacing.marginTop[fkid]) ?? 0
-        const mRight = unwrap(spacing.marginRight[fkid]) ?? 0
-        const mBottom = unwrap(spacing.marginBottom[fkid]) ?? 0
-        const mLeft = unwrap(spacing.marginLeft[fkid]) ?? 0
+        const mTop = spacing.marginTop[fkid] ?? 0
+        const mRight = spacing.marginRight[fkid] ?? 0
+        const mBottom = spacing.marginBottom[fkid] ?? 0
+        const mLeft = spacing.marginLeft[fkid] ?? 0
 
         // align-self overrides parent's align-items for individual items
         // alignSelf: 0=auto, 1=stretch, 2=flex-start, 3=center, 4=flex-end, 5=baseline
         // alignItems: 0=stretch, 1=flex-start, 2=center, 3=flex-end
         // When alignSelf != 0, we subtract 1 to map to alignItems values
-        const selfAlign = unwrap(layout.alignSelf[fkid]) ?? ALIGN_SELF_AUTO
+        const selfAlign = layout.alignSelf[fkid] ?? ALIGN_SELF_AUTO
         const effectiveAlign = selfAlign !== ALIGN_SELF_AUTO ? (selfAlign - 1) : alignItems
 
         let crossPos = crossOffset
@@ -617,7 +640,7 @@ export function computeLayoutTitan(
         // TEXT WRAPPING: Now that we know the width, recalculate height for TEXT
         // This fixes the intrinsicH=1 assumption - text wraps to actual width
         if (core.componentType[fkid] === ComponentType.TEXT) {
-          const content = unwrap(text.textContent[fkid])
+          const content = text.textContent[fkid]  // SlotArray auto-unwraps & tracks
           if (content != null) {
             const str = String(content)
             if (str.length > 0) {
@@ -665,10 +688,10 @@ export function computeLayoutTitan(
   // HELPER: Absolute positioning
   // ─────────────────────────────────────────────────────────────────────────
   function layoutAbsolute(i: number): void {
-    let container = unwrap(core.parentIndex[i]) ?? -1
+    let container = core.parentIndex[i] ?? -1
     while (container >= 0 && indices.has(container)) {
-      if ((unwrap(layout.position[container]) ?? POS_RELATIVE) !== POS_RELATIVE) break
-      container = unwrap(core.parentIndex[container]) ?? -1
+      if ((layout.position[container] ?? POS_RELATIVE) !== POS_RELATIVE) break
+      container = core.parentIndex[container] ?? -1
     }
 
     let containerX = 0, containerY = 0, containerW = outW[0] ?? 80, containerH = outH[0] ?? 24
@@ -680,21 +703,21 @@ export function computeLayoutTitan(
     }
 
     // Resolve dimensions against containing block
-    const ew = resolveDim(unwrap(dimensions.width[i]), containerW)
-    const eh = resolveDim(unwrap(dimensions.height[i]), containerH)
+    const ew = resolveDim(dimensions.width[i], containerW)
+    const eh = resolveDim(dimensions.height[i], containerH)
     let absW = ew > 0 ? ew : intrinsicW[i]!
     let absH = eh > 0 ? eh : intrinsicH[i]!
 
     // Apply min/max constraints
-    absW = clampDim(absW, unwrap(dimensions.minWidth[i]), unwrap(dimensions.maxWidth[i]), containerW)
-    absH = clampDim(absH, unwrap(dimensions.minHeight[i]), unwrap(dimensions.maxHeight[i]), containerH)
+    absW = clampDim(absW, dimensions.minWidth[i], dimensions.maxWidth[i], containerW)
+    absH = clampDim(absH, dimensions.minHeight[i], dimensions.maxHeight[i], containerH)
     outW[i] = absW
     outH[i] = absH
 
-    const t = unwrap(layout.top[i])
-    const r = unwrap(layout.right[i])
-    const b = unwrap(layout.bottom[i])
-    const l = unwrap(layout.left[i])
+    const t = layout.top[i]
+    const r = layout.right[i]
+    const b = layout.bottom[i]
+    const l = layout.left[i]
 
     if (l !== undefined && l !== 0) {
       outX[i] = containerX + l
@@ -724,8 +747,8 @@ export function computeLayoutTitan(
   // Root elements resolve percentage dimensions against terminal size
   for (let ri = 0; ri < rootCount; ri++) {
     const root = bfsQueue[ri]!
-    const rawW = unwrap(dimensions.width[root])
-    const rawH = unwrap(dimensions.height[root])
+    const rawW = dimensions.width[root]
+    const rawH = dimensions.height[root]
     const ew = resolveDim(rawW, terminalWidth)
     const eh = resolveDim(rawH, terminalHeight)
 
@@ -758,7 +781,7 @@ export function computeLayoutTitan(
   // PASS 5: Absolute positioning
   // ─────────────────────────────────────────────────────────────────────────
   for (const i of indices) {
-    if ((unwrap(layout.position[i]) ?? POS_RELATIVE) === POS_ABSOLUTE) {
+    if ((layout.position[i] ?? POS_RELATIVE) === POS_ABSOLUTE) {
       layoutAbsolute(i)
     }
   }

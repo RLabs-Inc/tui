@@ -5,14 +5,15 @@
  * These are fundamental flexbox features now implemented in TITAN.
  */
 
-import '../setup'
 import { signal, effect } from '@rlabs-inc/signals'
-import { box, text, mount } from '../../src'
+import { box, text, mount } from '../../index'
 
+
+const cleanup = await mount(() => {
 // Test min/max constraints
 box({
   width: '100%',
-  height: 20,
+  height: '50%',
   border: 1,
   flexDirection: 'column',
   gap: 1,
@@ -114,5 +115,5 @@ box({
     })
   }
 })
+}, {mode: 'fullscreen'})
 
-mount({ mode: 'fullscreen' })

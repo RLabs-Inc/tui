@@ -4,97 +4,82 @@
  * Margin, padding, and gap values.
  * All values are in terminal cells (integers).
  *
- * CRITICAL: Use regular arrays (NOT state!) to preserve binding getters.
- * state() proxies snapshot getter values, breaking reactivity.
+ * Uses slotArray for stable reactive cells that NEVER get replaced.
  */
 
-import { bind, disconnectBinding, type Binding } from '@rlabs-inc/signals'
+import { slotArray, type SlotArray } from '@rlabs-inc/signals'
 
 // =============================================================================
 // MARGIN - Space outside the component (offsets position in parent)
 // =============================================================================
 
 /** Top margin - adds space above the component (in cells) */
-export const marginTop: Binding<number>[] = []
+export const marginTop: SlotArray<number> = slotArray<number>(0)
 
 /** Right margin - adds space to the right of the component (in cells) */
-export const marginRight: Binding<number>[] = []
+export const marginRight: SlotArray<number> = slotArray<number>(0)
 
 /** Bottom margin - adds space below the component (in cells) */
-export const marginBottom: Binding<number>[] = []
+export const marginBottom: SlotArray<number> = slotArray<number>(0)
 
 /** Left margin - adds space to the left of the component (in cells) */
-export const marginLeft: Binding<number>[] = []
+export const marginLeft: SlotArray<number> = slotArray<number>(0)
 
 // =============================================================================
 // PADDING - Space inside the component (reduces content area)
 // =============================================================================
 
 /** Top padding - pushes content down from top edge (in cells) */
-export const paddingTop: Binding<number>[] = []
+export const paddingTop: SlotArray<number> = slotArray<number>(0)
 
 /** Right padding - pushes content left from right edge (in cells) */
-export const paddingRight: Binding<number>[] = []
+export const paddingRight: SlotArray<number> = slotArray<number>(0)
 
 /** Bottom padding - pushes content up from bottom edge (in cells) */
-export const paddingBottom: Binding<number>[] = []
+export const paddingBottom: SlotArray<number> = slotArray<number>(0)
 
 /** Left padding - pushes content right from left edge (in cells) */
-export const paddingLeft: Binding<number>[] = []
+export const paddingLeft: SlotArray<number> = slotArray<number>(0)
 
 // =============================================================================
 // GAP - Space between flex items (CSS gap property)
 // =============================================================================
 
 /** Gap between flex items in both directions (in cells) */
-export const gap: Binding<number>[] = []
+export const gap: SlotArray<number> = slotArray<number>(0)
 
 /** Row gap - vertical space between wrapped lines (in cells) */
-export const rowGap: Binding<number>[] = []
+export const rowGap: SlotArray<number> = slotArray<number>(0)
 
 /** Column gap - horizontal space between items in a row (in cells) */
-export const columnGap: Binding<number>[] = []
+export const columnGap: SlotArray<number> = slotArray<number>(0)
 
-/** LAZY BINDING: Push undefined, primitives create bindings for used props only */
+/** Ensure capacity for all spacing arrays */
 export function ensureCapacity(index: number): void {
-  while (marginTop.length <= index) {
-    marginTop.push(undefined as any)
-    marginRight.push(undefined as any)
-    marginBottom.push(undefined as any)
-    marginLeft.push(undefined as any)
-    paddingTop.push(undefined as any)
-    paddingRight.push(undefined as any)
-    paddingBottom.push(undefined as any)
-    paddingLeft.push(undefined as any)
-    gap.push(undefined as any)
-    rowGap.push(undefined as any)
-    columnGap.push(undefined as any)
-  }
+  marginTop.ensureCapacity(index)
+  marginRight.ensureCapacity(index)
+  marginBottom.ensureCapacity(index)
+  marginLeft.ensureCapacity(index)
+  paddingTop.ensureCapacity(index)
+  paddingRight.ensureCapacity(index)
+  paddingBottom.ensureCapacity(index)
+  paddingLeft.ensureCapacity(index)
+  gap.ensureCapacity(index)
+  rowGap.ensureCapacity(index)
+  columnGap.ensureCapacity(index)
 }
 
+/** Clear slot at index (reset to default) */
 export function clearAtIndex(index: number): void {
-  if (index < marginTop.length) {
-    disconnectBinding(marginTop[index])
-    disconnectBinding(marginRight[index])
-    disconnectBinding(marginBottom[index])
-    disconnectBinding(marginLeft[index])
-    disconnectBinding(paddingTop[index])
-    disconnectBinding(paddingRight[index])
-    disconnectBinding(paddingBottom[index])
-    disconnectBinding(paddingLeft[index])
-    disconnectBinding(gap[index])
-    disconnectBinding(rowGap[index])
-    disconnectBinding(columnGap[index])
-    marginTop[index] = undefined as any
-    marginRight[index] = undefined as any
-    marginBottom[index] = undefined as any
-    marginLeft[index] = undefined as any
-    paddingTop[index] = undefined as any
-    paddingRight[index] = undefined as any
-    paddingBottom[index] = undefined as any
-    paddingLeft[index] = undefined as any
-    gap[index] = undefined as any
-    rowGap[index] = undefined as any
-    columnGap[index] = undefined as any
-  }
+  marginTop.clear(index)
+  marginRight.clear(index)
+  marginBottom.clear(index)
+  marginLeft.clear(index)
+  paddingTop.clear(index)
+  paddingRight.clear(index)
+  paddingBottom.clear(index)
+  paddingLeft.clear(index)
+  gap.clear(index)
+  rowGap.clear(index)
+  columnGap.clear(index)
 }

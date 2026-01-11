@@ -11,9 +11,45 @@
  * - cursor: Cursor visibility, shape, position
  */
 
-// Keyboard is primary for focus navigation
-export * from './keyboard'
-export * from './mouse'
+// Keyboard - explicit exports to avoid conflicts
+export {
+  keyboard,
+  lastKey,
+  lastEvent,
+  on,
+  onKey,
+  onFocused,
+  cleanupIndex,
+  dispatch as dispatchKeyboard,
+  dispatchFocused,
+  cleanup as cleanupKeyboard,
+} from './keyboard'
+export type { Modifiers, KeyState, KeyboardEvent, KeyHandler } from './keyboard'
+
+// Mouse - explicit exports to avoid conflicts
+export {
+  mouse,
+  hitGrid,
+  lastMouseEvent,
+  mouseX,
+  mouseY,
+  isMouseDown,
+  HitGrid,
+  MouseButton,
+  onMouseDown,
+  onMouseUp,
+  onClick,
+  onScroll,
+  onComponent,
+  resize,
+  clearHitGrid,
+  enableTracking,
+  disableTracking,
+  isTrackingEnabled,
+  dispatch as dispatchMouse,
+  cleanup as cleanupMouse,
+} from './mouse'
+export type { MouseAction, ScrollInfo, MouseEvent, MouseHandlers, MouseHandler } from './mouse'
 // Focus exports - exclude duplicates that are in keyboard
 export {
   focusedIndex,
@@ -36,8 +72,8 @@ export {
 export * from './scroll'
 export * from './cursor'
 
-// Convenient namespace exports
-export { keyboard } from './keyboard'
-export { mouse } from './mouse'
-export { scroll } from './scroll'
-export { cursor } from './cursor'
+// Global keys - all shortcuts wired together
+export { globalKeys } from './global-keys'
+
+// Input - stdin ownership
+export { input } from './input'

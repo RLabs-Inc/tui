@@ -32,8 +32,8 @@ import * as ansi from '../renderer/ansi'
 import { frameBufferDerived } from '../pipeline/frameBuffer'
 import { layoutDerived, terminalWidth, terminalHeight, updateTerminalSize, renderMode } from '../pipeline/layout'
 import { resetRegistry } from '../engine/registry'
-import { hitGrid, clearHitGrid } from '../state/mouse'
-import { keyboard } from '../state/keyboard'
+import { hitGrid, clearHitGrid, mouse } from '../state/mouse'
+import { globalKeys } from '../state/global-keys'
 
 // =============================================================================
 // MOUNT
@@ -87,9 +87,7 @@ export async function mount(
 
   setupSequence.push(ansi.hideCursor)
 
-  if (mouse) {
-    setupSequence.push(ansi.enableMouse)
-  }
+  // Mouse tracking is handled by globalKeys.initialize() via mouse.enableTracking()
 
   if (kittyKeyboard) {
     setupSequence.push(ansi.enableKittyKeyboard)
@@ -101,9 +99,8 @@ export async function mount(
   // Write setup sequence
   process.stdout.write(setupSequence.join(''))
 
-  // Initialize keyboard module (handles stdin, raw mode, input parsing)
-  // Pass cleanup callback for proper shutdown on Ctrl+C
-  keyboard.initialize()
+  // Initialize global input system (stdin, keyboard, mouse, shortcuts)
+  globalKeys.initialize({ enableMouse: mouse })
 
   // Handle resize
   const handleResize = () => {
@@ -127,20 +124,29 @@ export async function mount(
   // Create the component tree
   root()
 
+  // Global error handlers for debugging
+  process.on('uncaughtException', (err) => {
+    console.error('[TUI] Uncaught exception:', err)
+  })
+  process.on('unhandledRejection', (err) => {
+    console.error('[TUI] Unhandled rejection:', err)
+  })
+
   // THE ONE RENDER EFFECT
   // This is where the magic happens - reactive rendering!
   // Side effects (HitGrid) are applied HERE, not in the derived.
   let stopEffect: (() => void) | null = null
 
   stopEffect = effect(() => {
+    try {
     const start = Bun.nanoseconds()
 
     // Time layout separately (reading .value triggers computation if needed)
-    // const layoutStart = Bun.nanoseconds()
-    // const _layout = layoutDerived.value
-    // const layoutNs = Bun.nanoseconds() - layoutStart
+    const layoutStart = Bun.nanoseconds()
+    const _layout = layoutDerived.value
+    const layoutNs = Bun.nanoseconds() - layoutStart
 
-    // Time buffer computation
+    // Time buffer computation (layout is cached, so this is just framebuffer)
     const bufferStart = Bun.nanoseconds()
     const { buffer, hitRegions, terminalSize } = frameBufferDerived.value
     const bufferNs = Bun.nanoseconds() - bufferStart
@@ -169,12 +175,14 @@ export async function mount(
     const totalNs = Bun.nanoseconds() - start
 
     // Show all timing stats in window title
-    // const layoutMs = layoutNs / 1_000_000
+    const layoutMs = layoutNs / 1_000_000
     const bufferMs = bufferNs / 1_000_000
     const renderMs = renderNs / 1_000_000
     const totalMs = totalNs / 1_000_000
-    // process.stdout.write(`\x1b]0;TUI | ${mode} | layout: ${layoutMs.toFixed(3)}ms | buffer: ${bufferMs.toFixed(3)}ms | render: ${renderMs.toFixed(3)}ms | total: ${totalMs.toFixed(3)}ms\x07`)
-    process.stdout.write(`\x1b]0;TUI | ${mode} | buffer: ${bufferMs.toFixed(3)}ms | render: ${renderMs.toFixed(3)}ms | total: ${totalMs.toFixed(3)}ms\x07`)
+    process.stdout.write(`\x1b]0;TUI | ${mode} | layout: ${layoutMs.toFixed(3)}ms | buffer: ${bufferMs.toFixed(3)}ms | render: ${renderMs.toFixed(3)}ms | total: ${totalMs.toFixed(3)}ms\x07`)
+    } catch (err) {
+      console.error('[TUI] Render effect error:', err)
+    }
   })
 
   // Cleanup function
@@ -185,8 +193,8 @@ export async function mount(
       stopEffect = null
     }
 
-    // Cleanup keyboard module (removes stdin listener, restores terminal)
-    keyboard.cleanup()
+    // Cleanup global input system
+    globalKeys.cleanup()
 
     // Remove resize listener
     process.stdout.removeListener('resize', handleResize)
@@ -201,11 +209,7 @@ export async function mount(
       restoreSequence.push(ansi.disableKittyKeyboard)
     }
 
-    if (mouse) {
-      restoreSequence.push(ansi.disableMouse)
-    }
-
-    restoreSequence.push(ansi.showCursor)
+    // Mouse disable and cursor show handled by globalKeys.cleanup()
     restoreSequence.push(ansi.reset)
 
     if (mode === 'fullscreen') {
@@ -218,10 +222,7 @@ export async function mount(
 
     process.stdout.write(restoreSequence.join(''))
 
-    // Disable raw mode
-    if (process.stdin.isTTY) {
-      process.stdin.setRawMode(false)
-    }
+    // Raw mode disabled by globalKeys.cleanup() -> input.cleanup()
 
     // Reset registry for clean slate
     resetRegistry()

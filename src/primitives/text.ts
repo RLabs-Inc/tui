@@ -23,7 +23,7 @@
  * ```
  */
 
-import { bind, BINDING_SYMBOL } from '@rlabs-inc/signals'
+// Using slotArray APIs - no direct signal imports needed
 import { ComponentType, Attr } from '../types'
 import { allocateIndex, releaseIndex, getCurrentParentIndex } from '../engine/registry'
 import { cleanupIndex as cleanupKeyboardListeners } from '../state/keyboard'
@@ -61,31 +61,33 @@ function wrapToNum(wrap: string | undefined): number {
     default: return 1 // wrap
   }
 }
+/** Override alignItems for this item: 0=auto, 1=stretch, 2=flex-start, 3=center, 4=flex-end */
+function alignSelfToNum(alignSelf: string | undefined): number {
+  switch (alignSelf) {
+    case 'auto': return 0
+    case 'stretch': return 1
+    case 'flex-start': return 2
+    case 'center': return 3
+    case 'flex-end': return 4
+    default: return 0
+  }
+}
+
+// bindEnumProp removed - using enumSource instead
 
 /**
- * Create a binding for enum props that converts at read time.
- * No derived needed - reads signal directly and converts inline.
- * This creates dependency directly on user's signal, no intermediate objects.
+ * Create a slot source for enum props - returns getter for reactive, value for static.
+ * For use with slotArray.setSource()
  */
-function bindEnumProp<T extends string>(
+function enumSource<T extends string>(
   prop: T | { value: T } | undefined,
   converter: (val: T | undefined) => number
-): ReturnType<typeof bind<number>> {
-  // If it's reactive (has .value), create binding that converts at read time
+): number | (() => number) {
   if (prop !== undefined && typeof prop === 'object' && prop !== null && 'value' in prop) {
     const reactiveSource = prop as { value: T }
-    return {
-      [BINDING_SYMBOL]: true,
-      get value(): number {
-        return converter(reactiveSource.value)
-      },
-      set value(_: number) {
-        // Enum props are read-only from number side
-      },
-    } as unknown as ReturnType<typeof bind<number>>
+    return () => converter(reactiveSource.value)
   }
-  // Static value - just convert
-  return bind(converter(prop as T | undefined))
+  return converter(prop as T | undefined)
 }
 
 // =============================================================================
@@ -110,55 +112,56 @@ export function text(props: TextProps): Cleanup {
   // CORE - Always needed
   // ==========================================================================
   core.componentType[index] = ComponentType.TEXT
-  core.parentIndex[index] = bind(getCurrentParentIndex())
+  core.parentIndex.setSource(index, getCurrentParentIndex())
 
   // Visible - only bind if passed
   if (props.visible !== undefined) {
-    core.visible[index] = bind(props.visible)
+    core.visible.setSource(index, props.visible)
   }
 
   // ==========================================================================
   // TEXT CONTENT - Always needed (this is a text component!)
+  // Uses setSource() for stable slot tracking (fixes bind() replacement bug)
   // ==========================================================================
-  textArrays.textContent[index] = bind(props.content)
+  textArrays.textContent.setSource(index, props.content)
 
-  // Text styling - only bind if passed
-  if (props.attrs !== undefined) textArrays.textAttrs[index] = bind(props.attrs)
-  if (props.align !== undefined) textArrays.textAlign[index] = bindEnumProp(props.align, alignToNum)
-  if (props.wrap !== undefined) textArrays.textWrap[index] = bindEnumProp(props.wrap, wrapToNum)
+  // Text styling - only set if passed
+  if (props.attrs !== undefined) textArrays.textAttrs.setSource(index, props.attrs)
+  if (props.align !== undefined) textArrays.textAlign.setSource(index, enumSource(props.align, alignToNum))
+  if (props.wrap !== undefined) textArrays.textWrap.setSource(index, enumSource(props.wrap, wrapToNum))
 
   // ==========================================================================
   // DIMENSIONS - Only bind what's passed (TITAN uses ?? 0 for undefined)
   // ==========================================================================
-  if (props.width !== undefined) dimensions.width[index] = bind(props.width)
-  if (props.height !== undefined) dimensions.height[index] = bind(props.height)
-  if (props.minWidth !== undefined) dimensions.minWidth[index] = bind(props.minWidth)
-  if (props.maxWidth !== undefined) dimensions.maxWidth[index] = bind(props.maxWidth)
-  if (props.minHeight !== undefined) dimensions.minHeight[index] = bind(props.minHeight)
-  if (props.maxHeight !== undefined) dimensions.maxHeight[index] = bind(props.maxHeight)
+  if (props.width !== undefined) dimensions.width.setSource(index, props.width)
+  if (props.height !== undefined) dimensions.height.setSource(index, props.height)
+  if (props.minWidth !== undefined) dimensions.minWidth.setSource(index, props.minWidth)
+  if (props.maxWidth !== undefined) dimensions.maxWidth.setSource(index, props.maxWidth)
+  if (props.minHeight !== undefined) dimensions.minHeight.setSource(index, props.minHeight)
+  if (props.maxHeight !== undefined) dimensions.maxHeight.setSource(index, props.maxHeight)
 
   // ==========================================================================
   // PADDING - Shorthand support
   // ==========================================================================
   if (props.padding !== undefined) {
-    spacing.paddingTop[index] = bind(props.paddingTop ?? props.padding)
-    spacing.paddingRight[index] = bind(props.paddingRight ?? props.padding)
-    spacing.paddingBottom[index] = bind(props.paddingBottom ?? props.padding)
-    spacing.paddingLeft[index] = bind(props.paddingLeft ?? props.padding)
+    spacing.paddingTop.setSource(index, props.paddingTop ?? props.padding)
+    spacing.paddingRight.setSource(index, props.paddingRight ?? props.padding)
+    spacing.paddingBottom.setSource(index, props.paddingBottom ?? props.padding)
+    spacing.paddingLeft.setSource(index, props.paddingLeft ?? props.padding)
   } else {
-    if (props.paddingTop !== undefined) spacing.paddingTop[index] = bind(props.paddingTop)
-    if (props.paddingRight !== undefined) spacing.paddingRight[index] = bind(props.paddingRight)
-    if (props.paddingBottom !== undefined) spacing.paddingBottom[index] = bind(props.paddingBottom)
-    if (props.paddingLeft !== undefined) spacing.paddingLeft[index] = bind(props.paddingLeft)
+    if (props.paddingTop !== undefined) spacing.paddingTop.setSource(index, props.paddingTop)
+    if (props.paddingRight !== undefined) spacing.paddingRight.setSource(index, props.paddingRight)
+    if (props.paddingBottom !== undefined) spacing.paddingBottom.setSource(index, props.paddingBottom)
+    if (props.paddingLeft !== undefined) spacing.paddingLeft.setSource(index, props.paddingLeft)
   }
 
   // ==========================================================================
   // FLEX ITEM - Only bind if passed (text can be a flex item)
   // ==========================================================================
-  if (props.grow !== undefined) layout.flexGrow[index] = bind(props.grow)
-  if (props.shrink !== undefined) layout.flexShrink[index] = bind(props.shrink)
-  if (props.flexBasis !== undefined) layout.flexBasis[index] = bind(props.flexBasis)
-  if (props.alignSelf !== undefined) layout.alignSelf[index] = bind(props.alignSelf)
+  if (props.grow !== undefined) layout.flexGrow.setSource(index, props.grow)
+  if (props.shrink !== undefined) layout.flexShrink.setSource(index, props.shrink)
+  if (props.flexBasis !== undefined) layout.flexBasis.setSource(index, props.flexBasis)
+  if (props.alignSelf !== undefined) layout.alignSelf.setSource(index, enumSource(props.alignSelf, alignSelfToNum))
 
   // ==========================================================================
   // VISUAL - Colors with variant support (only bind what's needed)
@@ -167,29 +170,21 @@ export function text(props: TextProps): Cleanup {
     // Variant colors - inline bindings that read theme at read time (no deriveds!)
     const variant = props.variant
     if (props.fg !== undefined) {
-      visual.fgColor[index] = bind(props.fg)
+      visual.fgColor.setSource(index, props.fg)
     } else {
-      visual.fgColor[index] = {
-        [BINDING_SYMBOL]: true,
-        get value() { return getVariantStyle(variant).fg },
-        set value(_) {},
-      } as any
+      visual.fgColor.setSource(index, () => getVariantStyle(variant).fg)
     }
     if (props.bg !== undefined) {
-      visual.bgColor[index] = bind(props.bg)
+      visual.bgColor.setSource(index, props.bg)
     } else {
-      visual.bgColor[index] = {
-        [BINDING_SYMBOL]: true,
-        get value() { return getVariantStyle(variant).bg },
-        set value(_) {},
-      } as any
+      visual.bgColor.setSource(index, () => getVariantStyle(variant).bg)
     }
   } else {
     // Direct colors - only bind if passed
-    if (props.fg !== undefined) visual.fgColor[index] = bind(props.fg)
-    if (props.bg !== undefined) visual.bgColor[index] = bind(props.bg)
+    if (props.fg !== undefined) visual.fgColor.setSource(index, props.fg)
+    if (props.bg !== undefined) visual.bgColor.setSource(index, props.bg)
   }
-  if (props.opacity !== undefined) visual.opacity[index] = bind(props.opacity)
+  if (props.opacity !== undefined) visual.opacity.setSource(index, props.opacity)
 
   // Cleanup function
   return () => {

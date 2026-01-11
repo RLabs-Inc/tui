@@ -137,7 +137,7 @@ export interface BoxProps extends StyleProps, BorderProps, DimensionProps, Spaci
 // TEXT PROPS
 // =============================================================================
 
-export interface TextProps extends StyleProps, DimensionProps, SpacingProps {
+export interface TextProps extends StyleProps, DimensionProps, SpacingProps, LayoutProps {
   /** Text content */
   content: Reactive<string>
   /** Text alignment: 'left' | 'center' | 'right' */

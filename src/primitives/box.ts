@@ -21,7 +21,7 @@
  * ```
  */
 
-import { bind, BINDING_SYMBOL } from '@rlabs-inc/signals'
+// No direct imports from signals - using slotArray APIs
 import { ComponentType } from '../types'
 import {
   allocateIndex,
@@ -113,29 +113,18 @@ function alignSelfToNum(align: string | undefined): number {
 }
 
 /**
- * Create a binding for enum props that converts at read time.
- * No derived needed - reads signal directly and converts inline.
- * This creates dependency directly on user's signal, no intermediate objects.
+ * Create a slot source for enum props - returns getter for reactive, value for static.
+ * For use with slotArray.setSource()
  */
-function bindEnumProp<T extends string>(
+function enumSource<T extends string>(
   prop: T | { value: T } | undefined,
   converter: (val: T | undefined) => number
-): ReturnType<typeof bind<number>> {
-  // If it's reactive (has .value), create binding that converts at read time
+): number | (() => number) {
   if (prop !== undefined && typeof prop === 'object' && prop !== null && 'value' in prop) {
     const reactiveSource = prop as { value: T }
-    return {
-      [BINDING_SYMBOL]: true,
-      get value(): number {
-        return converter(reactiveSource.value)
-      },
-      set value(_: number) {
-        // Enum props are read-only from number side
-      },
-    } as unknown as ReturnType<typeof bind<number>>
+    return () => converter(reactiveSource.value)
   }
-  // Static value - just convert and bind
-  return bind(converter(prop as T | undefined))
+  return converter(prop as T | undefined)
 }
 
 /** Get static boolean for visible prop */
@@ -170,38 +159,38 @@ export function box(props: BoxProps = {}): Cleanup {
   // CORE - Always needed
   // ==========================================================================
   core.componentType[index] = ComponentType.BOX
-  core.parentIndex[index] = bind(getCurrentParentIndex())
+  core.parentIndex.setSource(index, getCurrentParentIndex())
 
   // Visible - only bind if passed (default is visible, handled by TITAN)
   if (props.visible !== undefined) {
-    core.visible[index] = bind(props.visible)
+    core.visible.setSource(index, props.visible)
   }
 
   // ==========================================================================
   // DIMENSIONS - Only bind what's passed (TITAN uses ?? 0 for undefined)
   // ==========================================================================
-  if (props.width !== undefined) dimensions.width[index] = bind(props.width)
-  if (props.height !== undefined) dimensions.height[index] = bind(props.height)
-  if (props.minWidth !== undefined) dimensions.minWidth[index] = bind(props.minWidth)
-  if (props.maxWidth !== undefined) dimensions.maxWidth[index] = bind(props.maxWidth)
-  if (props.minHeight !== undefined) dimensions.minHeight[index] = bind(props.minHeight)
-  if (props.maxHeight !== undefined) dimensions.maxHeight[index] = bind(props.maxHeight)
+  if (props.width !== undefined) dimensions.width.setSource(index, props.width)
+  if (props.height !== undefined) dimensions.height.setSource(index, props.height)
+  if (props.minWidth !== undefined) dimensions.minWidth.setSource(index, props.minWidth)
+  if (props.maxWidth !== undefined) dimensions.maxWidth.setSource(index, props.maxWidth)
+  if (props.minHeight !== undefined) dimensions.minHeight.setSource(index, props.minHeight)
+  if (props.maxHeight !== undefined) dimensions.maxHeight.setSource(index, props.maxHeight)
 
   // ==========================================================================
   // PADDING - Shorthand support: padding sets all 4, individual overrides
   // ==========================================================================
   if (props.padding !== undefined) {
     // Shorthand - set all 4 sides
-    spacing.paddingTop[index] = bind(props.paddingTop ?? props.padding)
-    spacing.paddingRight[index] = bind(props.paddingRight ?? props.padding)
-    spacing.paddingBottom[index] = bind(props.paddingBottom ?? props.padding)
-    spacing.paddingLeft[index] = bind(props.paddingLeft ?? props.padding)
+    spacing.paddingTop.setSource(index, props.paddingTop ?? props.padding)
+    spacing.paddingRight.setSource(index, props.paddingRight ?? props.padding)
+    spacing.paddingBottom.setSource(index, props.paddingBottom ?? props.padding)
+    spacing.paddingLeft.setSource(index, props.paddingLeft ?? props.padding)
   } else {
     // Individual only - bind only what's passed
-    if (props.paddingTop !== undefined) spacing.paddingTop[index] = bind(props.paddingTop)
-    if (props.paddingRight !== undefined) spacing.paddingRight[index] = bind(props.paddingRight)
-    if (props.paddingBottom !== undefined) spacing.paddingBottom[index] = bind(props.paddingBottom)
-    if (props.paddingLeft !== undefined) spacing.paddingLeft[index] = bind(props.paddingLeft)
+    if (props.paddingTop !== undefined) spacing.paddingTop.setSource(index, props.paddingTop)
+    if (props.paddingRight !== undefined) spacing.paddingRight.setSource(index, props.paddingRight)
+    if (props.paddingBottom !== undefined) spacing.paddingBottom.setSource(index, props.paddingBottom)
+    if (props.paddingLeft !== undefined) spacing.paddingLeft.setSource(index, props.paddingLeft)
   }
 
   // ==========================================================================
@@ -209,90 +198,80 @@ export function box(props: BoxProps = {}): Cleanup {
   // ==========================================================================
   if (props.margin !== undefined) {
     // Shorthand - set all 4 sides
-    spacing.marginTop[index] = bind(props.marginTop ?? props.margin)
-    spacing.marginRight[index] = bind(props.marginRight ?? props.margin)
-    spacing.marginBottom[index] = bind(props.marginBottom ?? props.margin)
-    spacing.marginLeft[index] = bind(props.marginLeft ?? props.margin)
+    spacing.marginTop.setSource(index, props.marginTop ?? props.margin)
+    spacing.marginRight.setSource(index, props.marginRight ?? props.margin)
+    spacing.marginBottom.setSource(index, props.marginBottom ?? props.margin)
+    spacing.marginLeft.setSource(index, props.marginLeft ?? props.margin)
   } else {
     // Individual only - bind only what's passed
-    if (props.marginTop !== undefined) spacing.marginTop[index] = bind(props.marginTop)
-    if (props.marginRight !== undefined) spacing.marginRight[index] = bind(props.marginRight)
-    if (props.marginBottom !== undefined) spacing.marginBottom[index] = bind(props.marginBottom)
-    if (props.marginLeft !== undefined) spacing.marginLeft[index] = bind(props.marginLeft)
+    if (props.marginTop !== undefined) spacing.marginTop.setSource(index, props.marginTop)
+    if (props.marginRight !== undefined) spacing.marginRight.setSource(index, props.marginRight)
+    if (props.marginBottom !== undefined) spacing.marginBottom.setSource(index, props.marginBottom)
+    if (props.marginLeft !== undefined) spacing.marginLeft.setSource(index, props.marginLeft)
   }
 
   // Gap - only bind if passed
-  if (props.gap !== undefined) spacing.gap[index] = bind(props.gap)
+  if (props.gap !== undefined) spacing.gap.setSource(index, props.gap)
 
   // ==========================================================================
   // LAYOUT - Only bind what's passed (TITAN uses sensible defaults)
   // ==========================================================================
-  if (props.flexDirection !== undefined) layout.flexDirection[index] = bindEnumProp(props.flexDirection, flexDirectionToNum)
-  if (props.flexWrap !== undefined) layout.flexWrap[index] = bindEnumProp(props.flexWrap, flexWrapToNum)
-  if (props.justifyContent !== undefined) layout.justifyContent[index] = bindEnumProp(props.justifyContent, justifyToNum)
-  if (props.alignItems !== undefined) layout.alignItems[index] = bindEnumProp(props.alignItems, alignToNum)
-  if (props.overflow !== undefined) layout.overflow[index] = bindEnumProp(props.overflow, overflowToNum)
-  if (props.grow !== undefined) layout.flexGrow[index] = bind(props.grow)
-  if (props.shrink !== undefined) layout.flexShrink[index] = bind(props.shrink)
-  if (props.flexBasis !== undefined) layout.flexBasis[index] = bind(props.flexBasis)
-  if (props.zIndex !== undefined) layout.zIndex[index] = bind(props.zIndex)
-  if (props.alignSelf !== undefined) layout.alignSelf[index] = bindEnumProp(props.alignSelf, alignSelfToNum)
+  if (props.flexDirection !== undefined) layout.flexDirection.setSource(index, enumSource(props.flexDirection, flexDirectionToNum))
+  if (props.flexWrap !== undefined) layout.flexWrap.setSource(index, enumSource(props.flexWrap, flexWrapToNum))
+  if (props.justifyContent !== undefined) layout.justifyContent.setSource(index, enumSource(props.justifyContent, justifyToNum))
+  if (props.alignItems !== undefined) layout.alignItems.setSource(index, enumSource(props.alignItems, alignToNum))
+  if (props.overflow !== undefined) layout.overflow.setSource(index, enumSource(props.overflow, overflowToNum))
+  if (props.grow !== undefined) layout.flexGrow.setSource(index, props.grow)
+  if (props.shrink !== undefined) layout.flexShrink.setSource(index, props.shrink)
+  if (props.flexBasis !== undefined) layout.flexBasis.setSource(index, props.flexBasis)
+  if (props.zIndex !== undefined) layout.zIndex.setSource(index, props.zIndex)
+  if (props.alignSelf !== undefined) layout.alignSelf.setSource(index, enumSource(props.alignSelf, alignSelfToNum))
 
   // ==========================================================================
-  // INTERACTION - Only bind if focusable
+  // INTERACTION - Focusable handling
+  // Auto-focusable for overflow:'scroll' (unless explicitly disabled)
   // ==========================================================================
-  if (props.focusable) {
-    interaction.focusable[index] = bind(1)
-    if (props.tabIndex !== undefined) interaction.tabIndex[index] = bind(props.tabIndex)
+  const shouldBeFocusable = props.focusable || (props.overflow === 'scroll' && props.focusable !== false)
+  if (shouldBeFocusable) {
+    interaction.focusable.setSource(index, 1)
+    if (props.tabIndex !== undefined) interaction.tabIndex.setSource(index, props.tabIndex)
   }
 
   // ==========================================================================
   // VISUAL - Colors and borders (only bind what's passed)
   // ==========================================================================
   if (props.variant && props.variant !== 'default') {
-    // Variant colors - inline bindings that read theme at read time (no deriveds!)
+    // Variant colors - use getters that read theme at read time
     const variant = props.variant
     if (props.fg !== undefined) {
-      visual.fgColor[index] = bind(props.fg)
+      visual.fgColor.setSource(index, props.fg)
     } else {
-      visual.fgColor[index] = {
-        [BINDING_SYMBOL]: true,
-        get value() { return getVariantStyle(variant).fg },
-        set value(_) {},
-      } as any
+      visual.fgColor.setSource(index, () => getVariantStyle(variant).fg)
     }
     if (props.bg !== undefined) {
-      visual.bgColor[index] = bind(props.bg)
+      visual.bgColor.setSource(index, props.bg)
     } else {
-      visual.bgColor[index] = {
-        [BINDING_SYMBOL]: true,
-        get value() { return getVariantStyle(variant).bg },
-        set value(_) {},
-      } as any
+      visual.bgColor.setSource(index, () => getVariantStyle(variant).bg)
     }
     if (props.borderColor !== undefined) {
-      visual.borderColor[index] = bind(props.borderColor)
+      visual.borderColor.setSource(index, props.borderColor)
     } else {
-      visual.borderColor[index] = {
-        [BINDING_SYMBOL]: true,
-        get value() { return getVariantStyle(variant).border },
-        set value(_) {},
-      } as any
+      visual.borderColor.setSource(index, () => getVariantStyle(variant).border)
     }
   } else {
     // Direct colors - only bind if passed
-    if (props.fg !== undefined) visual.fgColor[index] = bind(props.fg)
-    if (props.bg !== undefined) visual.bgColor[index] = bind(props.bg)
-    if (props.borderColor !== undefined) visual.borderColor[index] = bind(props.borderColor)
+    if (props.fg !== undefined) visual.fgColor.setSource(index, props.fg)
+    if (props.bg !== undefined) visual.bgColor.setSource(index, props.bg)
+    if (props.borderColor !== undefined) visual.borderColor.setSource(index, props.borderColor)
   }
-  if (props.opacity !== undefined) visual.opacity[index] = bind(props.opacity)
+  if (props.opacity !== undefined) visual.opacity.setSource(index, props.opacity)
 
   // Border style - shorthand and individual
-  if (props.border !== undefined) visual.borderStyle[index] = bind(props.border)
-  if (props.borderTop !== undefined) visual.borderTop[index] = bind(props.borderTop)
-  if (props.borderRight !== undefined) visual.borderRight[index] = bind(props.borderRight)
-  if (props.borderBottom !== undefined) visual.borderBottom[index] = bind(props.borderBottom)
-  if (props.borderLeft !== undefined) visual.borderLeft[index] = bind(props.borderLeft)
+  if (props.border !== undefined) visual.borderStyle.setSource(index, props.border)
+  if (props.borderTop !== undefined) visual.borderTop.setSource(index, props.borderTop)
+  if (props.borderRight !== undefined) visual.borderRight.setSource(index, props.borderRight)
+  if (props.borderBottom !== undefined) visual.borderBottom.setSource(index, props.borderBottom)
+  if (props.borderLeft !== undefined) visual.borderLeft.setSource(index, props.borderLeft)
 
   // Render children with this box as parent context
   if (props.children) {

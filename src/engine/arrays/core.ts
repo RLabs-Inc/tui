@@ -8,53 +8,45 @@
  *
  * NOTE: Focus state (focusable, tabIndex) is in interaction.ts
  *
- * CRITICAL: Arrays storing Bindings must be regular arrays (NOT state!)
- * state() proxies snapshot getter values, breaking reactivity.
- * componentType is the exception - it stores values directly, not bindings.
+ * Uses slotArray for stable reactive cells that NEVER get replaced.
+ * componentType is the exception - it stores values directly, not reactively.
  */
 
-import { bind, disconnectBinding, type Binding } from '@rlabs-inc/signals'
+import { slotArray, type SlotArray } from '@rlabs-inc/signals'
 import { ComponentType } from '../../types'
 import type { ComponentTypeValue } from '../../types'
 
-/** Component type (box, text, input, etc.) - stores values directly */
+/** Component type (box, text, input, etc.) - stores values directly (not reactive) */
 export const componentType: ComponentTypeValue[] = []
 
 /** Parent component index (-1 for root) */
-export const parentIndex: Binding<number>[] = []
+export const parentIndex: SlotArray<number> = slotArray<number>(-1)
 
 /** Is component visible (0/false = hidden, 1/true = visible) */
-export const visible: Binding<number | boolean>[] = []
+export const visible: SlotArray<number | boolean> = slotArray<number | boolean>(1)
 
 /** Component ID (for debugging and lookups) */
-export const componentId: Binding<string>[] = []
+export const componentId: SlotArray<string> = slotArray<string>('')
 
 /**
  * Ensure array has capacity for the given index.
  * Called by registry when allocating.
- *
- * LAZY BINDING: We push undefined here, not bindings.
- * Primitives create bindings only for props they actually use.
- * This reduces memory from ~70 bindings/component to ~5-10.
  */
 export function ensureCapacity(index: number): void {
   while (componentType.length <= index) {
     componentType.push(ComponentType.NONE)
-    parentIndex.push(undefined as any)
-    visible.push(undefined as any)
-    componentId.push(undefined as any)
   }
+  parentIndex.ensureCapacity(index)
+  visible.ensureCapacity(index)
+  componentId.ensureCapacity(index)
 }
 
 /** Clear values at index (called when releasing) */
 export function clearAtIndex(index: number): void {
   if (index < componentType.length) {
     componentType[index] = ComponentType.NONE
-    disconnectBinding(parentIndex[index])
-    disconnectBinding(visible[index])
-    disconnectBinding(componentId[index])
-    parentIndex[index] = undefined as any
-    visible[index] = undefined as any
-    componentId[index] = undefined as any
   }
+  parentIndex.clear(index)
+  visible.clear(index)
+  componentId.clear(index)
 }

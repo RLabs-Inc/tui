@@ -4,8 +4,11 @@
  * All component state lives in these parallel arrays.
  * Each array index corresponds to one component.
  *
- * Components write directly to these arrays.
- * Deriveds read from these arrays and RETURN computed values.
+ * Components write directly to these arrays using setSource().
+ * Deriveds read from these arrays directly (no unwrap needed).
+ *
+ * All arrays use slotArray for stable reactive cells that NEVER get replaced.
+ * This fixes the bind() tracking bug where deriveds miss updates.
  *
  * Array categories:
  * - core: Component type, parent, visibility
@@ -25,7 +28,7 @@ export * as visual from './visual'
 export * as text from './text'
 export * as interaction from './interaction'
 
-import { disconnectBinding } from '@rlabs-inc/signals'
+import { type SlotArray } from '@rlabs-inc/signals'
 import * as core from './core'
 import * as dimensions from './dimensions'
 import * as spacing from './spacing'
@@ -62,12 +65,11 @@ export function clearAllAtIndex(index: number): void {
   interaction.clearAtIndex(index)
 }
 
-/** Disconnect all bindings in an array before truncating */
-function disconnectArray(arr: unknown[]): void {
+/** Clear all slots in a SlotArray (slots are stable, just reset to defaults) */
+function clearSlotArray<T>(arr: SlotArray<T>): void {
   for (let i = 0; i < arr.length; i++) {
-    disconnectBinding(arr[i] as any)
+    arr.clear(i)
   }
-  arr.length = 0
 }
 
 /**
@@ -75,92 +77,92 @@ function disconnectArray(arr: unknown[]): void {
  * Called automatically when all components are destroyed (allocatedIndices.size === 0).
  * This is the "reset on zero" cleanup - no manual API needed!
  *
- * IMPORTANT: Disconnects all bindings before truncating to break circular refs.
+ * SlotArrays are stable - we just clear them to defaults.
  */
 export function resetAllArrays(): void {
-  // Core arrays
+  // Core arrays (componentType is plain array, rest are slotArrays)
   core.componentType.length = 0
-  disconnectArray(core.parentIndex)
-  disconnectArray(core.visible)
-  disconnectArray(core.componentId)
+  clearSlotArray(core.parentIndex)
+  clearSlotArray(core.visible)
+  clearSlotArray(core.componentId)
 
-  // Dimension arrays
-  disconnectArray(dimensions.width)
-  disconnectArray(dimensions.height)
-  disconnectArray(dimensions.minWidth)
-  disconnectArray(dimensions.minHeight)
-  disconnectArray(dimensions.maxWidth)
-  disconnectArray(dimensions.maxHeight)
+  // Dimension arrays (all slotArrays)
+  clearSlotArray(dimensions.width)
+  clearSlotArray(dimensions.height)
+  clearSlotArray(dimensions.minWidth)
+  clearSlotArray(dimensions.minHeight)
+  clearSlotArray(dimensions.maxWidth)
+  clearSlotArray(dimensions.maxHeight)
 
-  // Spacing arrays
-  disconnectArray(spacing.marginTop)
-  disconnectArray(spacing.marginRight)
-  disconnectArray(spacing.marginBottom)
-  disconnectArray(spacing.marginLeft)
-  disconnectArray(spacing.paddingTop)
-  disconnectArray(spacing.paddingRight)
-  disconnectArray(spacing.paddingBottom)
-  disconnectArray(spacing.paddingLeft)
-  disconnectArray(spacing.gap)
-  disconnectArray(spacing.rowGap)
-  disconnectArray(spacing.columnGap)
+  // Spacing arrays (all slotArrays)
+  clearSlotArray(spacing.marginTop)
+  clearSlotArray(spacing.marginRight)
+  clearSlotArray(spacing.marginBottom)
+  clearSlotArray(spacing.marginLeft)
+  clearSlotArray(spacing.paddingTop)
+  clearSlotArray(spacing.paddingRight)
+  clearSlotArray(spacing.paddingBottom)
+  clearSlotArray(spacing.paddingLeft)
+  clearSlotArray(spacing.gap)
+  clearSlotArray(spacing.rowGap)
+  clearSlotArray(spacing.columnGap)
 
-  // Layout arrays
-  disconnectArray(layout.flexDirection)
-  disconnectArray(layout.flexWrap)
-  disconnectArray(layout.justifyContent)
-  disconnectArray(layout.alignItems)
-  disconnectArray(layout.alignContent)
-  disconnectArray(layout.flexGrow)
-  disconnectArray(layout.flexShrink)
-  disconnectArray(layout.flexBasis)
-  disconnectArray(layout.alignSelf)
-  disconnectArray(layout.order)
-  disconnectArray(layout.position)
-  disconnectArray(layout.top)
-  disconnectArray(layout.right)
-  disconnectArray(layout.bottom)
-  disconnectArray(layout.left)
-  disconnectArray(layout.borderTop)
-  disconnectArray(layout.borderRight)
-  disconnectArray(layout.borderBottom)
-  disconnectArray(layout.borderLeft)
-  disconnectArray(layout.zIndex)
-  disconnectArray(layout.overflow)
+  // Layout arrays (all slotArrays)
+  clearSlotArray(layout.flexDirection)
+  clearSlotArray(layout.flexWrap)
+  clearSlotArray(layout.justifyContent)
+  clearSlotArray(layout.alignItems)
+  clearSlotArray(layout.alignContent)
+  clearSlotArray(layout.flexGrow)
+  clearSlotArray(layout.flexShrink)
+  clearSlotArray(layout.flexBasis)
+  clearSlotArray(layout.alignSelf)
+  clearSlotArray(layout.order)
+  clearSlotArray(layout.position)
+  clearSlotArray(layout.top)
+  clearSlotArray(layout.right)
+  clearSlotArray(layout.bottom)
+  clearSlotArray(layout.left)
+  clearSlotArray(layout.borderTop)
+  clearSlotArray(layout.borderRight)
+  clearSlotArray(layout.borderBottom)
+  clearSlotArray(layout.borderLeft)
+  clearSlotArray(layout.zIndex)
+  clearSlotArray(layout.overflow)
 
-  // Visual arrays
-  disconnectArray(visual.fgColor)
-  disconnectArray(visual.bgColor)
-  disconnectArray(visual.opacity)
-  disconnectArray(visual.borderStyle)
-  disconnectArray(visual.borderColor)
-  disconnectArray(visual.borderTop)
-  disconnectArray(visual.borderRight)
-  disconnectArray(visual.borderBottom)
-  disconnectArray(visual.borderLeft)
-  disconnectArray(visual.borderColorTop)
-  disconnectArray(visual.borderColorRight)
-  disconnectArray(visual.borderColorBottom)
-  disconnectArray(visual.borderColorLeft)
-  disconnectArray(visual.showFocusRing)
-  disconnectArray(visual.focusRingColor)
+  // Visual arrays (all slotArrays)
+  clearSlotArray(visual.fgColor)
+  clearSlotArray(visual.bgColor)
+  clearSlotArray(visual.opacity)
+  clearSlotArray(visual.borderStyle)
+  clearSlotArray(visual.borderColor)
+  clearSlotArray(visual.borderTop)
+  clearSlotArray(visual.borderRight)
+  clearSlotArray(visual.borderBottom)
+  clearSlotArray(visual.borderLeft)
+  clearSlotArray(visual.borderColorTop)
+  clearSlotArray(visual.borderColorRight)
+  clearSlotArray(visual.borderColorBottom)
+  clearSlotArray(visual.borderColorLeft)
+  clearSlotArray(visual.showFocusRing)
+  clearSlotArray(visual.focusRingColor)
 
-  // Text arrays
-  disconnectArray(text.textContent)
-  disconnectArray(text.textAttrs)
-  disconnectArray(text.textAlign)
-  disconnectArray(text.textWrap)
-  disconnectArray(text.ellipsis)
+  // Text arrays (all slotArrays)
+  clearSlotArray(text.textContent)
+  clearSlotArray(text.textAttrs)
+  clearSlotArray(text.textAlign)
+  clearSlotArray(text.textWrap)
+  clearSlotArray(text.ellipsis)
 
-  // Interaction arrays
-  disconnectArray(interaction.scrollOffsetX)
-  disconnectArray(interaction.scrollOffsetY)
-  disconnectArray(interaction.focusable)
-  disconnectArray(interaction.tabIndex)
-  disconnectArray(interaction.hovered)
-  disconnectArray(interaction.pressed)
-  disconnectArray(interaction.mouseEnabled)
-  disconnectArray(interaction.cursorPosition)
-  disconnectArray(interaction.selectionStart)
-  disconnectArray(interaction.selectionEnd)
+  // Interaction arrays (all slotArrays)
+  clearSlotArray(interaction.scrollOffsetX)
+  clearSlotArray(interaction.scrollOffsetY)
+  clearSlotArray(interaction.focusable)
+  clearSlotArray(interaction.tabIndex)
+  clearSlotArray(interaction.hovered)
+  clearSlotArray(interaction.pressed)
+  clearSlotArray(interaction.mouseEnabled)
+  clearSlotArray(interaction.cursorPosition)
+  clearSlotArray(interaction.selectionStart)
+  clearSlotArray(interaction.selectionEnd)
 }

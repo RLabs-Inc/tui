@@ -36,5 +36,4 @@ export {
   finalizeAppendMode,
 } from './output'
 
-// Input parsing
-export { InputBuffer, type ParsedInput } from './input'
+// Input parsing moved to src/state/input.ts

@@ -65,7 +65,10 @@ export function restoreFocusFromHistory(): boolean {
   while (focusHistory.length > 0) {
     const index = focusHistory.pop()!
     // Check if component is still valid and focusable
-    if (unwrap(focusable[index]) && unwrap(visible[index])) {
+    // Match TITAN's logic: undefined means visible, only 0/false means hidden
+    const isVisible = unwrap(visible[index])
+    const isActuallyVisible = isVisible !== 0 && isVisible !== false
+    if (unwrap(focusable[index]) && isActuallyVisible) {
       focusedIndex.value = index
       return true
     }
@@ -83,7 +86,11 @@ export function getFocusableIndices(): number[] {
   const result: number[] = []
 
   for (const i of indices) {
-    if (unwrap(focusable[i]) && unwrap(visible[i])) {
+    const isFocusable = unwrap(focusable[i])
+    const isVisible = unwrap(visible[i])
+    // Match TITAN's logic: undefined means visible, only 0/false means hidden
+    const isActuallyVisible = isVisible !== 0 && isVisible !== false
+    if (isFocusable && isActuallyVisible) {
       result.push(i)
     }
   }
@@ -141,8 +148,9 @@ function findNextFocusable(fromIndex: number, direction: 1 | -1): number {
 
 /** Move focus to next focusable component */
 export function focusNext(): boolean {
-  const next = findNextFocusable(focusedIndex.value, 1)
-  if (next !== -1 && next !== focusedIndex.value) {
+  const current = focusedIndex.value
+  const next = findNextFocusable(current, 1)
+  if (next !== -1 && next !== current) {
     saveFocusToHistory()
     focusedIndex.value = next
     return true
@@ -163,7 +171,10 @@ export function focusPrevious(): boolean {
 
 /** Focus a specific component by index */
 export function focus(index: number): boolean {
-  if (unwrap(focusable[index]) && unwrap(visible[index])) {
+  // Match TITAN's logic: undefined means visible, only 0/false means hidden
+  const isVisible = unwrap(visible[index])
+  const isActuallyVisible = isVisible !== 0 && isVisible !== false
+  if (unwrap(focusable[index]) && isActuallyVisible) {
     if (focusedIndex.value !== index) {
       saveFocusToHistory()
       focusedIndex.value = index
