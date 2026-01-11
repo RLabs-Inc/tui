@@ -12,6 +12,7 @@
 
 import { ReactiveSet } from '@rlabs-inc/signals'
 import { ensureAllCapacity, clearAllAtIndex, resetAllArrays } from './arrays'
+import { parentIndex as parentIndexArray } from './arrays/core'
 import { resetTitanArrays } from '../pipeline/layout/titan-engine'
 
 // =============================================================================
@@ -101,12 +102,26 @@ export function allocateIndex(id?: string): number {
 
 /**
  * Release an index back to the pool.
+ * Also recursively releases all children!
  *
  * @param index - The index to release.
  */
 export function releaseIndex(index: number): void {
   const id = indexToId.get(index)
   if (id === undefined) return
+
+  // FIRST: Find and release all children (recursive!)
+  // We collect children first to avoid modifying while iterating
+  const children: number[] = []
+  for (const childIndex of allocatedIndices) {
+    if (parentIndexArray[childIndex] === index) {
+      children.push(childIndex)
+    }
+  }
+  // Release children recursively
+  for (const childIndex of children) {
+    releaseIndex(childIndex)
+  }
 
   // Clean up mappings
   idToIndex.delete(id)
