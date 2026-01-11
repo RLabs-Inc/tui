@@ -332,11 +332,16 @@ export function computeLayoutTitan(
           // const kidTotalW = kidW + kidBordL + kidBordR
           // const kidTotalH = kidH + kidBordT + kidBordB
 
+          // Include child margins in intrinsic size (matches layout pass behavior)
+          const kidMarginMain = isRow
+            ? (spacing.marginLeft[kid] ?? 0) + (spacing.marginRight[kid] ?? 0)
+            : (spacing.marginTop[kid] ?? 0) + (spacing.marginBottom[kid] ?? 0)
+
           if (isRow) {
-            sumMain += kidW + gap
+            sumMain += kidW + kidMarginMain + gap
             maxCross = Math.max(maxCross, kidH)
           } else {
-            sumMain += kidH + gap
+            sumMain += kidH + kidMarginMain + gap
             maxCross = Math.max(maxCross, kidW)
           }
           kid = nextSibling[kid]!
