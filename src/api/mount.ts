@@ -28,6 +28,7 @@ import {
   DiffRenderer,
   InlineRenderer,
 } from '../renderer/output'
+import { AppendRegionRenderer } from '../renderer/append-region'
 import * as ansi from '../renderer/ansi'
 import { frameBufferDerived } from '../pipeline/frameBuffer'
 import { layoutDerived, terminalWidth, terminalHeight, updateTerminalSize, renderMode } from '../pipeline/layout'
@@ -54,6 +55,7 @@ export async function mount(
     mode = 'fullscreen',
     mouse = true,
     kittyKeyboard = true,
+    getStaticHeight,
   } = options
 
   // Set render mode signal BEFORE creating components
@@ -63,9 +65,10 @@ export async function mount(
   // Create renderer based on mode
   // Fullscreen uses DiffRenderer (absolute positioning)
   // Inline uses InlineRenderer (eraseLines + sequential write)
-  // Append uses DiffRenderer for now (TODO: may need AppendRenderer)
+  // Append uses AppendRegionRenderer (two-region: static + reactive)
   const diffRenderer = new DiffRenderer()
   const inlineRenderer = new InlineRenderer()
+  const appendRegionRenderer = new AppendRegionRenderer()
 
   // Mode-specific state
   let previousHeight = 0  // For append mode: track last rendered height
@@ -167,7 +170,13 @@ export async function mount(
       diffRenderer.render(buffer)
     } else if (mode === 'inline') {
       inlineRenderer.render(buffer)
+    } else if (mode === 'append') {
+      // Append mode: use two-region renderer
+      // staticHeight determined by getStaticHeight callback or defaults to 0
+      const staticHeight = getStaticHeight ? getStaticHeight() : 0
+      appendRegionRenderer.render(buffer, { staticHeight })
     } else {
+      // Fallback to inline for unknown modes
       inlineRenderer.render(buffer)
     }
     const renderNs = Bun.nanoseconds() - renderStart
@@ -195,6 +204,11 @@ export async function mount(
 
     // Cleanup global input system
     globalKeys.cleanup()
+
+    // Cleanup append region renderer if used
+    if (mode === 'append') {
+      appendRegionRenderer.cleanup()
+    }
 
     // Remove resize listener
     process.stdout.removeListener('resize', handleResize)

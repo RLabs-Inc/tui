@@ -28,6 +28,7 @@ import { ComponentType, Attr } from '../types'
 import { allocateIndex, releaseIndex, getCurrentParentIndex } from '../engine/registry'
 import { cleanupIndex as cleanupKeyboardListeners } from '../state/keyboard'
 import { getVariantStyle } from '../state/theme'
+import { getActiveScope } from './scope'
 
 // Import arrays
 import * as core from '../engine/arrays/core'
@@ -187,8 +188,16 @@ export function text(props: TextProps): Cleanup {
   if (props.opacity !== undefined) visual.opacity.setSource(index, props.opacity)
 
   // Cleanup function
-  return () => {
+  const cleanup = () => {
     cleanupKeyboardListeners(index)
     releaseIndex(index)
   }
+
+  // Auto-register with active scope if one exists
+  const scope = getActiveScope()
+  if (scope) {
+    scope.cleanups.push(cleanup)
+  }
+
+  return cleanup
 }

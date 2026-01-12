@@ -9,8 +9,8 @@
 export { mount } from './src/api'
 
 // Primitives - UI building blocks
-export { box, text, each, show, when } from './src/primitives'
-export type { BoxProps, TextProps, Cleanup } from './src/primitives'
+export { box, text, each, show, when, scoped, onCleanup, useAnimation, AnimationFrames } from './src/primitives'
+export type { BoxProps, TextProps, Cleanup, AnimationOptions } from './src/primitives'
 
 // State modules - Input handling
 export { keyboard, lastKey, lastEvent } from './src/state/keyboard'

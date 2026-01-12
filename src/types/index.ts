@@ -282,6 +282,12 @@ export interface MountOptions {
   kittyKeyboard?: boolean
   /** Initial cursor configuration */
   cursor?: Partial<Cursor>
+  /**
+   * For append mode: Function to determine static region height.
+   * Called on each render to decide where to split static/reactive regions.
+   * Return number of lines to freeze into terminal history.
+   */
+  getStaticHeight?: () => number
 }
 
 // =============================================================================

@@ -36,4 +36,7 @@ export {
   finalizeAppendMode,
 } from './output'
 
+// Two-region append renderer
+export { AppendRegionRenderer } from './append-region'
+
 // Input parsing moved to src/state/input.ts

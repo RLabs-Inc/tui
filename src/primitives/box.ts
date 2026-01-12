@@ -32,6 +32,7 @@ import {
 } from '../engine/registry'
 import { cleanupIndex as cleanupKeyboardListeners } from '../state/keyboard'
 import { getVariantStyle } from '../state/theme'
+import { getActiveScope } from './scope'
 
 // Import arrays
 import * as core from '../engine/arrays/core'
@@ -284,8 +285,16 @@ export function box(props: BoxProps = {}): Cleanup {
   }
 
   // Cleanup function
-  return () => {
+  const cleanup = () => {
     cleanupKeyboardListeners(index)  // Remove any focused key handlers
     releaseIndex(index)
   }
+
+  // Auto-register with active scope if one exists
+  const scope = getActiveScope()
+  if (scope) {
+    scope.cleanups.push(cleanup)
+  }
+
+  return cleanup
 }
