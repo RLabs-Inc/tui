@@ -25,7 +25,8 @@ export * from './src/types'
 export * from './src/types/color'
 
 // Signals re-export for convenience
-export { signal, state, derived, effect, bind, signals, batch } from '@rlabs-inc/signals'
+export { signal, state, derived, effect, bind, signals, batch, reactiveProps } from '@rlabs-inc/signals'
+export type { PropInput, PropsInput, ReactiveProps } from '@rlabs-inc/signals'
 
 // Theme
 export {

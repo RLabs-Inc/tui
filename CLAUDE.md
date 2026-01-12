@@ -98,6 +98,39 @@ when(() => fetchData(), {
 
 **Pattern**: All template primitives capture parent context, render synchronously, then use an internal effect for reactive updates. Components inside use normal props (signals/getters work!).
 
+### User Components with reactiveProps
+
+For building reusable components, use `reactiveProps` to normalize any input type (static, getter, signal) to a consistent reactive interface:
+
+```typescript
+import { box, text, reactiveProps, derived } from '@rlabs-inc/tui'
+import type { PropInput, Cleanup } from '@rlabs-inc/tui'
+
+interface MyComponentProps {
+  title: PropInput<string>
+  count: PropInput<number>
+}
+
+function MyComponent(rawProps: MyComponentProps): Cleanup {
+  const props = reactiveProps<{ title: string; count: number }>(rawProps)
+
+  // Everything is now a DerivedSignal - consistent .value access
+  const display = derived(() => `${props.title.value}: ${props.count.value}`)
+
+  return box({
+    children: () => text({ content: display })
+  })
+}
+
+// All of these work:
+MyComponent({ title: 'Score', count: 42 })
+MyComponent({ title: () => getTitle(), count: countSignal })
+```
+
+**Architecture layers**:
+- **Primitives** (box, text): Use `slotArray` internally for parallel arrays
+- **User components**: Use `reactiveProps` for ergonomic prop handling
+
 ## Current State (Jan 2026)
 
 **Done**: TITAN v3 flexbox, box/text primitives, template primitives (each/show/when), all state modules (keyboard, mouse, focus, scroll, theme, cursor)
