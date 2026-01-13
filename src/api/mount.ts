@@ -23,12 +23,13 @@
  */
 
 import { effect } from '@rlabs-inc/signals'
-import type { MountOptions, ResizeEvent } from '../types'
+import type { MountOptions, ResizeEvent, AppendMountResult } from '../types'
 import {
   DiffRenderer,
   InlineRenderer,
 } from '../renderer/output'
 import { AppendRegionRenderer } from '../renderer/append-region'
+import { HistoryWriter, createRenderToHistory } from './history'
 import * as ansi from '../renderer/ansi'
 import { frameBufferDerived } from '../pipeline/frameBuffer'
 import { layoutDerived, terminalWidth, terminalHeight, updateTerminalSize, renderMode } from '../pipeline/layout'
@@ -50,12 +51,11 @@ import { globalKeys } from '../state/global-keys'
 export async function mount(
   root: () => void,
   options: MountOptions = {}
-): Promise<() => Promise<void>> {
+): Promise<(() => Promise<void>) | AppendMountResult> {
   const {
     mode = 'fullscreen',
     mouse = true,
     kittyKeyboard = true,
-    getStaticHeight,
   } = options
 
   // Set render mode signal BEFORE creating components
@@ -65,13 +65,21 @@ export async function mount(
   // Create renderer based on mode
   // Fullscreen uses DiffRenderer (absolute positioning)
   // Inline uses InlineRenderer (eraseLines + sequential write)
-  // Append uses AppendRegionRenderer (two-region: static + reactive)
+  // Append uses AppendRegionRenderer (eraseDown + render active)
   const diffRenderer = new DiffRenderer()
   const inlineRenderer = new InlineRenderer()
   const appendRegionRenderer = new AppendRegionRenderer()
 
+  // For append mode: create history writer and renderToHistory function
+  let historyWriter: HistoryWriter | null = null
+  let renderToHistory: ((componentFn: () => void) => void) | null = null
+
+  if (mode === 'append') {
+    historyWriter = new HistoryWriter()
+    renderToHistory = createRenderToHistory(historyWriter, appendRegionRenderer)
+  }
+
   // Mode-specific state
-  let previousHeight = 0  // For append mode: track last rendered height
   let isFirstRender = true
 
   // Resize handlers (keyboard module handles key/mouse)
@@ -171,10 +179,9 @@ export async function mount(
     } else if (mode === 'inline') {
       inlineRenderer.render(buffer)
     } else if (mode === 'append') {
-      // Append mode: use two-region renderer
-      // staticHeight determined by getStaticHeight callback or defaults to 0
-      const staticHeight = getStaticHeight ? getStaticHeight() : 0
-      appendRegionRenderer.render(buffer, { staticHeight })
+      // Append mode: render active content only
+      // History is written via renderToHistory() by the app
+      appendRegionRenderer.render(buffer)
     } else {
       // Fallback to inline for unknown modes
       inlineRenderer.render(buffer)
@@ -195,7 +202,7 @@ export async function mount(
   })
 
   // Cleanup function
-  return async () => {
+  const cleanup = async () => {
     // Stop the render effect
     if (stopEffect) {
       stopEffect()
@@ -205,9 +212,12 @@ export async function mount(
     // Cleanup global input system
     globalKeys.cleanup()
 
-    // Cleanup append region renderer if used
+    // Cleanup append mode resources
     if (mode === 'append') {
       appendRegionRenderer.cleanup()
+      if (historyWriter) {
+        historyWriter.end()
+      }
     }
 
     // Remove resize listener
@@ -241,5 +251,15 @@ export async function mount(
     // Reset registry for clean slate
     resetRegistry()
   }
+
+  // Return based on mode
+  if (mode === 'append' && renderToHistory) {
+    return {
+      cleanup,
+      renderToHistory,
+    }
+  }
+
+  return cleanup
 }
 

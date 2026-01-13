@@ -272,8 +272,8 @@ export interface MountOptions {
   /**
    * Render mode:
    * - 'fullscreen': Alternate screen buffer, full terminal control
-   * - 'inline': Renders inline, save/restore cursor, updates in place
-   * - 'append': Content flows down, still reactive (can update previous content)
+   * - 'inline': Renders inline, updates in place
+   * - 'append': Active content at bottom, history via renderToHistory()
    */
   mode?: RenderMode
   /** Enable mouse tracking (default: true) */
@@ -282,12 +282,27 @@ export interface MountOptions {
   kittyKeyboard?: boolean
   /** Initial cursor configuration */
   cursor?: Partial<Cursor>
+}
+
+/**
+ * Result of mount() for append mode.
+ * Includes renderToHistory for writing content to terminal history.
+ */
+export interface AppendMountResult {
+  /** Cleanup function to unmount */
+  cleanup: () => Promise<void>
   /**
-   * For append mode: Function to determine static region height.
-   * Called on each render to decide where to split static/reactive regions.
-   * Return number of lines to freeze into terminal history.
+   * Render components to terminal history (frozen scrollback).
+   * Use the same component API - components are rendered once and forgotten.
+   *
+   * @example
+   * ```ts
+   * renderToHistory(() => {
+   *   Message({ content: 'Frozen message' })
+   * })
+   * ```
    */
-  getStaticHeight?: () => number
+  renderToHistory: (componentFn: () => void) => void
 }
 
 // =============================================================================
