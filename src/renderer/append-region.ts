@@ -62,9 +62,9 @@ export class AppendRegionRenderer {
         process.stdout.write(ansi.cursorUp(this.previousHeight))
         process.stdout.write(ansi.eraseDown)
       } else {
-        // Active area exceeded viewport - clear terminal
-        // History that scrolled up is already in scrollback, so this is fine
-        process.stdout.write(ansi.clearTerminal)
+        // Active area exceeded viewport - clear visible screen only
+        // Use clearViewport (not clearTerminal) to preserve scrollback history
+        process.stdout.write(ansi.clearViewport)
       }
     }
 
@@ -92,8 +92,8 @@ export class AppendRegionRenderer {
         process.stdout.write(ansi.cursorUp(this.previousHeight))
         process.stdout.write(ansi.eraseDown)
       } else {
-        // Active area exceeded viewport - clear terminal
-        process.stdout.write(ansi.clearTerminal)
+        // Active area exceeded viewport - clear visible screen only
+        process.stdout.write(ansi.clearViewport)
       }
       this.previousHeight = 0
     }
