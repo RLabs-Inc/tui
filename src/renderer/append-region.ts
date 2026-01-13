@@ -26,6 +26,10 @@ import * as ansi from './ansi'
  * Erases previous active content and renders fresh.
  *
  * Like InlineRenderer but only erases the active area (preserves history).
+ *
+ * OVERFLOW HANDLING:
+ * - If active area fits in viewport: erase only active lines (preserves history)
+ * - If active area exceeds viewport: clear everything (can't partially erase scrollback)
  */
 export class AppendRegionRenderer {
   // Cell rendering state (for ANSI optimization)
@@ -38,18 +42,37 @@ export class AppendRegionRenderer {
 
   /**
    * Render frame buffer as active content.
-   * Erases exactly the previous content, then writes fresh.
+   * Uses sync mode for flicker-free rendering.
+   *
+   * SMART ERASE STRATEGY:
+   * - If previous height <= viewport: erase only active lines (O(1) for history)
+   * - If previous height > viewport: clear terminal (history is in scrollback anyway)
    */
   render(buffer: FrameBuffer): void {
     const output = this.buildOutput(buffer)
+    const viewportHeight = process.stdout.rows || 24
 
-    // Erase previous active content (move up and clear each line)
+    // Begin synchronized output for flicker-free rendering
+    process.stdout.write(ansi.beginSync)
+
+    // Decide erase strategy based on whether content exceeds viewport
     if (this.previousHeight > 0) {
-      process.stdout.write(ansi.eraseLines(this.previousHeight))
+      if (this.previousHeight <= viewportHeight) {
+        // Active area fits in viewport - erase only active lines (preserves history)
+        process.stdout.write(ansi.cursorUp(this.previousHeight))
+        process.stdout.write(ansi.eraseDown)
+      } else {
+        // Active area exceeded viewport - clear terminal
+        // History that scrolled up is already in scrollback, so this is fine
+        process.stdout.write(ansi.clearTerminal)
+      }
     }
 
     // Render active content
     process.stdout.write(output)
+
+    // End synchronized output
+    process.stdout.write(ansi.endSync)
 
     // Track height for next render
     // +1 because buildOutput adds trailing newline which moves cursor down one line
@@ -62,7 +85,16 @@ export class AppendRegionRenderer {
    */
   eraseActive(): void {
     if (this.previousHeight > 0) {
-      process.stdout.write(ansi.eraseLines(this.previousHeight))
+      const viewportHeight = process.stdout.rows || 24
+
+      if (this.previousHeight <= viewportHeight) {
+        // Active area fits in viewport - erase only active lines
+        process.stdout.write(ansi.cursorUp(this.previousHeight))
+        process.stdout.write(ansi.eraseDown)
+      } else {
+        // Active area exceeded viewport - clear terminal
+        process.stdout.write(ansi.clearTerminal)
+      }
       this.previousHeight = 0
     }
   }

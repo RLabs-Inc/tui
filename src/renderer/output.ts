@@ -191,8 +191,8 @@ export class DiffRenderer {
     const prev = this.previousBuffer
     let hasChanges = false
 
-    // NOTE: Synchronized output (CSI?2026h) disabled - was causing row 0 issues
-    // this.output.write(ansi.beginSync)
+    // Begin synchronized output for flicker-free rendering
+    this.output.write(ansi.beginSync)
 
     // Reset cell renderer state at start of frame
     this.cellRenderer.reset()
@@ -341,8 +341,10 @@ export class InlineRenderer {
       return
     }
 
-    // Clear everything and render fresh
+    // Synchronized output: wrap in begin/end sync for flicker-free rendering
+    this.output.write(ansi.beginSync)
     this.output.write(ansi.clearTerminal + output)
+    this.output.write(ansi.endSync)
     this.output.flushSync()
 
     this.previousOutput = output
