@@ -11,6 +11,7 @@
  * - Isolated rendering: creates temporary components, renders, cleans up
  */
 
+import { batch } from '@rlabs-inc/signals'
 import type { FrameBuffer, RGBA } from '../types'
 import { ComponentType } from '../types'
 import { Colors, TERMINAL_DEFAULT } from '../types/color'
@@ -400,50 +401,51 @@ export function createRenderToHistory(
   appendRegionRenderer: { eraseActive: () => void }
 ) {
   return function renderToHistory(componentFn: () => void): void {
-    // STEP 1: Erase the active area first
-    // This clears the screen so history can be written in its place
-    appendRegionRenderer.eraseActive()
+    // CRITICAL: Wrap in batch() to prevent reactive updates during this operation.
+    // Without batch, the ReactiveSet triggers updates when we allocate/release indices,
+    // causing the render effect to run mid-operation and duplicate content.
+    batch(() => {
+      // Save current allocated indices BEFORE creating history components
+      const beforeIndices = new Set(getAllocatedIndices())
 
-    // Save current allocated indices BEFORE creating history components
-    const beforeIndices = new Set(getAllocatedIndices())
+      // Run component function - creates new components
+      componentFn()
 
-    // Run component function - creates new components
-    componentFn()
-
-    // Find NEW indices (ones that didn't exist before)
-    const historyIndices = new Set<number>()
-    for (const idx of getAllocatedIndices()) {
-      if (!beforeIndices.has(idx)) {
-        historyIndices.add(idx)
+      // Find NEW indices (ones that didn't exist before)
+      const historyIndices = new Set<number>()
+      for (const idx of getAllocatedIndices()) {
+        if (!beforeIndices.has(idx)) {
+          historyIndices.add(idx)
+        }
       }
-    }
 
-    if (historyIndices.size === 0) {
-      return
-    }
+      if (historyIndices.size === 0) {
+        return
+      }
 
-    // Get terminal width for layout
-    const tw = terminalWidth.value
-    const th = terminalHeight.value
+      // Get terminal width for layout
+      const tw = terminalWidth.value
+      const th = terminalHeight.value
 
-    // Compute layout for just history components
-    const layoutResult = computeLayoutTitan(tw, th, historyIndices, false)
+      // Compute layout for just history components
+      const layoutResult = computeLayoutTitan(tw, th, historyIndices, false)
 
-    // Build frame buffer for history components
-    const buffer = computeBufferForIndices(historyIndices, layoutResult, tw)
+      // Build frame buffer for history components
+      const buffer = computeBufferForIndices(historyIndices, layoutResult, tw)
 
-    // STEP 2: Convert to ANSI and write to history
-    // This becomes permanent terminal scrollback
-    const output = bufferToAnsi(buffer)
-    historyWriter.write(output)
-    historyWriter.flush()
+      // STEP 2: Convert to ANSI and write to history
+      // This becomes permanent terminal scrollback
+      const output = bufferToAnsi(buffer)
+      historyWriter.write(output)
+      historyWriter.flush()
 
-    // Cleanup: release all history components
-    // Note: This will trigger reactive updates, but the history is already written
-    // The renderer's previousHeight is already 0 from eraseActive(), so next render
-    // will simply render the active area fresh below our history output
-    for (const idx of historyIndices) {
-      releaseIndex(idx)
-    }
+      // Cleanup: release all history components
+      // Batched, so render effect won't run until after release completes.
+      // The renderer's previousHeight is already 0 from eraseActive(), so next render
+      // will simply render the active area fresh below our history output
+      for (const idx of historyIndices) {
+        releaseIndex(idx)
+      }
+    })
   }
 }
