@@ -405,6 +405,10 @@ export function createRenderToHistory(
     // Without batch, the ReactiveSet triggers updates when we allocate/release indices,
     // causing the render effect to run mid-operation and duplicate content.
     batch(() => {
+      // STEP 1: Erase the active area BEFORE doing anything else
+      // This clears the screen so history can be written where the active area was
+      appendRegionRenderer.eraseActive()
+
       // Save current allocated indices BEFORE creating history components
       const beforeIndices = new Set(getAllocatedIndices())
 
