@@ -12,7 +12,6 @@ A blazing-fast, fine-grained reactive terminal UI framework with complete flexbo
 | Updates per second | 41,000+ |
 | Layout (10K components) | 0.66ms |
 | Memory per component | ~500 bytes |
-| Maximum components tested | 1,000,000 |
 
 ## Quick Start
 
