@@ -92,10 +92,27 @@ bun run examples/tests/03-layout-flex.ts
 
 ## Documentation
 
-- [CLAUDE.md](./CLAUDE.md) - Development guide and philosophy
-- [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) - Deep dive into the architecture
-- [docs/API.md](./docs/API.md) - Complete API reference
-- [docs/BIND_PRIMITIVE.md](./docs/BIND_PRIMITIVE.md) - Understanding reactivity
+### Getting Started
+- [Installation](./docs/getting-started/installation.md) - Requirements and setup
+- [Quick Start](./docs/getting-started/quick-start.md) - Hello world in 5 minutes
+- [Core Concepts](./docs/getting-started/concepts.md) - Understand the fundamentals
+- [First App Tutorial](./docs/getting-started/first-app.md) - Build a complete app
+
+### User Guides
+- [Primitives](./docs/guides/primitives/) - box, text, each, show, when
+- [Layout](./docs/guides/layout/flexbox.md) - Flexbox layout system
+- [Styling](./docs/guides/styling/colors.md) - Colors, themes, borders
+- [Reactivity](./docs/guides/reactivity/signals.md) - Signals and reactivity
+- [Patterns](./docs/guides/patterns/component-patterns.md) - Building components
+
+### Reference
+- [API Reference](./docs/api/README.md) - Complete API documentation
+- [Architecture](./docs/contributing/architecture.md) - Deep dive into internals
+- [Examples](./docs/examples/README.md) - 100+ working examples
+
+### Contributing
+- [Development Setup](./docs/contributing/development.md) - Get started contributing
+- [Internals](./docs/contributing/internals/) - Engine deep-dives
 
 ## Primitives
 

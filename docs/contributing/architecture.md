@@ -1,18 +1,14 @@
-# TUI Framework - Architecture
+# Architecture Overview
 
-> Reactive parallel arrays → Derived pipeline → Single render effect
-
----
+> Reactive parallel arrays -> Derived pipeline -> Single render effect
 
 ## Core Philosophy
 
 1. **Parallel Arrays** with `Binding<T>[]` - components write via `bind()`
 2. **Deriveds** compute and RETURN results (pure functions, no mutation)
 3. **One Effect** outputs to terminal (the ONLY side effect)
-4. **No reconciliation** — components write directly to arrays
+4. **No reconciliation** - components write directly to arrays
 5. **TITAN** - Pure TypeScript flexbox engine (no Yoga dependency)
-
----
 
 ## Data Flow
 
@@ -48,7 +44,6 @@
 │   textContent[]:    [null]  ["Hi"]  [null]  ...                            │
 │                                                                             │
 │   Arrays use Binding<T>[] - bind() preserves reactive links                │
-│   Components: width[i] = bind(props.width ?? 0)                            │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
                                       │
@@ -116,9 +111,7 @@
                                [ TERMINAL ]
 ```
 
----
-
-## The Key Insight: Deriveds RETURN Values
+## Key Insight: Deriveds RETURN Values
 
 ```typescript
 // Layout derived - RETURNS computed values, does NOT mutate state
@@ -146,8 +139,6 @@ const frameBufferDerived = derived(() => {
 })
 ```
 
----
-
 ## Input Flow
 
 ```
@@ -174,7 +165,7 @@ const frameBufferDerived = derived(() => {
 │      KEYBOARD STATE            │  │        MOUSE STATE             │
 │                                │  │                                │
 │  lastKey, lastEvent            │  │  HitGrid: Int16Array           │
-│  modifiers: ctrl/alt/shift     │  │  - Maps (x,y) → component index│
+│  modifiers: ctrl/alt/shift     │  │  - Maps (x,y) → component idx │
 │                                │  │  - O(1) hit testing            │
 │  Handlers:                     │  │                                │
 │  - on(handler)                 │  │  Handlers:                     │
@@ -194,8 +185,6 @@ const frameBufferDerived = derived(() => {
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
-
----
 
 ## File Structure
 
@@ -230,7 +219,7 @@ src/
 │       ├── layout.ts            # flex*, position, zIndex, overflow
 │       ├── visual.ts            # colors, borders, opacity
 │       ├── text.ts              # textContent, alignment
-│       └── interaction.ts       # focusable, tabIndex, hovered, pressed
+│       └── interaction.ts       # focusable, tabIndex, hovered
 │
 ├── pipeline/                     # Derived pipeline
 │   ├── layout/
@@ -238,9 +227,12 @@ src/
 │   ├── frameBuffer.ts           # Cell buffer generation
 │   └── render.ts                # THE single render effect
 │
-├── primitives/                   # Components (2 implemented)
+├── primitives/                   # Components
 │   ├── box.ts                   # Container with flexbox
 │   ├── text.ts                  # Text display
+│   ├── each.ts                  # List iteration
+│   ├── show.ts                  # Conditional rendering
+│   ├── when.ts                  # Async rendering
 │   └── types.ts                 # Prop interfaces
 │
 ├── api/
@@ -250,121 +242,6 @@ src/
     └── text.ts                  # stringWidth, wrapping
 ```
 
----
-
-## Parallel Arrays Pattern
-
-```typescript
-// engine/arrays/dimensions.ts
-import type { Binding } from '@rlabs-inc/signals'
-
-// Arrays use Binding<T>[] - NOT state()!
-// bind() preserves reactive links from user signals
-export const width: Binding<number | string>[] = []
-export const height: Binding<number | string>[] = []
-export const minWidth: Binding<number | string>[] = []
-export const maxWidth: Binding<number | string>[] = []
-// ... etc
-```
-
-**CRITICAL**:
-- Use `Binding<T>[]` NOT `state()` for arrays
-- `state()` snapshots getter values, breaking reactivity
-- `bind()` preserves the reactive link to user signals
-- Deriveds read via `unwrap(array[i])` to track dependencies
-
----
-
-## Primitive Pattern
-
-```typescript
-// primitives/box.ts
-import { bind } from '@rlabs-inc/signals'
-
-export function box(props: BoxProps = {}): Cleanup {
-  const index = allocateIndex(props.id)
-
-  // BIND DIRECTLY - preserves reactive link!
-  core.componentType[index] = ComponentType.BOX
-  core.parentIndex[index] = bind(getCurrentParentIndex())
-  core.visible[index] = bind(props.visible ?? true)
-
-  dimensions.width[index] = bind(props.width ?? 0)
-  dimensions.height[index] = bind(props.height ?? 0)
-  // ... etc
-
-  // Children render with this as parent
-  if (props.children) {
-    pushParentContext(index)
-    props.children()
-    popParentContext()
-  }
-
-  return () => releaseIndex(index)
-}
-```
-
----
-
-## TITAN Layout Engine
-
-Pure TypeScript flexbox implementation:
-
-```typescript
-// pipeline/layout/titan-engine.ts
-
-export function computeLayoutTitan(
-  terminalWidth: number,
-  terminalHeight: number,
-  indices: Set<number>
-): LayoutResult {
-  // Build tree from flat arrays
-  const tree = buildLayoutTree(indices)
-
-  // Flexbox algorithm:
-  // 1. Calculate intrinsic sizes (content-based)
-  // 2. Apply min/max constraints
-  // 3. Distribute flex grow/shrink
-  // 4. Handle wrapping
-  // 5. Apply justify-content, align-items
-  // 6. Calculate absolute positions
-
-  return {
-    x: number[],      // Computed X positions
-    y: number[],      // Computed Y positions
-    w: number[],      // Computed widths
-    h: number[],      // Computed heights
-    maxScrollX: number[],
-    maxScrollY: number[],
-  }
-}
-```
-
-**Features**:
-- `flexDirection`: row, column, row-reverse, column-reverse
-- `flexWrap`: nowrap, wrap, wrap-reverse
-- `justifyContent`: flex-start, center, flex-end, space-between, space-around, space-evenly
-- `alignItems` / `alignSelf`: stretch, flex-start, center, flex-end
-- `grow` / `shrink` / `flexBasis`
-- `minWidth`, `maxWidth`, `minHeight`, `maxHeight`
-- Percentage dimensions (`'50%'`, `'100%'`)
-- `overflow: scroll/auto` with automatic scroll detection
-
----
-
-## State Modules
-
-| Module | Purpose |
-|--------|---------|
-| `keyboard` | Key events, `onKey()`, `onFocused()`, lastKey/lastEvent signals |
-| `mouse` | Mouse events, HitGrid (O(1) hit testing), `onComponent()` |
-| `focus` | Tab navigation, focus trapping, focus history |
-| `scroll` | Scroll state, arrow/page/wheel handlers |
-| `theme` | Color palette, variants (primary, secondary, etc.) |
-| `cursor` | Cursor position and visibility for inputs |
-
----
-
 ## Summary
 
 | Aspect | Count/Details |
@@ -373,11 +250,9 @@ export function computeLayoutTitan(
 | State modules | 6 (keyboard, mouse, focus, scroll, theme, cursor) |
 | Derived stages | 2 (layout → frameBuffer) |
 | Effects | 1 (render only) |
-| Primitives | 2 implemented (box, text) |
+| Primitives | 5 (box, text, each, show, when) |
 | Layout engine | TITAN (pure TypeScript flexbox) |
 | Render modes | 3 (fullscreen, inline, append) |
-
----
 
 ## Performance
 
@@ -392,3 +267,10 @@ export function computeLayoutTitan(
 - Fine-grained reactivity (only changed values trigger updates)
 - Differential rendering (only changed cells written)
 - Batched terminal output
+
+## See Also
+
+- [Parallel Arrays](./internals/parallel-arrays.md)
+- [TITAN Engine](./internals/titan-engine.md)
+- [Pipeline](./internals/pipeline.md)
+- [Renderers](./internals/renderers.md)

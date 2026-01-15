@@ -1,8 +1,10 @@
-# Append Mode - Two-Region Rendering
+# Append Mode Guide
 
-Append mode implements a hybrid static/reactive rendering strategy optimized for chat-like interfaces and rich CLIs.
+> Two-region rendering for chat interfaces and growing content
 
 ## Overview
+
+Append mode implements a hybrid static/reactive rendering strategy optimized for chat-like interfaces and rich CLIs.
 
 Traditional TUI rendering has two modes:
 - **Fullscreen**: Fast differential updates, but limited to terminal viewport
@@ -40,16 +42,19 @@ Traditional TUI rendering has two modes:
 ## Benefits
 
 ### Performance
+
 - **Constant-time rendering**: Always renders same number of lines (reactive region only)
 - **Infinite conversations**: Chat history can grow to millions of messages with zero performance impact
 - **Sub-millisecond updates**: Only active content re-renders
 
 ### User Experience
+
 - **Native terminal features**: Scroll, search, copy/paste work on static content
 - **Persistent history**: Content stays in scrollback after app exits
 - **Familiar behavior**: Feels like a CLI, enhanced with TUI interactivity
 
 ### Use Cases
+
 - **Chat interfaces**: Claude Code, ChatGPT CLI, customer support
 - **Log viewers**: Tail logs with interactive filtering
 - **Build tools**: Show completed steps in history, current step interactive
@@ -67,13 +72,33 @@ const cleanup = await mount(() => {
   App()
 }, {
   mode: 'append',
-  mouse: false // Disable mouse for native terminal scroll
+  mouse: false  // Disable mouse for native terminal scroll
 })
 ```
 
-By default, append mode keeps **all content reactive** (staticHeight = 0). This gives you inline-mode behavior but positions you for region splitting.
+By default, append mode keeps **all content reactive** (no static region). This gives you inline-mode behavior but positions you for region splitting.
 
-### With Region Splitting
+### Return Value
+
+In append mode, `mount()` returns an object instead of just a cleanup function:
+
+```typescript
+const { cleanup, renderToHistory } = await mount(() => {
+  App()
+}, {
+  mode: 'append',
+  mouse: false
+})
+
+// renderToHistory: Write static content to history
+// cleanup: Function to unmount the app
+```
+
+## Region Splitting
+
+The power of append mode comes from region splitting - moving completed content to the static region.
+
+### Basic Splitting
 
 Control where the static/reactive boundary is by providing a `getStaticHeight` function:
 
@@ -100,14 +125,14 @@ const cleanup = await mount(() => {
     const messagesToFreeze = Math.max(0, totalMessages - activeMessageCount)
 
     // Convert to line count (you'll need to track this)
-    return messagesToFreeze * 10 // Assuming ~10 lines per message
+    return messagesToFreeze * 10  // Assuming ~10 lines per message
   }
 })
 ```
 
-## Advanced: Layout-Based Splitting
+### Layout-Based Splitting
 
-For precise control, track line counts per message and calculate staticHeight based on layout:
+For precise control, track line counts per message:
 
 ```typescript
 // state/append-mode.ts
@@ -153,7 +178,7 @@ export function updateMessageLayout(id: string, lineCount: number) {
 }
 ```
 
-Then use it:
+Use it in mount:
 
 ```typescript
 import { staticHeight } from './state/append-mode'
@@ -167,14 +192,45 @@ const cleanup = await mount(() => {
 })
 ```
 
-## Implementation Details
+## Using renderToHistory
 
-### AppendRegionRenderer
-
-The `AppendRegionRenderer` class handles two-region rendering:
+The `renderToHistory` function lets you write pre-rendered content directly to the static region:
 
 ```typescript
-export class AppendRegionRenderer {
+const { cleanup, renderToHistory } = await mount(() => {
+  ActiveMessages()
+}, {
+  mode: 'append',
+  mouse: false
+})
+
+// Later, when a message is complete:
+function onMessageComplete(message: Message) {
+  // Render the message to history (static region)
+  renderToHistory(() => {
+    MessageComponent({ message })
+  })
+
+  // Remove from active messages
+  removeFromActive(message.id)
+}
+```
+
+This is useful when you want explicit control over what goes to history.
+
+## Implementation Details
+
+### How It Works
+
+The `AppendRegionRenderer` handles two-region rendering:
+
+1. **Render**: Compute the full frame buffer
+2. **Split**: Divide at `staticHeight` boundary
+3. **Static**: Write new static lines via Bun FileSink (once only)
+4. **Reactive**: Clear and re-render active region
+
+```typescript
+class AppendRegionRenderer {
   render(buffer: FrameBuffer, options: { staticHeight: number }) {
     // Split buffer at staticHeight
     const staticBuffer = extractRegion(buffer, 0, staticHeight)
@@ -193,19 +249,19 @@ export class AppendRegionRenderer {
 }
 ```
 
-### Bun FileSink for Static Region
+### Bun FileSink
 
 The static region uses Bun's `FileSink` API for efficient buffered writes:
 
 ```typescript
-const stdoutFile = Bun.file(1) // stdout is file descriptor 1
+const stdoutFile = Bun.file(1)  // stdout is file descriptor 1
 const writer = stdoutFile.writer({ highWaterMark: 1024 * 1024 })
 
 writer.write("Content that becomes terminal history\n")
 writer.flush()
 ```
 
-### Boundary Management
+### Boundary Tracking
 
 The renderer tracks the boundary between regions:
 
@@ -275,9 +331,29 @@ getStaticHeight: () => {
 }
 ```
 
-## Migration from Inline Mode
+### 5. Consider Message Boundaries
 
-Migrating from inline to append mode is trivial:
+Freeze at message boundaries, not arbitrary line counts:
+
+```typescript
+getStaticHeight: () => {
+  // Find the last complete message boundary
+  let height = 0
+  const freezeCount = Math.max(0, messages.value.length - activeCount)
+
+  for (let i = 0; i < freezeCount; i++) {
+    height += messageLayouts[i].lineCount
+  }
+
+  return height
+}
+```
+
+## Migration from Other Modes
+
+### From Inline Mode
+
+Trivial migration:
 
 ```diff
   const cleanup = await mount(() => {
@@ -289,7 +365,7 @@ Migrating from inline to append mode is trivial:
   })
 ```
 
-Start with no region splitting (default staticHeight = 0), then add splitting when ready:
+Start with no region splitting (default), then add when ready:
 
 ```diff
   const cleanup = await mount(() => {
@@ -301,30 +377,128 @@ Start with no region splitting (default staticHeight = 0), then add splitting wh
   })
 ```
 
+### From Fullscreen Mode
+
+Larger change - app must handle unbounded content:
+
+```typescript
+// Before: Fullscreen (viewport-constrained)
+mount(() => {
+  box({
+    height: '100%',  // Fills viewport
+    overflow: 'scroll',
+    children: () => Messages()
+  })
+}, { mode: 'fullscreen' })
+
+// After: Append (unbounded)
+mount(() => {
+  // No height constraint needed
+  box({
+    children: () => Messages()
+  })
+}, { mode: 'append', mouse: false })
+```
+
 ## Comparison with Other Modes
 
 | Feature | Fullscreen | Inline | Append |
 |---------|-----------|--------|--------|
 | Render Cost | O(changes) | O(content) | O(active) |
-| Terminal Scroll | ✗ (viewport only) | ✓ | ✓ |
-| Mouse Input | ✓ | ✓ | ✗ (native scroll) |
+| Terminal Scroll | No (viewport only) | Yes | Yes |
+| Mouse Input | Yes | Yes | No (native scroll) |
 | Max Content | Viewport size | Unlimited | Unlimited |
-| History Persistence | ✗ | ✗ | ✓ |
+| History Persistence | Yes* | Yes | Yes |
 | Ideal For | Dashboards, Editors | Short content | Chat, Logs, CLIs |
 
-## Examples
+*Fullscreen uses alternate screen buffer, so history is preserved but not added to.
 
-See the `claude-tui` project for a complete implementation:
+## Complete Example
 
-- `/claude-tui/src/state/append-mode.ts` - Region tracking
-- `/claude-tui/index.ts` - Mount configuration
-- `/tui/src/renderer/append-region.ts` - Implementation
+```typescript
+import { mount, box, text, each, signal, derived } from '@rlabs-inc/tui'
+import type { Signal } from '@rlabs-inc/signals'
+
+interface Message {
+  id: string
+  content: string
+  complete: boolean
+}
+
+// State
+const messages: Signal<Message[]> = signal([])
+const isStreaming = signal(false)
+
+// Track message heights for region splitting
+const messageHeights = signal<Record<string, number>>({})
+
+const staticHeight = derived(() => {
+  if (isStreaming.value) return 0
+
+  const msgs = messages.value
+  const heights = messageHeights.value
+  const activeCount = 3
+
+  if (msgs.length <= activeCount) return 0
+
+  let height = 0
+  for (let i = 0; i < msgs.length - activeCount; i++) {
+    const msg = msgs[i]
+    if (msg.complete && heights[msg.id]) {
+      height += heights[msg.id]
+    } else {
+      break  // Stop at first incomplete message
+    }
+  }
+
+  return height
+})
+
+// Chat UI Component
+function ChatUI() {
+  return box({
+    children: () => {
+      each(
+        () => messages.value,
+        (getMessage, key) => {
+          const msg = getMessage()
+          return box({
+            padding: 1,
+            children: () => {
+              text({ content: msg.content })
+              if (!msg.complete) {
+                text({ content: '...', fg: t.textDim })
+              }
+            }
+          })
+        },
+        { key: msg => msg.id }
+      )
+    }
+  })
+}
+
+// Mount
+const { cleanup, renderToHistory } = await mount(() => {
+  ChatUI()
+}, {
+  mode: 'append',
+  mouse: false,
+  getStaticHeight: () => staticHeight.value
+})
+
+// Cleanup on exit
+process.on('SIGINT', async () => {
+  await cleanup()
+  process.exit(0)
+})
+```
 
 ## Future Enhancements
 
 Potential improvements for append mode:
 
-1. **Automatic height tracking**: Framework tracks message line counts
+1. **Automatic height tracking**: Framework tracks component line counts
 2. **Smooth scrolling**: Animate boundary movement
 3. **Lazy unfreezing**: Expand frozen messages on demand
 4. **Compression**: Summarize very old content
@@ -333,9 +507,15 @@ Potential improvements for append mode:
 ## Summary
 
 Append mode enables:
-- ✅ **Infinite content** with constant performance
-- ✅ **Native terminal UX** (scroll, copy, search)
-- ✅ **Rich interactivity** for active content
-- ✅ **CLI-like feel** with TUI enhancements
+- **Infinite content** with constant performance
+- **Native terminal UX** (scroll, copy, search)
+- **Rich interactivity** for active content
+- **CLI-like feel** with TUI enhancements
 
 It's the perfect rendering mode for chat interfaces, log viewers, and any application where content grows over time but only recent content needs interactivity.
+
+## See Also
+
+- [Render Modes Overview](./render-modes.md)
+- [mount() API](../../api/mount.md)
+- [Architecture](../../contributing/architecture.md)

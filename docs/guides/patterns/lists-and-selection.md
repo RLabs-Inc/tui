@@ -1,0 +1,366 @@
+# Lists & Selection Guide
+
+> Interactive lists with each()
+
+## Overview
+
+Building interactive lists with selection is a common pattern. This guide covers:
+
+- Rendering lists with `each()`
+- Tracking selection state
+- Keyboard navigation
+- Visual feedback
+
+## Basic Selectable List
+
+```typescript
+import { signal, derived } from '@rlabs-inc/signals'
+import { box, text, each, keyboard, t } from '@rlabs-inc/tui'
+
+const items = signal(['Apple', 'Banana', 'Cherry', 'Date'])
+const selectedIndex = signal(0)
+
+box({
+  children: () => {
+    each(
+      () => items.value,
+      (getItem, key) => {
+        const index = parseInt(key)
+        const isSelected = derived(() => selectedIndex.value === index)
+
+        return box({
+          bg: derived(() => isSelected.value ? t.surface.value : null),
+          paddingLeft: 1,
+          children: () => {
+            text({
+              content: derived(() => isSelected.value ? '> ' : '  '),
+              fg: t.primary
+            })
+            text({ content: getItem })
+          }
+        })
+      },
+      { key: (_, i) => String(i) }
+    )
+  }
+})
+
+// Navigation
+keyboard.onKey(['ArrowUp', 'k'], () => {
+  if (selectedIndex.value > 0) selectedIndex.value--
+})
+
+keyboard.onKey(['ArrowDown', 'j'], () => {
+  if (selectedIndex.value < items.value.length - 1) selectedIndex.value++
+})
+```
+
+## Using Stable Keys
+
+For object lists, use a stable identifier as key:
+
+```typescript
+interface Task {
+  id: string
+  text: string
+  done: boolean
+}
+
+const tasks = signal<Task[]>([
+  { id: '1', text: 'Learn TUI', done: false },
+  { id: '2', text: 'Build app', done: false },
+])
+
+const selectedId = signal<string | null>('1')
+
+each(
+  () => tasks.value,
+  (getTask, key) => {
+    // key is the task.id - stable across reorders!
+    const isSelected = derived(() => selectedId.value === key)
+
+    return box({
+      bg: derived(() => isSelected.value ? t.surface.value : null),
+      children: () => {
+        text({
+          content: derived(() => getTask().done ? '[x]' : '[ ]')
+        })
+        text({ content: derived(() => getTask().text) })
+      }
+    })
+  },
+  { key: task => task.id }  // Use stable ID
+)
+
+// Selection uses ID, not index
+keyboard.onKey('Enter', () => {
+  const id = selectedId.value
+  if (id) {
+    tasks.value = tasks.value.map(t =>
+      t.id === id ? { ...t, done: !t.done } : t
+    )
+  }
+})
+```
+
+## Multi-Selection
+
+```typescript
+const selectedIds = signal(new Set<string>())
+
+function toggleSelection(id: string) {
+  const newSet = new Set(selectedIds.value)
+  if (newSet.has(id)) {
+    newSet.delete(id)
+  } else {
+    newSet.add(id)
+  }
+  selectedIds.value = newSet
+}
+
+each(
+  () => items.value,
+  (getItem, key) => {
+    const isSelected = derived(() => selectedIds.value.has(key))
+
+    return box({
+      bg: derived(() => isSelected.value ? t.surface.value : null),
+      children: () => {
+        text({
+          content: derived(() => isSelected.value ? '[x]' : '[ ]')
+        })
+        text({ content: getItem })
+      }
+    })
+  },
+  { key: item => item.id }
+)
+
+// Space toggles selection
+keyboard.onKey('Space', () => {
+  toggleSelection(focusedId.value)
+})
+
+// Ctrl+A selects all
+keyboard.on((event) => {
+  if (event.key === 'a' && event.modifiers.ctrl) {
+    selectedIds.value = new Set(items.value.map(i => i.id))
+    return true
+  }
+})
+```
+
+## Scrollable List
+
+```typescript
+const items = signal([...Array(100)].map((_, i) => `Item ${i + 1}`))
+const selectedIndex = signal(0)
+
+box({
+  height: 10,
+  overflow: 'scroll',
+  focusable: true,
+  children: () => {
+    each(
+      () => items.value,
+      (getItem, key) => {
+        const index = parseInt(key)
+        const isSelected = derived(() => selectedIndex.value === index)
+
+        return text({
+          content: derived(() => `${isSelected.value ? '>' : ' '} ${getItem()}`),
+          bg: derived(() => isSelected.value ? t.surface.value : null)
+        })
+      },
+      { key: (_, i) => String(i) }
+    )
+  }
+})
+
+// Keep selection in view
+effect(() => {
+  const selected = selectedIndex.value
+  // scroll.scrollIntoView(...)
+})
+```
+
+## Filtered List
+
+```typescript
+const allItems = signal(['Apple', 'Banana', 'Cherry', 'Date', 'Elderberry'])
+const filter = signal('')
+const selectedIndex = signal(0)
+
+const filteredItems = derived(() =>
+  allItems.value.filter(item =>
+    item.toLowerCase().includes(filter.value.toLowerCase())
+  )
+)
+
+// Reset selection when filter changes
+effect(() => {
+  filter.value  // Track filter
+  selectedIndex.value = 0
+})
+
+box({
+  children: () => {
+    // Search input
+    box({
+      flexDirection: 'row',
+      children: () => {
+        text({ content: 'Search: ', fg: t.textDim })
+        text({ content: filter })
+      }
+    })
+
+    // Results
+    each(
+      () => filteredItems.value,
+      (getItem, key) => {
+        const index = parseInt(key)
+        const isSelected = derived(() => selectedIndex.value === index)
+
+        return text({
+          content: getItem,
+          bg: derived(() => isSelected.value ? t.surface.value : null)
+        })
+      },
+      { key: (_, i) => String(i) }
+    )
+
+    // Empty state
+    show(
+      () => filteredItems.value.length === 0,
+      () => text({ content: 'No matches', fg: t.textDim })
+    )
+  }
+})
+```
+
+## Grouped List
+
+```typescript
+interface GroupedItem {
+  category: string
+  items: string[]
+}
+
+const groups = signal<GroupedItem[]>([
+  { category: 'Fruits', items: ['Apple', 'Banana'] },
+  { category: 'Vegetables', items: ['Carrot', 'Broccoli'] },
+])
+
+box({
+  children: () => {
+    each(
+      () => groups.value,
+      (getGroup, groupKey) => {
+        return box({
+          marginBottom: 1,
+          children: () => {
+            // Group header
+            text({
+              content: derived(() => getGroup().category),
+              fg: t.primary,
+              attrs: Attr.BOLD
+            })
+
+            // Group items
+            each(
+              () => getGroup().items,
+              (getItem, itemKey) => text({
+                content: derived(() => `  ${getItem()}`),
+              }),
+              { key: item => item }
+            )
+          }
+        })
+      },
+      { key: group => group.category }
+    )
+  }
+})
+```
+
+## List with Actions
+
+```typescript
+const items = signal([...])
+
+each(
+  () => items.value,
+  (getItem, key) => {
+    return box({
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      children: () => {
+        text({ content: derived(() => getItem().name) })
+
+        // Action buttons
+        box({
+          flexDirection: 'row',
+          gap: 1,
+          children: () => {
+            text({
+              content: '[Edit]',
+              fg: t.primary
+            })
+            text({
+              content: '[Delete]',
+              fg: t.error
+            })
+          }
+        })
+      }
+    })
+  },
+  { key: item => item.id }
+)
+```
+
+## Virtual List (Large Data)
+
+For very large lists, render only visible items:
+
+```typescript
+const allItems = signal([...Array(10000)].map((_, i) => `Item ${i}`))
+const scrollOffset = signal(0)
+const viewportHeight = 20
+
+const visibleItems = derived(() => {
+  const start = scrollOffset.value
+  const end = start + viewportHeight
+  return allItems.value.slice(start, end).map((item, i) => ({
+    item,
+    index: start + i
+  }))
+})
+
+box({
+  height: viewportHeight,
+  children: () => {
+    each(
+      () => visibleItems.value,
+      (getVisible, key) => text({
+        content: derived(() => getVisible().item)
+      }),
+      { key: v => String(v.index) }
+    )
+  }
+})
+
+// Scroll handlers update scrollOffset
+keyboard.onKey('ArrowDown', () => {
+  scrollOffset.value = Math.min(
+    scrollOffset.value + 1,
+    allItems.value.length - viewportHeight
+  )
+})
+```
+
+## See Also
+
+- [Template Primitives](../primitives/template-primitives.md)
+- [Keyboard Guide](../state/keyboard.md)
+- [Scroll Guide](../state/scroll.md)
