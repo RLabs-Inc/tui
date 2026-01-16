@@ -12,17 +12,10 @@ bun test --watch                            # Watch mode
 
 # Run examples
 bun run examples/hello.ts                   # Basic example
-bun run examples/showcase/showcase.ts       # Full showcase
 
 # Type checking
 bun run typecheck                           # Root package
 
-# Benchmarks
-bun run test/realistic-benchmark.ts
-bun run test/stress-benchmark.ts
-
-# Publishing (npm)
-npm publish --access public                 # Root @rlabs-inc/tui
 ```
 
 ## Architecture
@@ -33,17 +26,14 @@ npm publish --access public                 # Root @rlabs-inc/tui
 
 ### Core Pipeline
 ```
-User Signals → bind() → Parallel Arrays → layoutDerived → frameBufferDerived → render effect
+User Signals → Slot Parallel Arrays → layoutDerived → frameBufferDerived → render effect
 ```
 
 The framework uses **parallel arrays** (ECS-style) instead of component objects:
 - Each ARRAY stores one property type: `width[]`, `height[]`, `color[]`
 - Each INDEX represents one component
-- Components write via `bind(props.value)`, pipeline reads via `unwrap()`
 
 ### Critical Rules
-1. **Arrays use `Binding<T>[]`** - NOT `state<T[]>`. `state()` snapshots getters.
-2. **Props bind directly**: `bind(props.width ?? 0)` - never extract first
 3. **One render effect**: Pipeline is all derived, only final render is an effect
 
 ### Key Files
@@ -138,5 +128,3 @@ MyComponent({ title: () => getTitle(), count: countSignal })
 **Not Done**: input, select, progress, canvas primitives; grid layout; CLI scaffolding tool
 
 **Deprecated**: .tui compiler moved to `.backup/` - focusing on bulletproof raw TypeScript API instead
-
-**Known Issues**: Documentation/examples may be outdated compared to actual API - always verify against source code
