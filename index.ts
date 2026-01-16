@@ -12,6 +12,13 @@ export { mount } from './src/api'
 export { box, text, each, show, when, scoped, onCleanup, useAnimation, AnimationFrames } from './src/primitives'
 export type { BoxProps, TextProps, Cleanup, AnimationOptions } from './src/primitives'
 
+// Lifecycle hooks - Component mount/destroy callbacks
+export { onMount, onDestroy } from './src/engine/lifecycle'
+
+// Context - Reactive dependency injection
+export { createContext, provide, useContext, hasContext, clearContext } from './src/state/context'
+export type { Context } from './src/state/context'
+
 // State modules - Input handling
 export { keyboard, lastKey, lastEvent } from './src/state/keyboard'
 export { mouse, hitGrid, lastMouseEvent, mouseX, mouseY, isMouseDown } from './src/state/mouse'

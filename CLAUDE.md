@@ -11,7 +11,8 @@ bun test test/titan-engine.test.ts          # Single test file
 bun test --watch                            # Watch mode
 
 # Run examples
-bun run examples/hello.ts                   # Basic example
+bun run dev                                 # Hello counter showcase
+bun run examples/showcase/showcase.ts       # Full showcase
 
 # Type checking
 bun run typecheck                           # Root package
@@ -45,6 +46,8 @@ The framework uses **parallel arrays** (ECS-style) instead of component objects:
 | `src/engine/arrays/` | Parallel arrays (core, dimensions, spacing, layout, visual, text, interaction) |
 | `src/state/keyboard.ts` | Keyboard handling with escape sequence parsing |
 | `src/state/focus.ts` | Focus management and tab navigation |
+| `src/state/context.ts` | Reactive context system (createContext/provide/useContext) |
+| `src/engine/lifecycle.ts` | Component lifecycle hooks (onMount/onDestroy) |
 
 ### Keyboard API
 ```typescript
@@ -88,6 +91,52 @@ when(() => fetchData(), {
 
 **Pattern**: All template primitives capture parent context, render synchronously, then use an internal effect for reactive updates. Components inside use normal props (signals/getters work!).
 
+### Lifecycle Hooks
+
+Clean up resources when components are destroyed:
+
+```typescript
+import { onMount, onDestroy } from '@rlabs-inc/tui'
+
+function Timer() {
+  const interval = setInterval(() => tick(), 1000)
+  onDestroy(() => clearInterval(interval))  // Cleanup on destroy
+
+  onMount(() => console.log('Timer started'))  // Run after mount
+
+  return text({ content: 'Timer running...' })
+}
+```
+
+- **onMount(fn)** - Runs after component is fully set up
+- **onDestroy(fn)** - Runs when component is released (cleanup timers, subscriptions, etc.)
+- Zero overhead when not used - only components that call these hooks pay the cost
+
+### Context System
+
+Pass data deep without prop drilling - automatically reactive via ReactiveMap:
+
+```typescript
+import { createContext, provide, useContext } from '@rlabs-inc/tui'
+
+// Create context with default value
+const ThemeContext = createContext<Theme>(defaultTheme)
+
+// Provide value (can be called anywhere)
+provide(ThemeContext, darkTheme)
+
+// Use in component - AUTOMATICALLY REACTIVE
+function ThemedBox() {
+  const theme = useContext(ThemeContext)
+  return box({ bg: theme.background })
+}
+
+// Update context - all consumers re-render automatically
+provide(ThemeContext, lightTheme)
+```
+
+The magic: ReactiveMap gives automatic subscriptions. Read = subscribed. Write = notify readers.
+
 ### User Components with reactiveProps
 
 For building reusable components, use `reactiveProps` to normalize any input type (static, getter, signal) to a consistent reactive interface:
@@ -123,7 +172,7 @@ MyComponent({ title: () => getTitle(), count: countSignal })
 
 ## Current State (Jan 2026)
 
-**Done**: TITAN v3 flexbox, box/text primitives, template primitives (each/show/when), all state modules (keyboard, mouse, focus, scroll, theme, cursor)
+**Done**: TITAN v3 flexbox, box/text primitives, template primitives (each/show/when), all state modules (keyboard, mouse, focus, scroll, theme, cursor), lifecycle hooks (onMount/onDestroy), reactive context system
 
 **Not Done**: input, select, progress, canvas primitives; grid layout; CLI scaffolding tool
 

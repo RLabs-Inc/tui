@@ -30,6 +30,11 @@ import {
   pushParentContext,
   popParentContext,
 } from '../engine/registry'
+import {
+  pushCurrentComponent,
+  popCurrentComponent,
+  runMountCallbacks,
+} from '../engine/lifecycle'
 import { cleanupIndex as cleanupKeyboardListeners } from '../state/keyboard'
 import { getVariantStyle } from '../state/theme'
 import { getActiveScope } from './scope'
@@ -163,6 +168,9 @@ function getStaticBool(prop: unknown, defaultVal: boolean): boolean {
 export function box(props: BoxProps = {}): Cleanup {
   const index = allocateIndex(props.id)
 
+  // Track current component for lifecycle hooks
+  pushCurrentComponent(index)
+
   // ==========================================================================
   // CORE - Always needed
   // ==========================================================================
@@ -290,6 +298,10 @@ export function box(props: BoxProps = {}): Cleanup {
       popParentContext()
     }
   }
+
+  // Component setup complete - run lifecycle callbacks
+  popCurrentComponent()
+  runMountCallbacks(index)
 
   // Cleanup function
   const cleanup = () => {

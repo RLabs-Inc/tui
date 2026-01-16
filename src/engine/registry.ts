@@ -14,6 +14,7 @@ import { ReactiveSet } from '@rlabs-inc/signals'
 import { ensureAllCapacity, clearAllAtIndex, resetAllArrays } from './arrays'
 import { parentIndex as parentIndexArray } from './arrays/core'
 import { resetTitanArrays } from '../pipeline/layout/titan-engine'
+import { runDestroyCallbacks, resetLifecycle } from './lifecycle'
 
 // =============================================================================
 // Registry State
@@ -123,6 +124,9 @@ export function releaseIndex(index: number): void {
     releaseIndex(childIndex)
   }
 
+  // Run destroy callbacks before cleanup
+  runDestroyCallbacks(index)
+
   // Clean up mappings
   idToIndex.delete(id)
   indexToId.delete(index)
@@ -192,4 +196,5 @@ export function resetRegistry(): void {
   nextIndex = 0
   idCounter = 0
   parentStack.length = 0
+  resetLifecycle()
 }

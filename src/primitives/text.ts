@@ -26,6 +26,11 @@
 // Using slotArray APIs - no direct signal imports needed
 import { ComponentType, Attr } from '../types'
 import { allocateIndex, releaseIndex, getCurrentParentIndex } from '../engine/registry'
+import {
+  pushCurrentComponent,
+  popCurrentComponent,
+  runMountCallbacks,
+} from '../engine/lifecycle'
 import { cleanupIndex as cleanupKeyboardListeners } from '../state/keyboard'
 import { getVariantStyle } from '../state/theme'
 import { getActiveScope } from './scope'
@@ -136,6 +141,9 @@ function enumSource<T extends string>(
 export function text(props: TextProps): Cleanup {
   const index = allocateIndex()
 
+  // Track current component for lifecycle hooks
+  pushCurrentComponent(index)
+
   // ==========================================================================
   // CORE - Always needed
   // ==========================================================================
@@ -214,6 +222,10 @@ export function text(props: TextProps): Cleanup {
     if (props.bg !== undefined) visual.bgColor.setSource(index, props.bg)
   }
   if (props.opacity !== undefined) visual.opacity.setSource(index, props.opacity)
+
+  // Component setup complete - run lifecycle callbacks
+  popCurrentComponent()
+  runMountCallbacks(index)
 
   // Cleanup function
   const cleanup = () => {
