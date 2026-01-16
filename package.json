@@ -1,6 +1,6 @@
 {
   "name": "@rlabs-inc/tui",
-  "version": "0.3.0",
+  "version": "0.3.2",
   "description": "The Terminal UI Framework for TypeScript/Bun - Blazing-fast, fine-grained reactive terminal UI with complete flexbox layout",
   "module": "index.ts",
   "main": "index.ts",
@@ -15,7 +15,7 @@
     "src"
   ],
   "scripts": {
-    "dev": "bun run examples/hello.ts",
+    "dev": "bun run examples/showcase/01-hello-counter.ts",
     "test": "bun test",
     "typecheck": "tsc --noEmit"
   },

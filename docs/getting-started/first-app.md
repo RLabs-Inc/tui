@@ -359,7 +359,7 @@ bun run src/index.ts
 
 1. **State outside components** - Signals live outside the component tree
 2. **Derived for computed values** - Use `derived()` for values based on other signals
-3. **Reactive props** - Pass signals or getters to component props
+3. **Pass signals and deriveds directly** - `text({ content: counterDisplay })` is cleaner than `text({ content: () => counterDisplay.value })`. Use inline getters `() =>` only for one-off computations.
 4. **Keyboard after mount** - Register handlers after mount returns
 5. **Cleanup function** - Mount returns a cleanup function for graceful exit
 

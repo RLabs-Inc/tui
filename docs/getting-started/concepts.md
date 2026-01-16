@@ -40,21 +40,30 @@ console.log(doubled.value)  // 10 (automatically updated!)
 
 ### Reactive Props
 
-Components accept signals, getters, or static values:
+Components accept static values, signals, deriveds, or inline getters:
 
 ```typescript
-// Static value
+const count = signal(0)
+const formatted = derived(() => `Count: ${count.value}`)
+
+// Static value - for unchanging content
 text({ content: 'Hello' })
 
-// Signal (2-way reactive)
-const message = signal('Hello')
-text({ content: message })
+// Signal directly - clean and simple
+text({ content: count })           // displays: 0
+box({ width: widthSignal })        // works for any prop
 
-// Getter function (reactive)
-text({ content: () => `Count: ${count.value}` })
+// Derived directly - for pre-computed values
+text({ content: formatted })       // displays: "Count: 0"
+
+// Inline getter - for one-off computations
+text({ content: () => count.value * 2 })
+text({ content: () => `Value: ${count.value}` })
 ```
 
-All three patterns work. TUI automatically tracks dependencies.
+**The rule**: Pass signals and deriveds directly. Use `() =>` only for inline computations that don't warrant a named derived.
+
+TUI automatically tracks dependencies regardless of which pattern you use.
 
 ## The Rendering Pipeline
 

@@ -54,7 +54,7 @@ async function main() {
             box({
               width: 15,
               height: 4,
-              border: BorderStyle.HEAVY,
+              border: BorderStyle.BOLD,
               borderColor: Colors.GREEN,
               children: () => text({ content: 'HEAVY', fg: Colors.GREEN }),
             })

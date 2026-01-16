@@ -18,7 +18,9 @@ function text(props: TextProps): Cleanup
 
 ### TextProps
 
-All props can be static values or reactive (signals/getters).
+All props accept **static values, signals, deriveds, or getter functions**.
+
+> **The rule**: Pass signals and deriveds directly. Use `() =>` only for inline computations.
 
 #### Core Props
 
@@ -98,11 +100,24 @@ text({
 
 ### Reactive Content
 
+Props accept signals and deriveds directly:
+
 ```typescript
 const count = signal(0)
+const display = derived(() => `Count: ${count.value}`)
+const textColor = derived(() => count.value > 10 ? t.error.value : t.text.value)
 
 text({
-  content: () => `Count: ${count.value}`,
+  content: display,    // Derived directly
+  fg: textColor        // Derived directly
+})
+```
+
+Use `() =>` only for inline computations:
+
+```typescript
+text({
+  content: () => `Count: ${count.value}`,  // Inline computation
   fg: () => count.value > 10 ? t.error.value : t.text.value
 })
 ```

@@ -46,8 +46,22 @@ import { globalKeys } from '../state/global-keys'
  *
  * @param root - Function that creates the component tree
  * @param options - Mount options (mode, mouse, keyboard)
- * @returns Cleanup function to unmount
+ * @returns Cleanup function to unmount (or AppendMountResult for append mode)
  */
+// Overloads for proper return type inference
+export async function mount(
+  root: () => void,
+  options: MountOptions & { mode: 'append' }
+): Promise<AppendMountResult>
+export async function mount(
+  root: () => void,
+  options?: MountOptions & { mode?: 'fullscreen' | 'inline' }
+): Promise<() => Promise<void>>
+export async function mount(
+  root: () => void,
+  options?: MountOptions
+): Promise<(() => Promise<void>) | AppendMountResult>
+// Implementation
 export async function mount(
   root: () => void,
   options: MountOptions = {}

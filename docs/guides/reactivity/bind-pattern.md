@@ -35,24 +35,41 @@ const boundWidth = bind(width)  // Stays connected to signal
 // When width.value changes, boundWidth reflects the change
 ```
 
-## Using bind() with Props
+## Using Reactive Values in Props
 
-TUI primitives accept multiple input types:
+TUI primitives accept multiple input types. **The simple rule**:
+
+> Pass signals and deriveds directly. Use `() =>` only for inline computations.
 
 ```typescript
-// Static value
-text({ content: 'Hello' })
-
-// Signal (bind happens internally)
 const message = signal('Hello')
+const formatted = derived(() => message.value.toUpperCase())
+
+// Best: Pass signal directly
 text({ content: message })
 
-// Getter function
+// Best: Pass derived directly
+text({ content: formatted })
+
+// Use getter for inline computation
 text({ content: () => `Count: ${count.value}` })
 
-// Explicit binding
-text({ content: bind(message) })
+// Static value
+text({ content: 'Hello' })
 ```
+
+**A getter `() =>` is an inline derived.** These are equivalent:
+
+```typescript
+// Named derived
+const upper = derived(() => message.value.toUpperCase())
+text({ content: upper })
+
+// Inline derived (getter)
+text({ content: () => message.value.toUpperCase() })
+```
+
+If you already have a signal or derived, just pass it directly - no wrapper needed.
 
 **In most cases, you don't need explicit `bind()`** - TUI handles it automatically. But understanding it helps with debugging and advanced patterns.
 
@@ -125,54 +142,56 @@ input({
 
 ## Common Patterns
 
-### Derived Binding
+### Derived Values
 
 ```typescript
 const count = signal(0)
 
-// Bind to a derived value
+// Create a derived, pass it directly
 const display = derived(() => `Count: ${count.value}`)
+text({ content: display })
 
-text({ content: display })  // Updates automatically
+// Or use inline getter (equivalent)
+text({ content: () => `Count: ${count.value}` })
 ```
 
-### Conditional Binding
+### Conditional Content
 
 ```typescript
 const useCustom = signal(false)
 const custom = signal('Custom')
 const defaultVal = 'Default'
 
-// Switch source based on condition
+// Inline getter for conditional logic
 text({
   content: () => useCustom.value ? custom.value : defaultVal
 })
 ```
 
-### Binding to Object Properties
+### Object Properties
 
 ```typescript
 const user = signal({ name: 'Alice', age: 30 })
 
-// Bind to specific property
-text({
-  content: () => user.value.name
-})
+// Getter to access property
+text({ content: () => user.value.name })
 
 // Update triggers re-render
 user.value = { ...user.value, name: 'Bob' }
 ```
 
-### Array Item Binding
+### Array Item Access
 
 ```typescript
 const items = signal(['A', 'B', 'C'])
 const selectedIndex = signal(0)
 
-// Bind to computed item
-text({
-  content: derived(() => items.value[selectedIndex.value])
-})
+// Named derived for complex logic
+const selectedItem = derived(() => items.value[selectedIndex.value])
+text({ content: selectedItem })
+
+// Or inline getter
+text({ content: () => items.value[selectedIndex.value] })
 ```
 
 ## Debugging Bindings
@@ -180,18 +199,23 @@ text({
 If reactivity isn't working:
 
 1. **Check if value is extracted** - Don't do `const x = signal.value; use(x)`
-2. **Ensure getter wraps access** - `() => signal.value` not `signal.value`
+2. **Pass signal directly or use getter** - Not `signal.value`
 3. **Verify signal exists** - `undefined` won't track
 
 ```typescript
-// Wrong - extracted value, no tracking
+// WRONG - extracted value, no tracking
 const count = signal(0)
 const val = count.value
 text({ content: val })  // Never updates!
 
-// Right - pass signal or getter
+// RIGHT - pass signal directly (preferred)
 text({ content: count })
-text({ content: () => count.value })
+
+// RIGHT - use getter for computation
+text({ content: () => count.value * 2 })
+
+// WRONG - unnecessary getter around signal
+text({ content: () => count.value })  // Works, but just use: count
 ```
 
 ## Performance Considerations

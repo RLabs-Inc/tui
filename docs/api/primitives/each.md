@@ -99,14 +99,15 @@ each(
   () => items.value,
   (getItem, key) => {
     const isSelected = derived(() => selectedId.value === key)
+    const bgColor = derived(() => isSelected.value ? t.surface.value : null)
+    const prefix = derived(() => isSelected.value ? '> ' : '  ')
+    const itemName = derived(() => getItem().name)
 
     return box({
-      bg: derived(() => isSelected.value ? t.surface.value : null),
+      bg: bgColor,  // Derived directly
       children: () => {
-        text({
-          content: derived(() => isSelected.value ? '> ' : '  ')
-        })
-        text({ content: derived(() => getItem().name) })
+        text({ content: prefix })      // Derived directly
+        text({ content: itemName })    // Derived directly
       }
     })
   },
@@ -125,17 +126,19 @@ keyboard.onKey('Enter', () => {
 each(
   () => todos.value,
   (getTodo, key) => {
-    // Create deriveds for reactive updates
+    // Create deriveds for reactive updates - pass directly to props
     const todoText = derived(() => getTodo().text)
     const isDone = derived(() => getTodo().done)
+    const checkbox = derived(() => isDone.value ? '[x]' : '[ ]')
+    const checkColor = derived(() => isDone.value ? t.success.value : t.text.value)
 
     return box({
       children: () => {
         text({
-          content: derived(() => isDone.value ? '[x]' : '[ ]'),
-          fg: derived(() => isDone.value ? t.success.value : t.text.value)
+          content: checkbox,   // Derived directly
+          fg: checkColor       // Derived directly
         })
-        text({ content: todoText })
+        text({ content: todoText })  // Derived directly
       }
     })
   },
@@ -156,12 +159,14 @@ const categories = signal<Category[]>([...])
 each(
   () => categories.value,
   (getCategory, categoryKey) => {
+    const categoryName = derived(() => getCategory().name)
+
     return box({
       children: () => {
         // Category header
         text({
-          content: derived(() => getCategory().name),
-          fg: t.primary,
+          content: categoryName,  // Derived directly
+          fg: t.primary,          // Theme accessor (already reactive)
           attrs: Attr.BOLD
         })
 

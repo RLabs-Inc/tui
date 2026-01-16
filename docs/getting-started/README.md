@@ -26,16 +26,18 @@ TUI brings modern reactive programming to the terminal:
 - **Simple** - Just functions, no classes or decorators
 
 ```typescript
-import { signal } from '@rlabs-inc/signals'
+import { signal, derived } from '@rlabs-inc/signals'
 import { box, text, mount, keyboard } from '@rlabs-inc/tui'
 
 const count = signal(0)
+const label = derived(() => `Count: ${count.value}`)
 
 mount(() => {
   box({
     padding: 1,
     children: () => {
-      text({ content: () => `Count: ${count.value}` })
+      // Pass deriveds directly - clean and reactive!
+      text({ content: label })
     }
   })
 })

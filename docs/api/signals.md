@@ -237,12 +237,27 @@ console.log(computed.value)  // 10
 
 ### Use in Components
 
+TUI primitives accept signals and deriveds directly - `bind()` is used internally:
+
 ```typescript
-// TUI uses bind internally for props
+const width = signal(40)
+const height = derived(() => width.value / 2)
+const bgColor = derived(() => isActive.value ? t.primary.value : null)
+
 box({
-  width: 40,           // Static: no bind needed
-  height: height,      // Signal: bind internally
-  bg: () => color.value // Getter: bind internally
+  width,      // Signal directly - TUI binds it internally
+  height,     // Derived directly - TUI binds it internally
+  padding: 2, // Static value - works too
+  bg: bgColor // Derived directly
+})
+```
+
+**The rule**: Pass signals and deriveds directly. Use `() =>` only for inline computations:
+
+```typescript
+box({
+  width,
+  bg: () => isHovered.value ? t.surface.value : null  // Inline computation
 })
 ```
 

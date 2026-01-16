@@ -330,29 +330,34 @@ box({
 
 ## Reactive Props
 
-All props can be reactive:
+All props can be reactive. **Pass signals and deriveds directly** - only use `() =>` for inline computations:
 
 ```typescript
 const width = signal(40)
+const height = signal(20)
 const isExpanded = signal(false)
+const bgColor = derived(() => isExpanded.value ? t.surface.value : null)
 
 box({
-  // Signal
-  width: width,
+  // Pass signals directly (preferred)
+  width,
+  height,
 
-  // Getter
+  // Pass deriveds directly
+  bg: bgColor,
+
+  // Use getter only for inline computations
   padding: () => isExpanded.value ? 2 : 1,
-
-  // Derived
-  bg: derived(() => isExpanded.value ? t.surface.value : null),
 
   children: () => { /* ... */ }
 })
 
-// Update triggers re-render
+// Updates trigger re-render
 width.value = 60
 isExpanded.value = true
 ```
+
+> **Mental model**: Signals and deriveds are already reactive containers - TUI knows how to subscribe to them. Wrap in `() =>` only when you need to compute something inline.
 
 ## Cleanup
 

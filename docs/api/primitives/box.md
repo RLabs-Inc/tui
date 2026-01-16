@@ -18,7 +18,9 @@ function box(props: BoxProps): Cleanup
 
 ### BoxProps
 
-All props can be static values or reactive (signals/getters).
+All props accept **static values, signals, deriveds, or getter functions**.
+
+> **The rule**: Pass signals and deriveds directly. Use `() =>` only for inline computations.
 
 #### Core Props
 
@@ -165,30 +167,45 @@ box({
 
 ### Reactive Props
 
+Props accept signals and deriveds directly - no wrapper needed.
+
 ```typescript
 const width = signal(40)
 const isVisible = signal(true)
+const bgColor = derived(() => isActive.value ? t.primary.value : null)
 
 box({
-  width,  // Reactive
-  visible: isVisible,  // Reactive
-  bg: () => isActive.value ? t.primary.value : null,  // Getter
+  width,                // Signal directly
+  visible: isVisible,   // Signal directly
+  bg: bgColor,          // Derived directly
   children: () => {
     text({ content: 'Reactive box' })
   }
 })
 ```
 
+Use `() =>` only for inline computations that don't warrant a named derived:
+
+```typescript
+box({
+  width,
+  bg: () => isHovered.value ? t.surface.value : t.bg.value,  // Inline computation
+  children: () => { ... }
+})
+```
+
 ### Focusable Box
 
 ```typescript
+const borderColor = derived(() =>
+  isFocused(myIndex) ? t.primary.value : t.border.value
+)
+
 box({
   focusable: true,
   tabIndex: 1,
   border: BorderStyle.SINGLE,
-  borderColor: derived(() =>
-    isFocused(myIndex) ? t.primary.value : t.border.value
-  ),
+  borderColor,  // Derived directly
   children: () => {
     text({ content: 'Tab to focus' })
   }

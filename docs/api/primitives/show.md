@@ -126,13 +126,14 @@ show(
 ```typescript
 const isLoading = signal(true)
 const data = signal<string | null>(null)
+const dataDisplay = derived(() => `Data: ${data.value}`)
 
 show(
   () => isLoading.value,
   () => text({ content: 'Loading...' }),
   () => show(
     () => data.value !== null,
-    () => text({ content: () => `Data: ${data.value}` }),
+    () => text({ content: dataDisplay }),  // Derived directly
     () => text({ content: 'No data', fg: t.textMuted })
   )
 )

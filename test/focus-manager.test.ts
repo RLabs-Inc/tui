@@ -327,8 +327,8 @@ describe('Focus Manager - History', () => {
     focus(idx1)
     focus(idx2)
 
-    // Destroy idx2's focusability
-    interaction.focusable[idx1]!.value = false
+    // Destroy idx1's focusability
+    interaction.focusable.setSource(idx1, false)
 
     // Restore should skip idx1 (no longer focusable)
     restoreFocusFromHistory()
@@ -394,7 +394,7 @@ describe('Focus Manager - Visibility', () => {
     const idx2 = createFocusable()
 
     // Make idx1 invisible
-    core.visible[idx1]!.value = false
+    core.visible.setSource(idx1, false)
 
     const focusables = getFocusableIndices()
 
@@ -404,7 +404,7 @@ describe('Focus Manager - Visibility', () => {
 
   test('focus() fails for invisible component', () => {
     const idx = createFocusable()
-    core.visible[idx]!.value = false
+    core.visible.setSource(idx, false)
 
     const result = focus(idx)
 

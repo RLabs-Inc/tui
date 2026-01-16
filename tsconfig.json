@@ -1,6 +1,6 @@
 {
   "include": ["src/**/*", "examples/**/*", "index.ts"],
-  "exclude": ["node_modules", "docs", "dist"],
+  "exclude": ["node_modules", "docs", "dist", "examples/_archive"],
   "compilerOptions": {
     // Environment setup & latest features
     "lib": ["ESNext"],

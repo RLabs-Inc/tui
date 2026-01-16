@@ -9,7 +9,7 @@
  */
 
 import { describe, test, expect, beforeEach, afterEach } from 'bun:test'
-import { bind, unwrap } from '@rlabs-inc/signals'
+import { bind, unwrap, signal } from '@rlabs-inc/signals'
 
 import {
   allocateIndex,
@@ -182,37 +182,37 @@ describe('Parallel Arrays - Ensure Capacity', () => {
     expect(core.visible.length).toBeGreaterThan(idx)
   })
 
-  test('ensureCapacity creates slots with lazy bindings (undefined)', () => {
+  test('ensureCapacity creates slots with default values', () => {
     core.ensureCapacity(5)
 
-    // LAZY BINDINGS: componentType has defaults, but bindings start undefined
+    // Slots are initialized with sensible defaults (not undefined)
     expect(core.componentType[0]).toBe(ComponentType.NONE)
-    expect(core.parentIndex[0]).toBeUndefined() // Lazy - primitives create bindings
-    expect(core.visible[0]).toBeUndefined()
+    expect(unwrap(core.parentIndex[0])).toBe(-1) // Default parent index
+    expect(unwrap(core.visible[0])).toBe(1) // Default visible
   })
 
-  test('dimensions ensureCapacity creates empty slots (lazy)', () => {
+  test('dimensions ensureCapacity creates slots with defaults', () => {
     dimensions.ensureCapacity(3)
 
-    // LAZY BINDINGS: Slots exist but are undefined until primitives use them
+    // Slots exist with default value 0
     expect(dimensions.width.length).toBeGreaterThanOrEqual(3)
-    expect(dimensions.width[0]).toBeUndefined()
+    expect(unwrap(dimensions.width[0])).toBe(0)
   })
 
-  test('spacing ensureCapacity creates empty slots (lazy)', () => {
+  test('spacing ensureCapacity creates slots with defaults', () => {
     spacing.ensureCapacity(3)
 
-    // LAZY BINDINGS: Slots exist but are undefined
+    // Slots exist with default value 0
     expect(spacing.marginTop.length).toBeGreaterThanOrEqual(3)
-    expect(spacing.marginTop[0]).toBeUndefined()
+    expect(unwrap(spacing.marginTop[0])).toBe(0)
   })
 
-  test('layout ensureCapacity creates empty slots (lazy)', () => {
+  test('layout ensureCapacity creates slots with defaults', () => {
     layout.ensureCapacity(3)
 
-    // LAZY BINDINGS: Slots exist but are undefined
+    // Slots exist with default value 0
     expect(layout.flexDirection.length).toBeGreaterThanOrEqual(3)
-    expect(layout.flexDirection[0]).toBeUndefined()
+    expect(unwrap(layout.flexDirection[0])).toBe(0)
   })
 })
 
@@ -224,30 +224,35 @@ describe('Parallel Arrays - Clear at Index', () => {
   beforeEach(cleanupAll)
   afterEach(cleanupAll)
 
-  test('clearAtIndex disconnects bindings and sets to undefined', () => {
+  test('clearAtIndex resets slots to default values', () => {
     const idx = 0
 
     // Set up component with bindings
-    core.ensureCapacity(idx)
+    core.ensureCapacity(idx + 1)
     core.componentType[idx] = ComponentType.BOX
-    core.parentIndex[idx] = bind(5)
-    core.visible[idx] = bind(false)
-    core.componentId[idx] = bind('test-component')
+    core.parentIndex.setSource(idx, 5)
+    core.visible.setSource(idx, false)
+    core.componentId.setSource(idx, 'test-component')
 
-    dimensions.ensureCapacity(idx)
-    dimensions.width[idx] = bind(100)
-    dimensions.height[idx] = bind(50)
+    dimensions.ensureCapacity(idx + 1)
+    dimensions.width.setSource(idx, 100)
+    dimensions.height.setSource(idx, 50)
 
-    // Clear - this disconnects bindings and sets to undefined
+    // Verify setup
+    expect(core.componentType[idx]).toBe(ComponentType.BOX)
+    expect(unwrap(core.parentIndex[idx])).toBe(5)
+    expect(unwrap(dimensions.width[idx])).toBe(100)
+
+    // Clear - this resets to defaults
     core.clearAtIndex(idx)
     dimensions.clearAtIndex(idx)
 
-    // componentType resets to NONE, bindings become undefined (lazy pattern)
+    // componentType resets to NONE, values reset to defaults
     expect(core.componentType[idx]).toBe(ComponentType.NONE)
-    expect(core.parentIndex[idx]).toBeUndefined()
-    expect(core.visible[idx]).toBeUndefined()
-    expect(dimensions.width[idx]).toBeUndefined()
-    expect(dimensions.height[idx]).toBeUndefined()
+    expect(unwrap(core.parentIndex[idx])).toBe(-1) // default
+    expect(unwrap(core.visible[idx])).toBe(1) // default
+    expect(unwrap(dimensions.width[idx])).toBe(0) // default
+    expect(unwrap(dimensions.height[idx])).toBe(0) // default
   })
 })
 
@@ -259,31 +264,35 @@ describe('Parallel Arrays - Binding Behavior', () => {
   beforeEach(cleanupAll)
   afterEach(cleanupAll)
 
-  test('bindings are reactive', () => {
-    dimensions.ensureCapacity(0)
-    dimensions.width[0] = bind(100)
+  test('slots track reactive sources via setSource', () => {
+    const widthSignal = signal(100)
+    dimensions.ensureCapacity(1)
+    dimensions.width.setSource(0, widthSignal)
 
     // Initial value
     expect(unwrap(dimensions.width[0])).toBe(100)
 
-    // Update binding
-    dimensions.width[0].value = 200
+    // Update source signal
+    widthSignal.value = 200
 
-    // Value should update
+    // Slot reflects update
     expect(unwrap(dimensions.width[0])).toBe(200)
   })
 
   test('multiple indices are independent', () => {
-    dimensions.ensureCapacity(1)
-    dimensions.width[0] = bind(100)
-    dimensions.width[1] = bind(200)
+    const width0 = signal(100)
+    const width1 = signal(200)
+
+    dimensions.ensureCapacity(2)
+    dimensions.width.setSource(0, width0)
+    dimensions.width.setSource(1, width1)
 
     // Values are independent
     expect(unwrap(dimensions.width[0])).toBe(100)
     expect(unwrap(dimensions.width[1])).toBe(200)
 
     // Update one
-    dimensions.width[0].value = 50
+    width0.value = 50
 
     // Other unchanged
     expect(unwrap(dimensions.width[0])).toBe(50)

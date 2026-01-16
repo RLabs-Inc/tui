@@ -77,17 +77,44 @@ function alignSelfToNum(alignSelf: string | undefined): number {
 // bindEnumProp removed - using enumSource instead
 
 /**
+ * Convert content prop (string | number) to string source for setSource.
+ * Handles: static values, signals, and getters.
+ */
+function contentToStringSource(
+  content: TextProps['content']
+): string | (() => string) {
+  // Getter function - wrap to convert
+  if (typeof content === 'function') {
+    return () => String(content())
+  }
+  // Signal/binding/derived with .value
+  if (content !== null && typeof content === 'object' && 'value' in content) {
+    const reactive = content as { value: string | number }
+    return () => String(reactive.value)
+  }
+  // Static value
+  return String(content)
+}
+
+/**
  * Create a slot source for enum props - returns getter for reactive, value for static.
  * For use with slotArray.setSource()
+ * Handles: static values, signals/bindings ({ value: T }), and getter functions (() => T)
  */
 function enumSource<T extends string>(
-  prop: T | { value: T } | undefined,
+  prop: T | { value: T } | (() => T) | undefined,
   converter: (val: T | undefined) => number
 ): number | (() => number) {
+  // Handle getter function (inline derived)
+  if (typeof prop === 'function') {
+    return () => converter(prop())
+  }
+  // Handle object with .value (signal/binding/derived)
   if (prop !== undefined && typeof prop === 'object' && prop !== null && 'value' in prop) {
     const reactiveSource = prop as { value: T }
     return () => converter(reactiveSource.value)
   }
+  // Static value
   return converter(prop as T | undefined)
 }
 
@@ -123,8 +150,9 @@ export function text(props: TextProps): Cleanup {
   // ==========================================================================
   // TEXT CONTENT - Always needed (this is a text component!)
   // Uses setSource() for stable slot tracking (fixes bind() replacement bug)
+  // Converts numbers to strings automatically
   // ==========================================================================
-  textArrays.textContent.setSource(index, props.content)
+  textArrays.textContent.setSource(index, contentToStringSource(props.content))
 
   // Text styling - only set if passed
   if (props.attrs !== undefined) textArrays.textAttrs.setSource(index, props.attrs)

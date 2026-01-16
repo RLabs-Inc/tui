@@ -161,26 +161,43 @@ interface InteractionProps {
 
 ### Reactive<T>
 
-Value that can be static or reactive.
+Value that can be static or reactive. **All TUI component props accept this type.**
 
 ```typescript
 type Reactive<T> =
-  | T
-  | WritableSignal<T>
-  | Binding<T>
-  | ReadonlyBinding<T>
+  | T                    // Static value
+  | WritableSignal<T>    // signal()
+  | DerivedSignal<T>     // derived()
+  | Binding<T>           // bind()
+  | ReadonlyBinding<T>   // ReadonlyBinding
+  | (() => T)            // Getter function (for inline computations)
+```
+
+**The rule**: Pass signals and deriveds directly. Use `() =>` only for inline computations.
+
+```typescript
+const width = signal(40)
+const height = derived(() => width.value / 2)
+
+box({
+  width,                           // Signal directly - works!
+  height,                          // Derived directly - works!
+  padding: 2,                      // Static value - works!
+  bg: () => isActive.value ? t.primary.value : null  // Inline computation
+})
 ```
 
 ### PropInput<T>
 
-Input type for component props (includes getter functions).
+Input type for component props (includes getter functions). Same as Reactive<T>.
 
 ```typescript
 type PropInput<T> =
-  | T
-  | Signal<T>
-  | (() => T)
-  | Binding<T>
+  | T                    // Static value
+  | WritableSignal<T>    // signal()
+  | DerivedSignal<T>     // derived()
+  | (() => T)            // Getter function
+  | Binding<T>           // bind()
 ```
 
 ### WithReactive<T, K>

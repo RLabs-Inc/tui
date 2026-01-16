@@ -20,15 +20,18 @@ bun add tui @rlabs-inc/signals
 ```
 
 ```typescript
-import { mount, box, text } from 'tui'
+import { mount, box, text, derived } from 'tui'
 import { signal } from '@rlabs-inc/signals'
 
 // Create reactive state
 const count = signal(0)
+const doubled = derived(() => count.value * 2)
 
 // Build your UI
 box({ width: 40, height: 10, children: () => {
-  text({ content: `Count: ${count.value}` })
+  text({ content: count })                         // signal directly
+  text({ content: doubled })                       // derived directly
+  text({ content: () => `Count: ${count.value}` }) // () => for formatting
 }})
 
 // Mount to terminal
@@ -55,6 +58,7 @@ setInterval(() => count.value++, 1000)
 - Effects for side effects
 - Bindings for prop connections
 - Zero reconciliation - reactivity IS the update mechanism
+- **Clean syntax**: Pass signals/deriveds directly, use `() =>` only for inline computations
 
 ### State Modules
 - **keyboard** - Key events, shortcuts, input buffering
@@ -154,7 +158,7 @@ box({
       (todo) => box({                       // Render function per item
         id: `todo-${todo.id}`,              // Stable ID for reconciliation
         children: () => {
-          text({ content: () => todo.text })  // Props can be reactive too!
+          text({ content: todo.text })      // Static value from item
         }
       }),
       { key: (todo) => todo.id }            // Key function for efficient updates

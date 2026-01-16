@@ -52,7 +52,7 @@ export const lastKey = derived(() => lastEvent.value?.key ?? '')
 // =============================================================================
 
 const globalHandlers = new Set<KeyHandler>()
-const keyHandlers = new Map<string, Set<() => void | boolean>>()
+const keyHandlers = new Map<string, Set<() => void | boolean | Promise<void>>>()
 const focusedHandlers = new Map<number, Set<KeyHandler>>()
 
 // =============================================================================
@@ -118,8 +118,9 @@ export function on(handler: KeyHandler): () => void {
  * Subscribe to specific key(s).
  * Handler receives no arguments - check lastEvent if needed.
  * Return true to consume the event.
+ * Async handlers are supported (e.g., for cleanup functions).
  */
-export function onKey(key: string | string[], handler: () => void | boolean): () => void {
+export function onKey(key: string | string[], handler: () => void | boolean | Promise<void>): () => void {
   const keys = Array.isArray(key) ? key : [key]
   const unsubscribers: (() => void)[] = []
 

@@ -16,8 +16,15 @@ import type { Variant } from '../state/theme'
 /**
  * A prop value that can be static or reactive.
  * Components will sync reactive values automatically.
+ *
+ * Accepts:
+ * - Static value: `42`, `'hello'`
+ * - Signal: `mySignal`
+ * - Derived: `myDerived`
+ * - Binding: `bind(source)`
+ * - Getter (inline derived): `() => count.value * 2`
  */
-export type Reactive<T> = T | WritableSignal<T> | Binding<T> | ReadonlyBinding<T>
+export type Reactive<T> = T | WritableSignal<T> | Binding<T> | ReadonlyBinding<T> | (() => T)
 
 /**
  * Make specific props reactive while keeping others static.
@@ -138,8 +145,8 @@ export interface BoxProps extends StyleProps, BorderProps, DimensionProps, Spaci
 // =============================================================================
 
 export interface TextProps extends StyleProps, DimensionProps, SpacingProps, LayoutProps {
-  /** Text content */
-  content: Reactive<string>
+  /** Text content (strings and numbers auto-converted) */
+  content: Reactive<string | number>
   /** Text alignment: 'left' | 'center' | 'right' */
   align?: Reactive<'left' | 'center' | 'right'>
   /** Text attributes (bold, italic, etc.) */

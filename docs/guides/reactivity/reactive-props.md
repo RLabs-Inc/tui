@@ -30,7 +30,7 @@ function MyComponent(props: { count: number | Signal<number> | (() => number) })
 ## The Solution: reactiveProps()
 
 ```typescript
-import { reactiveProps, type PropInput } from '@rlabs-inc/tui'
+import { reactiveProps, derived, type PropInput } from '@rlabs-inc/tui'
 
 interface MyComponentProps {
   title: PropInput<string>
@@ -38,14 +38,19 @@ interface MyComponentProps {
 }
 
 function MyComponent(rawProps: MyComponentProps) {
-  // Normalize all props
+  // Normalize all props - everything becomes a DerivedSignal
   const props = reactiveProps<{ title: string; count: number }>(rawProps)
 
-  // Now everything has consistent .value access
-  const display = derived(() => `${props.title.value}: ${props.count.value}`)
-
+  // props.title and props.count are now DerivedSignals
+  // Pass them directly to primitives - no wrapper needed!
   return box({
-    children: () => text({ content: display })
+    children: () => {
+      // Pass the derived directly (cleanest)
+      text({ content: props.title })
+
+      // Use getter only for inline computation
+      text({ content: () => `Count: ${props.count.value}` })
+    }
   })
 }
 ```
@@ -98,6 +103,8 @@ function Button(rawProps: ButtonProps) {
 
 ### 3. Use in Primitives
 
+After `reactiveProps()`, each prop is a `DerivedSignal`. **Pass them directly** - no wrapper needed:
+
 ```typescript
 function Button(rawProps: ButtonProps) {
   const props = reactiveProps<{ label: string; disabled: boolean }>({
@@ -105,11 +112,14 @@ function Button(rawProps: ButtonProps) {
     disabled: rawProps.disabled ?? false
   })
 
+  // props.disabled is a DerivedSignal - use getter only for computation
+  const opacity = derived(() => props.disabled.value ? 0.5 : 1)
+
   return box({
     border: BorderStyle.ROUNDED,
-    opacity: derived(() => props.disabled.value ? 0.5 : 1),
+    opacity,  // Pass derived directly
     children: () => {
-      text({ content: props.label })  // Already a signal-like
+      text({ content: props.label })  // Pass derived directly - cleanest!
     }
   })
 }
@@ -117,25 +127,29 @@ function Button(rawProps: ButtonProps) {
 
 ## Calling Your Component
 
-All these work:
+Callers can pass any reactive form - `reactiveProps()` normalizes them all:
 
 ```typescript
 // Static values
 Button({ label: 'Click Me' })
 
-// Signals
+// Signals - pass directly (cleanest)
 const label = signal('Click Me')
 Button({ label })
 
-// Getters
+// Deriveds - pass directly
+const formatted = derived(() => label.value.toUpperCase())
+Button({ label: formatted })
+
+// Getters - only for inline computation
 Button({ label: () => `Count: ${count.value}` })
 
 // Mixed
 const disabled = signal(false)
 Button({
-  label: 'Submit',
-  disabled,
-  variant: () => isImportant.value ? 'primary' : 'secondary'
+  label: 'Submit',  // static
+  disabled,         // signal directly
+  variant: () => isImportant.value ? 'primary' : 'secondary'  // inline computation
 })
 ```
 
@@ -166,14 +180,18 @@ function Card(rawProps: CardProps): Cleanup {
     highlighted: rawProps.highlighted ?? false
   })
 
+  // Create derived for computed borderColor
+  const borderColor = derived(() =>
+    props.highlighted.value ? t.primary.value : t.border.value
+  )
+
   return box({
     border: BorderStyle.ROUNDED,
-    borderColor: derived(() =>
-      props.highlighted.value ? t.primary.value : t.border.value
-    ),
+    borderColor,  // Pass derived directly
     padding: 1,
     gap: 1,
     children: () => {
+      // Pass props directly - they're DerivedSignals
       text({
         content: props.title,
         fg: t.primary,
@@ -184,7 +202,7 @@ function Card(rawProps: CardProps): Cleanup {
   })
 }
 
-// Usage
+// Usage - callers pass signals/deriveds directly, or use getters for computation
 Card({
   title: 'Welcome',
   content: 'This is a card component',
@@ -192,9 +210,9 @@ Card({
 })
 
 Card({
-  title: () => `User: ${user.value.name}`,
-  content: userBio,
-  highlighted: isSelected
+  title: () => `User: ${user.value.name}`,  // Getter for inline computation
+  content: userBio,       // Signal directly
+  highlighted: isSelected // Signal directly
 })
 ```
 
@@ -220,26 +238,24 @@ function Button(rawProps: ButtonProps) {
 
 ## Derived from Props
 
-Create derived values from normalized props:
+Create named deriveds for complex logic, then pass them directly:
 
 ```typescript
 function Progress(rawProps: { value: PropInput<number> }) {
   const props = reactiveProps<{ value: number }>({ value: rawProps.value })
 
+  // Create deriveds for complex computations
   const percent = derived(() => Math.round(props.value.value * 100))
   const barWidth = derived(() => Math.floor(props.value.value * 20))
+  const bar = derived(() => '█'.repeat(barWidth.value))
+  const label = derived(() => `${percent.value}%`)
 
   return box({
     flexDirection: 'row',
     children: () => {
-      text({
-        content: derived(() => '█'.repeat(barWidth.value)),
-        fg: t.primary
-      })
-      text({
-        content: derived(() => `${percent.value}%`),
-        fg: t.textDim
-      })
+      // Pass deriveds directly - cleanest syntax
+      text({ content: bar, fg: t.primary })
+      text({ content: label, fg: t.textDim })
     }
   })
 }
@@ -247,10 +263,12 @@ function Progress(rawProps: { value: PropInput<number> }) {
 
 ## Best Practices
 
-1. **Always use PropInput** for props that might be reactive
-2. **Provide defaults** when normalizing optional props
-3. **Create derived values** for computed display logic
-4. **Return Cleanup** from component functions
+1. **Pass signals/deriveds directly** - After `reactiveProps()`, props are deriveds - pass them directly to primitives
+2. **Use `() =>` only for inline computation** - A getter is an inline derived
+3. **Always use PropInput** for props that might be reactive
+4. **Provide defaults** when normalizing optional props
+5. **Create named deriveds** for complex computed logic
+6. **Return Cleanup** from component functions
 
 ```typescript
 // Good pattern

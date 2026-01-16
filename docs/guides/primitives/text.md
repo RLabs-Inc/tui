@@ -22,27 +22,29 @@ text({ content: 'Hello, World!' })
 
 ## Reactive Content
 
-The `content` prop can be static, a signal, or a getter:
+The `content` prop can be static, a signal, a derived, or a getter. **Pass signals and deriveds directly** - only use `() =>` for inline computations:
 
 ```typescript
 import { signal, derived } from '@rlabs-inc/signals'
 
 const count = signal(0)
+const title = signal('Hello')
+const formatted = derived(() => count.value.toFixed(2))
 
 // Static
 text({ content: 'Static text' })
 
-// Signal
-const message = signal('Hello')
-text({ content: message })
+// Pass signals directly (preferred for simple values)
+text({ content: title })
 
-// Getter (most common pattern)
-text({ content: () => `Count: ${count.value}` })
-
-// Derived
-const formatted = derived(() => count.value.toFixed(2))
+// Pass deriveds directly
 text({ content: formatted })
+
+// Use getter for inline computations (string templates, expressions)
+text({ content: () => `Count: ${count.value}` })
 ```
+
+> **The rule**: Pass signals and deriveds directly. Use `() =>` only when you need to compute something inline (like string templates or conditional expressions).
 
 When the signal changes, only that text updates - not the whole UI.
 
@@ -316,24 +318,34 @@ box({
 
 ## Performance Tips
 
-1. **Prefer getters over derived for simple expressions**:
+1. **Pass signals directly when you have them**:
    ```typescript
-   // Good - simple getter
-   text({ content: () => `Count: ${count.value}` })
+   const title = signal('Hello')
 
-   // Overkill for simple formatting
-   const formatted = derived(() => `Count: ${count.value}`)
-   text({ content: formatted })
+   // Good - pass signal directly
+   text({ content: title })
+
+   // Unnecessary wrapper
+   text({ content: () => title.value })
    ```
 
-2. **Use derived for expensive computations**:
+2. **Use getters for string templates and inline expressions**:
    ```typescript
-   // Good - computed once, cached
+   // Good - getter for inline computation
+   text({ content: () => `Count: ${count.value}` })
+   ```
+
+3. **Use derived for expensive or reused computations**:
+   ```typescript
+   // Good - computed once, cached, reusable
    const stats = derived(() => calculateStats(data.value))
+   text({ content: stats })
+
+   // Or combine with a template
    text({ content: () => `Stats: ${stats.value}` })
    ```
 
-3. **Batch updates when changing multiple signals**:
+4. **Batch updates when changing multiple signals**:
    ```typescript
    import { batch } from '@rlabs-inc/signals'
 

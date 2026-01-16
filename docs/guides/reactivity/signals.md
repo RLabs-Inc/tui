@@ -174,20 +174,63 @@ batch(() => {
 
 ## Using Signals in TUI
 
-### As Props
+TUI primitives accept signals, deriveds, getters, and static values directly. **The rule is simple**:
+
+> Pass signals and deriveds directly. Use `() =>` only for inline computations.
+
+### The Cleaner Pattern
 
 ```typescript
 const count = signal(0)
+const doubled = derived(() => count.value * 2)
 
-// Pass signal directly - stays reactive
-text({ content: count })  // Updates when count changes
+// Pass signal directly - cleanest syntax
+text({ content: count })
 
-// Getter for formatted content
+// Pass derived directly - also clean
+text({ content: doubled })
+
+// Use getter only for inline computation
+text({ content: () => `Count: ${count.value}` })
+```
+
+### Why This Works
+
+A getter `() =>` is essentially an **inline derived**. These are equivalent:
+
+```typescript
+// Named derived
+const doubled = derived(() => count.value * 2)
+text({ content: doubled })
+
+// Inline derived (using getter)
+text({ content: () => count.value * 2 })
+```
+
+If you already have a signal or derived, just pass it directly - no wrapper needed.
+
+### When to Use Getters
+
+Use `() =>` when you need inline computation:
+
+```typescript
+// String templates
 text({ content: () => `Count: ${count.value}` })
 
-// Derived for complex computation
-const formatted = derived(() => count.value.toLocaleString())
-text({ content: formatted })
+// Conditional logic
+text({ content: () => isActive.value ? 'ON' : 'OFF' })
+
+// Combining multiple signals
+text({ content: () => `${firstName.value} ${lastName.value}` })
+```
+
+### Static Values
+
+Static values work too - no reactivity needed:
+
+```typescript
+text({ content: 'Hello World' })  // Never changes
+box({ width: 40 })                // Fixed width
 ```
 
 ### In Children
@@ -352,11 +395,11 @@ function redo() {
 
 ## Best Practices
 
-1. **Keep state at top level** - Define signals outside components
-2. **Use derived for computation** - Don't recalculate in render
-3. **Batch related updates** - Prevent unnecessary renders
-4. **Prefer getters in props** - `() => signal.value` for simple expressions
-5. **Use derived for caching** - Expensive computations only run when needed
+1. **Pass signals/deriveds directly** - Cleanest syntax: `text({ content: mySignal })`
+2. **Use `() =>` for inline computations** - It's an inline derived
+3. **Keep state at top level** - Define signals outside components
+4. **Use derived for expensive computation** - Cache complex calculations
+5. **Batch related updates** - Prevent unnecessary renders
 
 ## See Also
 

@@ -32,11 +32,12 @@ Press `Ctrl+C` to exit.
 Let's make it interactive. The magic of TUI is **signals** - reactive values that automatically update the UI when they change.
 
 ```typescript
-import { signal } from '@rlabs-inc/signals'
+import { signal, derived } from '@rlabs-inc/signals'
 import { box, text, mount, keyboard } from '@rlabs-inc/tui'
 
 // Create reactive state
 const count = signal(0)
+const label = derived(() => `Count: ${count.value}`)
 
 mount(() => {
   box({
@@ -45,8 +46,8 @@ mount(() => {
     children: () => {
       text({ content: 'Press Enter to increment' })
 
-      // This text updates automatically when count changes!
-      text({ content: () => `Count: ${count.value}` })
+      // Pass a derived directly - clean and simple!
+      text({ content: label })
     }
   })
 })
@@ -58,6 +59,28 @@ keyboard.onKey('Enter', () => {
 ```
 
 Run it and press Enter repeatedly. The count updates without any manual DOM manipulation or re-rendering logic.
+
+### Three Ways to Pass Reactive Props
+
+TUI accepts signals, deriveds, or inline getters for any reactive prop:
+
+```typescript
+const count = signal(0)
+const formatted = derived(() => `Count: ${count.value}`)
+
+// 1. Signal directly - simplest when no transformation needed
+text({ content: count })        // displays: 0
+box({ width: widthSignal })     // any prop works
+
+// 2. Derived directly - for pre-computed values
+text({ content: formatted })    // displays: "Count: 0"
+
+// 3. Inline getter - for one-off computations
+text({ content: () => count.value * 2 })           // inline math
+text({ content: () => `Value: ${count.value}` })   // inline template
+```
+
+**The rule**: Pass signals and deriveds directly. Use `() =>` only for inline computations that don't warrant a named derived.
 
 ## Adding Style
 

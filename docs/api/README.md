@@ -117,13 +117,15 @@ TypeScript type definitions.
 | [`BoxProps`](./types.md#boxprops) | Box component props |
 | [`TextProps`](./types.md#textprops) | Text component props |
 | [`Cleanup`](./types.md#cleanup) | Component cleanup function |
-| [`Reactive<T>`](./types.md#reactive) | Reactive value type |
+| [`Reactive<T>`](./types.md#reactive) | Reactive value type (static, signal, derived, or getter) |
 | [`PropInput<T>`](./types.md#propinput) | Component prop input type |
 | [`RGBA`](./types.md#rgba) | Color type |
 
 ```typescript
 import type { BoxProps, TextProps, Cleanup, RGBA } from '@rlabs-inc/tui'
 ```
+
+**Prop type rule**: All component props accept `Reactive<T>` - pass signals and deriveds directly, use `() =>` only for inline computations.
 
 ## Common Imports
 
@@ -149,6 +151,15 @@ import {
   keyboard, focusManager,
   t, BorderStyle
 } from '@rlabs-inc/tui'
+
+// Reactive props example - pass signals/deriveds directly
+const width = signal(40)
+const bgColor = derived(() => isActive.value ? t.primary.value : null)
+
+box({
+  width,      // Signal directly
+  bg: bgColor // Derived directly
+})
 ```
 
 ### Full Import
