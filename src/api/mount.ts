@@ -38,6 +38,13 @@ import { hitGrid, clearHitGrid, mouse } from '../state/mouse'
 import { globalKeys } from '../state/global-keys'
 
 // =============================================================================
+// MODULE STATE
+// =============================================================================
+
+// Track if global error handlers have been registered (only once per process)
+let globalErrorHandlersRegistered = false
+
+// =============================================================================
 // MOUNT
 // =============================================================================
 
@@ -149,13 +156,16 @@ export async function mount(
   // Create the component tree
   root()
 
-  // Global error handlers for debugging
-  process.on('uncaughtException', (err) => {
-    console.error('[TUI] Uncaught exception:', err)
-  })
-  process.on('unhandledRejection', (err) => {
-    console.error('[TUI] Unhandled rejection:', err)
-  })
+  // Global error handlers for debugging (register only once per process)
+  if (!globalErrorHandlersRegistered) {
+    globalErrorHandlersRegistered = true
+    process.on('uncaughtException', (err) => {
+      console.error('[TUI] Uncaught exception:', err)
+    })
+    process.on('unhandledRejection', (err) => {
+      console.error('[TUI] Unhandled rejection:', err)
+    })
+  }
 
   // THE ONE RENDER EFFECT
   // This is where the magic happens - reactive rendering!

@@ -35,3 +35,29 @@ export function getValue<T>(prop: T | { value: T } | (() => T) | undefined, defa
   if (typeof prop === 'object' && prop !== null && 'value' in prop) return (prop as { value: T }).value
   return prop as T
 }
+
+// =============================================================================
+// ENUM SOURCE
+// =============================================================================
+
+/**
+ * Create a slot source for enum props - returns getter for reactive, value for static.
+ * For use with slotArray.setSource()
+ * Handles: static values, signals/bindings ({ value: T }), and getter functions (() => T)
+ */
+export function enumSource<T extends string>(
+  prop: T | { value: T } | (() => T) | undefined,
+  converter: (val: T | undefined) => number
+): number | (() => number) {
+  // Handle getter function (inline derived)
+  if (typeof prop === 'function') {
+    return () => converter(prop())
+  }
+  // Handle object with .value (signal/binding/derived)
+  if (prop !== undefined && typeof prop === 'object' && prop !== null && 'value' in prop) {
+    const reactiveSource = prop as { value: T }
+    return () => converter(reactiveSource.value)
+  }
+  // Static value
+  return converter(prop as T | undefined)
+}

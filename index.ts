@@ -21,8 +21,20 @@ export type { Context } from './src/state/context'
 
 // State modules - Input handling
 export { keyboard, lastKey, lastEvent } from './src/state/keyboard'
-export { mouse, hitGrid, lastMouseEvent, mouseX, mouseY, isMouseDown } from './src/state/mouse'
-export { focusManager, focusedIndex } from './src/state/focus'
+export {
+  mouse,
+  hitGrid,
+  lastMouseEvent,
+  mouseX,
+  mouseY,
+  isMouseDown,
+  onMouseDown,
+  onMouseUp,
+  onClick,
+  onScroll,
+  onComponent,
+} from './src/state/mouse'
+export { focusManager, focusedIndex, pushFocusTrap, popFocusTrap, isFocusTrapped, getFocusTrapContainer } from './src/state/focus'
 export { scroll } from './src/state/scroll'
 export { globalKeys } from './src/state/global-keys'
 export { cursor } from './src/state/cursor'

@@ -38,6 +38,7 @@ import {
 import { cleanupIndex as cleanupKeyboardListeners } from '../state/keyboard'
 import { getVariantStyle } from '../state/theme'
 import { getActiveScope } from './scope'
+import { enumSource } from './utils'
 
 // Import arrays
 import * as core from '../engine/arrays/core'
@@ -116,28 +117,6 @@ function alignSelfToNum(align: string | undefined): number {
     case 'baseline': return 5
     default: return 0 // auto (use parent's alignItems)
   }
-}
-
-/**
- * Create a slot source for enum props - returns getter for reactive, value for static.
- * For use with slotArray.setSource()
- * Handles: static values, signals/bindings ({ value: T }), and getter functions (() => T)
- */
-function enumSource<T extends string>(
-  prop: T | { value: T } | (() => T) | undefined,
-  converter: (val: T | undefined) => number
-): number | (() => number) {
-  // Handle getter function (inline derived)
-  if (typeof prop === 'function') {
-    return () => converter(prop())
-  }
-  // Handle object with .value (signal/binding/derived)
-  if (prop !== undefined && typeof prop === 'object' && prop !== null && 'value' in prop) {
-    const reactiveSource = prop as { value: T }
-    return () => converter(reactiveSource.value)
-  }
-  // Static value
-  return converter(prop as T | undefined)
 }
 
 /** Get static boolean for visible prop */

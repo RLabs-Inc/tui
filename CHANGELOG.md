@@ -5,6 +5,36 @@ All notable changes to the TUI Framework will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2025-01-17
+
+### Added
+- **Focus trap API exports** - `pushFocusTrap`, `popFocusTrap`, `isFocusTrapped`, `getFocusTrapContainer` now accessible from root
+- **Mouse handler exports** - `onMouseDown`, `onMouseUp`, `onClick`, `onScroll`, `onComponent` now accessible from root
+- **Comprehensive test suite** - 775 tests across 17 files (up from 125)
+  - Input primitive tests (76 tests)
+  - Template primitive tests (each: 38, show: 31, when: 28)
+  - Box/text primitive tests (94 tests)
+  - Keyboard state tests (61 tests)
+  - Theme state tests (69 tests)
+  - Mouse/scroll tests (53 tests)
+  - Renderer tests (95 tests)
+  - Inheritance tests (44 tests)
+  - Stress tests (26 tests) - deep nesting, large component counts, rapid updates
+  - Integration tests (35 tests) - nested primitives, full pipeline
+
+### Fixed
+- **Memory leak in mount.ts** - Process exception handlers now only registered once per process
+- **FPS validation in drawnCursor.ts** - Returns no-op for fps ≤ 0 (prevents infinite interval)
+- **O(n²) text measurement** - Replaced `indexOf()` with loop index in text-measure.ts
+- **TITAN array bounds safety** - Replaced unsafe `array[index]!` with `array[index] ?? -1`
+- **show.ts reactive dependency** - Effect now reads condition on every run to establish proper dependency
+- **Border style triple-read** - Inlined `hasBorder()` check using already-fetched borderStyles (33% fewer array reads)
+
+### Changed
+- **Code cleanup** - Removed duplicate `Cleanup` type definition (scope.ts now imports from types.ts)
+- **Shared helper extraction** - `enumSource` moved to utils.ts (removed duplication in box.ts/text.ts)
+- **Dead code removal** - Removed unused `SelectProps`, `SelectOption`, `ProgressProps` types
+
 ## [0.5.0] - 2025-01-17
 
 ### Added

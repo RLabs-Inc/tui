@@ -111,6 +111,11 @@ function getBlinkClock(fps: number): BlinkRegistry {
 }
 
 function subscribeToBlink(fps: number): () => void {
+  // Guard against invalid fps (0 or negative would cause Infinity interval)
+  if (fps <= 0) {
+    return () => {} // No-op unsubscribe
+  }
+
   const registry = getBlinkClock(fps)
   registry.subscribers++
 

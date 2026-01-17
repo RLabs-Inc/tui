@@ -58,14 +58,15 @@ export function show(
     // Initial render
     update(conditionGetter())
 
-    // Effect for updates - skip first run (don't read condition to avoid double tracking)
+    // Effect for updates - reads condition to establish dependency
+    // but skips the update on first run since we already rendered above
     let initialized = false
     effect(() => {
+      const condition = conditionGetter() // Must read to track dependency!
       if (!initialized) {
         initialized = true
         return
       }
-      const condition = conditionGetter()
       update(condition)
     })
 

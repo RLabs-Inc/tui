@@ -233,41 +233,6 @@ export interface InputProps extends StyleProps, BorderProps, DimensionProps, Spa
 }
 
 // =============================================================================
-// SELECT PROPS
-// =============================================================================
-
-export interface SelectOption {
-  value: string
-  label: string
-}
-
-export interface SelectProps extends StyleProps, BorderProps, DimensionProps {
-  /** Selected value (two-way bound) */
-  value: WritableSignal<string> | Binding<string>
-  /** Available options */
-  options: SelectOption[]
-  /** Placeholder when nothing selected */
-  placeholder?: string
-  /** Is visible */
-  visible?: Reactive<boolean>
-  /** Called when selection changes */
-  onChange?: (value: string) => void
-}
-
-// =============================================================================
-// PROGRESS PROPS
-// =============================================================================
-
-export interface ProgressProps extends StyleProps, DimensionProps {
-  /** Progress value 0-1 */
-  value: Reactive<number>
-  /** Show percentage text */
-  showPercent?: boolean
-  /** Is visible */
-  visible?: Reactive<boolean>
-}
-
-// =============================================================================
 // COMPONENT RETURN TYPE
 // =============================================================================
 

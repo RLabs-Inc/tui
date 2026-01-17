@@ -22,8 +22,7 @@
 
 import { effectScope, onScopeDispose } from '@rlabs-inc/signals'
 import type { EffectScope } from '@rlabs-inc/signals'
-
-export type Cleanup = () => void
+import type { Cleanup } from './types'
 
 // =============================================================================
 // ACTIVE SCOPE TRACKING

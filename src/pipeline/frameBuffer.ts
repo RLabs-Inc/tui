@@ -39,7 +39,6 @@ import {
   getInheritedBg,
   getBorderColors,
   getBorderStyles,
-  hasBorder,
   getEffectiveOpacity,
 } from '../engine/inheritance'
 
@@ -222,7 +221,8 @@ function renderComponent(
   // Get border configuration
   const borderStyles = getBorderStyles(index)
   const borderColors = getBorderColors(index)
-  const hasAnyBorder = hasBorder(index)
+  // Inline hasAnyBorder check - avoids redundant getBorderStyles call (was 12 array reads, now 8)
+  const hasAnyBorder = borderStyles.top > 0 || borderStyles.right > 0 || borderStyles.bottom > 0 || borderStyles.left > 0
 
   // Draw borders
   if (hasAnyBorder && w >= 2 && h >= 2) {

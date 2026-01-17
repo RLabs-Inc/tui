@@ -217,7 +217,8 @@ export function computeLayoutTitan(
       if (firstChild[parent] === -1) {
         firstChild[parent] = i
       } else {
-        nextSibling[lastChild[parent]!] = i
+        const last = lastChild[parent] ?? -1
+        if (last !== -1) nextSibling[last] = i
       }
       lastChild[parent] = i
     } else {
@@ -231,10 +232,10 @@ export function computeLayoutTitan(
   let head = 0
   while (head < bfsQueue.length) {
     const parent = bfsQueue[head++]!
-    let child = firstChild[parent]!
+    let child = firstChild[parent] ?? -1
     while (child !== -1) {
       bfsQueue.push(child)
-      child = nextSibling[child]!
+      child = nextSibling[child] ?? -1
     }
   }
 
@@ -319,7 +320,7 @@ export function computeLayoutTitan(
       const overflow = layout.overflow[i] ?? Overflow.VISIBLE
       const isScrollable = overflow === Overflow.SCROLL || overflow === Overflow.AUTO
 
-      let kid = firstChild[i]!
+      let kid = firstChild[i] ?? -1
       if (kid !== -1 && !isScrollable) {
         // Normal containers: intrinsic size includes all children
         const dir = layout.flexDirection[i] ?? FLEX_COLUMN
@@ -368,7 +369,7 @@ export function computeLayoutTitan(
             sumMain += kidH + kidMarginMain + gap
             maxCross = Math.max(maxCross, kidW)
           }
-          kid = nextSibling[kid]!
+          kid = nextSibling[kid] ?? -1
         }
 
         if (childCount > 0) sumMain -= gap
@@ -429,12 +430,12 @@ export function computeLayoutTitan(
     let childrenMaxCross = 0
 
     // Collect flow children
-    let kid = firstChild[parent]!
+    let kid = firstChild[parent] ?? -1
     while (kid !== -1) {
       if ((layout.position[kid] ?? POS_RELATIVE) !== POS_ABSOLUTE) {
         flowKids.push(kid)
       }
-      kid = nextSibling[kid]!
+      kid = nextSibling[kid] ?? -1
     }
 
     if (flowKids.length === 0) return

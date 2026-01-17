@@ -33,7 +33,8 @@ export function measureTextHeight(content: string, maxWidth: number): number {
   // Split by existing newlines first
   const paragraphs = content.split('\n')
 
-  for (const paragraph of paragraphs) {
+  for (let i = 0; i < paragraphs.length; i++) {
+    const paragraph = paragraphs[i]!
     if (paragraph === '') {
       lines++
       continue
@@ -53,7 +54,7 @@ export function measureTextHeight(content: string, maxWidth: number): number {
 
     // Reset for next paragraph
     currentLineWidth = 0
-    if (paragraphs.indexOf(paragraph) < paragraphs.length - 1) {
+    if (i < paragraphs.length - 1) {
       lines++
     }
   }
