@@ -16,7 +16,7 @@
  * HitGrid updates are returned as data to be applied by the render effect.
  */
 
-import { derived, neverEquals } from '@rlabs-inc/signals'
+import { derived, neverEquals, signal } from '@rlabs-inc/signals'
 import type { FrameBuffer, RGBA } from '../types'
 import { ComponentType } from '../types'
 import { Colors, TERMINAL_DEFAULT, rgbaBlend, rgbaLerp } from '../types/color'
@@ -376,7 +376,9 @@ function renderInput(
   fg: RGBA,
   clip: ClipRect
 ): void {
-  const content = text.textContent[index] || ''  // SlotArray auto-unwraps
+  // Read through slotArray proxy - same pattern as renderText
+  const rawValue = text.textContent[index]
+  const content = rawValue == null ? '' : String(rawValue)
   const attrs = text.textAttrs[index] || 0
   const cursorPos = interaction.cursorPosition[index] || 0
 
@@ -401,14 +403,38 @@ function renderInput(
   if (interaction.focusedIndex.value === index) {
     const cursorX = x + Math.min(cursorPos - displayOffset, w - 1)
     if (cursorX >= clip.x && cursorX < clip.x + clip.width && y >= clip.y && y < clip.y + clip.height) {
-      // Draw cursor as inverse block
+      // Read cursor configuration from arrays
+      const cursorCharCode = interaction.cursorChar[index] ?? 0
+      const cursorAltCharCode = interaction.cursorAltChar[index] ?? 0
+      const cursorVisible = interaction.cursorVisible[index] ?? 1
+
       const cell = buffer.cells[y]?.[cursorX]
       if (cell) {
-        const cursorChar = content[cursorPos] || ' '
-        // Swap fg/bg for cursor visibility
-        cell.char = cursorChar.codePointAt(0) ?? 32
-        cell.fg = getInheritedBg(index)
-        cell.bg = fg
+        const charUnderCursor = content[cursorPos] || ' '
+
+        if (cursorVisible === 0) {
+          // Blink "off" phase
+          if (cursorAltCharCode > 0) {
+            // Custom alt character for "off" phase
+            cell.char = cursorAltCharCode
+            cell.fg = fg
+            cell.bg = getInheritedBg(index)
+          }
+          // else: leave cell unchanged (original text shows through)
+        } else {
+          // Cursor visible
+          if (cursorCharCode === 0) {
+            // Block cursor (inverse) - swap fg/bg
+            cell.char = charUnderCursor.codePointAt(0) ?? 32
+            cell.fg = getInheritedBg(index)
+            cell.bg = fg
+          } else {
+            // Custom cursor character (bar, underline, or user-defined)
+            cell.char = cursorCharCode
+            cell.fg = fg
+            cell.bg = getInheritedBg(index)
+          }
+        }
       }
     }
   }

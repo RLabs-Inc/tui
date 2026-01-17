@@ -17,7 +17,13 @@
 
 import { state, derived } from '@rlabs-inc/signals'
 import type { RGBA } from '../types'
-import { parseColor, TERMINAL_DEFAULT, ansiColor } from '../types/color'
+import {
+  parseColor,
+  TERMINAL_DEFAULT,
+  ansiColor,
+  isAnsiColor,
+  adjustLightnessForContrast,
+} from '../types/color'
 
 // =============================================================================
 // THEME COLOR TYPE
@@ -269,6 +275,222 @@ export const themes = {
     overlay: 0x002b36,
     border: 0x586e75,
     borderFocus: 0x268bd2,
+  },
+
+  /**
+   * Catppuccin Mocha - soothing pastel theme (most popular variant).
+   */
+  catppuccin: {
+    name: 'catppuccin',
+    description: 'Catppuccin Mocha theme',
+    primary: 0x89b4fa, // blue
+    secondary: 0xcba6f7, // mauve
+    tertiary: 0x94e2d5, // teal
+    accent: 0xf9e2af, // yellow
+    success: 0xa6e3a1, // green
+    warning: 0xf9e2af, // yellow
+    error: 0xf38ba8, // red
+    info: 0x89dceb, // sky
+    text: 0xcdd6f4, // text
+    textMuted: 0x6c7086, // overlay0
+    textDim: 0x585b70, // surface2
+    textDisabled: 0x45475a, // surface0
+    textBright: 0xffffff,
+    background: 0x1e1e2e, // base
+    backgroundMuted: 0x313244, // surface0
+    surface: 0x45475a, // surface1
+    overlay: 0x181825, // mantle
+    border: 0x6c7086, // overlay0
+    borderFocus: 0x89b4fa, // blue
+  },
+
+  /**
+   * Gruvbox Dark - retro groove color scheme.
+   */
+  gruvbox: {
+    name: 'gruvbox',
+    description: 'Gruvbox Dark theme',
+    primary: 0x458588, // blue
+    secondary: 0xb16286, // purple
+    tertiary: 0x689d6a, // aqua
+    accent: 0xd79921, // yellow
+    success: 0x98971a, // green
+    warning: 0xd79921, // yellow
+    error: 0xcc241d, // red
+    info: 0x458588, // blue
+    text: 0xebdbb2, // fg
+    textMuted: 0xa89984, // gray
+    textDim: 0x928374, // gray
+    textDisabled: 0x665c54, // bg3
+    textBright: 0xfbf1c7, // fg0
+    background: 0x282828, // bg
+    backgroundMuted: 0x3c3836, // bg1
+    surface: 0x504945, // bg2
+    overlay: 0x1d2021, // bg0_h
+    border: 0x665c54, // bg3
+    borderFocus: 0xfe8019, // orange
+  },
+
+  /**
+   * Tokyo Night - clean, dark theme inspired by Tokyo city lights.
+   */
+  tokyoNight: {
+    name: 'tokyoNight',
+    description: 'Tokyo Night theme',
+    primary: 0x7aa2f7, // blue
+    secondary: 0xbb9af7, // purple
+    tertiary: 0x7dcfff, // cyan
+    accent: 0xe0af68, // yellow
+    success: 0x9ece6a, // green
+    warning: 0xe0af68, // yellow
+    error: 0xf7768e, // red
+    info: 0x7dcfff, // cyan
+    text: 0xa9b1d6, // fg
+    textMuted: 0x565f89, // comment
+    textDim: 0x414868, // dark3
+    textDisabled: 0x3b4261, // dark2
+    textBright: 0xc0caf5, // fg_bright
+    background: 0x1a1b26, // bg
+    backgroundMuted: 0x24283b, // bg_highlight
+    surface: 0x414868, // dark3
+    overlay: 0x16161e, // bg_dark
+    border: 0x414868, // dark3
+    borderFocus: 0x7aa2f7, // blue
+  },
+
+  /**
+   * One Dark - Atom's iconic dark theme.
+   */
+  oneDark: {
+    name: 'oneDark',
+    description: 'One Dark (Atom) theme',
+    primary: 0x61afef, // blue
+    secondary: 0xc678dd, // purple
+    tertiary: 0x56b6c2, // cyan
+    accent: 0xe5c07b, // yellow
+    success: 0x98c379, // green
+    warning: 0xe5c07b, // yellow
+    error: 0xe06c75, // red
+    info: 0x56b6c2, // cyan
+    text: 0xabb2bf, // fg
+    textMuted: 0x5c6370, // comment
+    textDim: 0x4b5263, // gutter
+    textDisabled: 0x3e4451, // guide
+    textBright: 0xffffff,
+    background: 0x282c34, // bg
+    backgroundMuted: 0x21252b, // bg_dark
+    surface: 0x3e4451, // guide
+    overlay: 0x1e2127, // bg_darker
+    border: 0x3e4451, // guide
+    borderFocus: 0x61afef, // blue
+  },
+
+  /**
+   * Rosé Pine - all natural pine, faux fur and a bit of soho vibes.
+   */
+  rosePine: {
+    name: 'rosePine',
+    description: 'Rosé Pine theme',
+    primary: 0x9ccfd8, // foam
+    secondary: 0xc4a7e7, // iris
+    tertiary: 0x31748f, // pine
+    accent: 0xf6c177, // gold
+    success: 0x31748f, // pine
+    warning: 0xf6c177, // gold
+    error: 0xeb6f92, // love
+    info: 0x9ccfd8, // foam
+    text: 0xe0def4, // text
+    textMuted: 0x908caa, // subtle
+    textDim: 0x6e6a86, // muted
+    textDisabled: 0x524f67, // highlight_med
+    textBright: 0xffffff,
+    background: 0x191724, // base
+    backgroundMuted: 0x1f1d2e, // surface
+    surface: 0x26233a, // overlay
+    overlay: 0x16141f, // nc
+    border: 0x524f67, // highlight_med
+    borderFocus: 0xebbcba, // rose
+  },
+
+  /**
+   * Kanagawa - theme inspired by Katsushika Hokusai's famous wave painting.
+   */
+  kanagawa: {
+    name: 'kanagawa',
+    description: 'Kanagawa wave theme',
+    primary: 0x7e9cd8, // crystalBlue
+    secondary: 0x957fb8, // oniViolet
+    tertiary: 0x7aa89f, // waveAqua2
+    accent: 0xdca561, // carpYellow
+    success: 0x98bb6c, // springGreen
+    warning: 0xdca561, // carpYellow
+    error: 0xc34043, // autumnRed
+    info: 0x7fb4ca, // springBlue
+    text: 0xdcd7ba, // fujiWhite
+    textMuted: 0x727169, // fujiGray
+    textDim: 0x54546d, // sumiInk4
+    textDisabled: 0x363646, // sumiInk3
+    textBright: 0xffffff,
+    background: 0x1f1f28, // sumiInk1
+    backgroundMuted: 0x2a2a37, // sumiInk2
+    surface: 0x363646, // sumiInk3
+    overlay: 0x16161d, // sumiInk0
+    border: 0x54546d, // sumiInk4
+    borderFocus: 0x7e9cd8, // crystalBlue
+  },
+
+  /**
+   * Everforest - comfortable green-tinted theme.
+   */
+  everforest: {
+    name: 'everforest',
+    description: 'Everforest theme',
+    primary: 0x7fbbb3, // aqua
+    secondary: 0xd699b6, // purple
+    tertiary: 0x83c092, // green
+    accent: 0xdbbc7f, // yellow
+    success: 0xa7c080, // green
+    warning: 0xdbbc7f, // yellow
+    error: 0xe67e80, // red
+    info: 0x7fbbb3, // aqua
+    text: 0xd3c6aa, // fg
+    textMuted: 0x9da9a0, // grey1
+    textDim: 0x859289, // grey0
+    textDisabled: 0x5c6a72, // bg5
+    textBright: 0xfdf6e3,
+    background: 0x2d353b, // bg_dim
+    backgroundMuted: 0x343f44, // bg1
+    surface: 0x3d484d, // bg3
+    overlay: 0x272e33, // bg0
+    border: 0x5c6a72, // bg5
+    borderFocus: 0xa7c080, // green
+  },
+
+  /**
+   * Night Owl - designed with accessibility in mind.
+   */
+  nightOwl: {
+    name: 'nightOwl',
+    description: 'Night Owl theme',
+    primary: 0x82aaff, // blue
+    secondary: 0xc792ea, // purple
+    tertiary: 0x7fdbca, // cyan
+    accent: 0xffcb6b, // yellow
+    success: 0xaddb67, // green
+    warning: 0xffcb6b, // yellow
+    error: 0xef5350, // red
+    info: 0x7fdbca, // cyan
+    text: 0xd6deeb, // fg
+    textMuted: 0x637777, // comment
+    textDim: 0x5f7e97, // lineHighlight
+    textDisabled: 0x3b4252, // guide
+    textBright: 0xffffff,
+    background: 0x011627, // bg
+    backgroundMuted: 0x0b2942, // bg_light
+    surface: 0x1d3b53, // selection
+    overlay: 0x010e1a, // bg_dark
+    border: 0x5f7e97, // lineHighlight
+    borderFocus: 0x82aaff, // blue
   },
 }
 
@@ -569,8 +791,36 @@ export interface VariantStyle {
 }
 
 /**
+ * Get a foreground color with proper contrast against the background.
+ *
+ * For ANSI colors (terminal theme): Returns the desired fg as-is, trusting
+ * the standard ANSI color pairings and terminal's contrast handling.
+ *
+ * For RGB colors (custom themes): Adjusts the fg lightness using OKLCH
+ * to ensure WCAG AA contrast (4.5:1 ratio).
+ */
+function getContrastFg(desiredFg: RGBA, bg: RGBA): RGBA {
+  // If background is ANSI, trust terminal's color handling
+  if (isAnsiColor(bg)) {
+    return desiredFg
+  }
+
+  // If foreground is ANSI but background is RGB, also trust it
+  // (mixed case, probably intentional)
+  if (isAnsiColor(desiredFg)) {
+    return desiredFg
+  }
+
+  // Both are RGB - ensure proper contrast using OKLCH
+  return adjustLightnessForContrast(desiredFg, bg, 4.5)
+}
+
+/**
  * Get variant styles resolved to RGBA.
  * Returns colors based on variant name and current theme.
+ *
+ * For terminal theme (ANSI colors): Uses standard ANSI pairings.
+ * For custom themes (RGB colors): Calculates proper OKLCH contrast.
  */
 export function getVariantStyle(variant: Variant): VariantStyle {
   const resolved = resolvedTheme.value
@@ -578,56 +828,56 @@ export function getVariantStyle(variant: Variant): VariantStyle {
   switch (variant) {
     case 'primary':
       return {
-        fg: resolved.textBright,
+        fg: getContrastFg(resolved.textBright, resolved.primary),
         bg: resolved.primary,
         border: resolved.primary,
         borderFocus: resolved.accent,
       }
     case 'secondary':
       return {
-        fg: resolved.textBright,
+        fg: getContrastFg(resolved.textBright, resolved.secondary),
         bg: resolved.secondary,
         border: resolved.secondary,
         borderFocus: resolved.accent,
       }
     case 'tertiary':
       return {
-        fg: resolved.textBright,
+        fg: getContrastFg(resolved.textBright, resolved.tertiary),
         bg: resolved.tertiary,
         border: resolved.tertiary,
         borderFocus: resolved.accent,
       }
     case 'accent':
       return {
-        fg: { r: 0, g: 0, b: 0, a: 255 }, // Dark text on accent (usually bright)
+        fg: getContrastFg({ r: 0, g: 0, b: 0, a: 255 }, resolved.accent),
         bg: resolved.accent,
         border: resolved.accent,
         borderFocus: resolved.primary,
       }
     case 'success':
       return {
-        fg: resolved.textBright,
+        fg: getContrastFg(resolved.textBright, resolved.success),
         bg: resolved.success,
         border: resolved.success,
         borderFocus: resolved.accent,
       }
     case 'warning':
       return {
-        fg: { r: 0, g: 0, b: 0, a: 255 }, // Dark text on warning
+        fg: getContrastFg({ r: 0, g: 0, b: 0, a: 255 }, resolved.warning),
         bg: resolved.warning,
         border: resolved.warning,
         borderFocus: resolved.accent,
       }
     case 'error':
       return {
-        fg: resolved.textBright,
+        fg: getContrastFg(resolved.textBright, resolved.error),
         bg: resolved.error,
         border: resolved.error,
         borderFocus: resolved.accent,
       }
     case 'info':
       return {
-        fg: resolved.textBright,
+        fg: getContrastFg(resolved.textBright, resolved.info),
         bg: resolved.info,
         border: resolved.info,
         borderFocus: resolved.accent,
@@ -648,7 +898,7 @@ export function getVariantStyle(variant: Variant): VariantStyle {
       }
     case 'elevated':
       return {
-        fg: resolved.textBright,
+        fg: getContrastFg(resolved.textBright, resolved.surface),
         bg: resolved.surface,
         border: resolved.primary,
         borderFocus: resolved.borderFocus,

@@ -232,6 +232,121 @@ function oklchToRgb(l: number, c: number, h: number): { r: number; g: number; b:
   }
 }
 
+/**
+ * Convert RGB to OKLCH.
+ * Inverse of oklchToRgb. Used for color manipulation while preserving perceptual uniformity.
+ *
+ * @returns { l: lightness (0-1), c: chroma (0-~0.4), h: hue (0-360) }
+ */
+export function rgbToOklch(color: RGBA): { l: number; c: number; h: number } {
+  // sRGB to linear sRGB (inverse gamma)
+  const toLinear = (x: number) => {
+    const s = x / 255
+    return s <= 0.04045 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4)
+  }
+
+  const rLinear = toLinear(color.r)
+  const gLinear = toLinear(color.g)
+  const bLinear = toLinear(color.b)
+
+  // Linear sRGB to LMS (cone responses)
+  const l = 0.4122214708 * rLinear + 0.5363325363 * gLinear + 0.0514459929 * bLinear
+  const m = 0.2119034982 * rLinear + 0.6806995451 * gLinear + 0.1073969566 * bLinear
+  const s = 0.0883024619 * rLinear + 0.2817188376 * gLinear + 0.6299787005 * bLinear
+
+  // LMS to OKLab (cube root for perceptual linearity)
+  const l_ = Math.cbrt(l)
+  const m_ = Math.cbrt(m)
+  const s_ = Math.cbrt(s)
+
+  const L = 0.2104542553 * l_ + 0.7936177850 * m_ - 0.0040720468 * s_
+  const a = 1.9779984951 * l_ - 2.4285922050 * m_ + 0.4505937099 * s_
+  const b = 0.0259040371 * l_ + 0.7827717662 * m_ - 0.8086757660 * s_
+
+  // OKLab to OKLCH (polar coordinates)
+  const c = Math.sqrt(a * a + b * b)
+  let h = Math.atan2(b, a) * (180 / Math.PI)
+  if (h < 0) h += 360
+
+  return { l: L, c, h }
+}
+
+/**
+ * Adjust OKLCH lightness to achieve minimum contrast ratio against a background.
+ * Preserves hue and chroma while adjusting only lightness.
+ *
+ * @param fg Foreground color to adjust
+ * @param bg Background color
+ * @param minRatio Minimum contrast ratio (WCAG AA = 4.5, AAA = 7)
+ * @returns Adjusted foreground color as RGBA
+ */
+export function adjustLightnessForContrast(fg: RGBA, bg: RGBA, minRatio: number = 4.5): RGBA {
+  const bgOklch = rgbToOklch(bg)
+  let fgOklch = rgbToOklch(fg)
+
+  // Calculate current contrast
+  const getContrast = (fgL: number): number => {
+    const fgRgb = oklchToRgb(fgL, fgOklch.c, fgOklch.h)
+    const fgRgba = { ...fgRgb, a: 255 }
+    return contrastRatio(fgRgba, bg)
+  }
+
+  let currentRatio = getContrast(fgOklch.l)
+
+  // If already sufficient, return original
+  if (currentRatio >= minRatio) {
+    return fg
+  }
+
+  // Determine direction: if bg is dark, go lighter; if bg is light, go darker
+  const direction = bgOklch.l > 0.5 ? -1 : 1
+  let newL = fgOklch.l
+
+  // Binary search for the right lightness
+  let step = 0.25
+  for (let i = 0; i < 20 && currentRatio < minRatio; i++) {
+    newL = Math.max(0, Math.min(1, newL + direction * step))
+    currentRatio = getContrast(newL)
+
+    // If we overshot, reverse and halve step
+    if (currentRatio >= minRatio) {
+      // Found a valid lightness, but let's fine-tune to not over-adjust
+      const testL = newL - direction * step * 0.5
+      if (getContrast(testL) >= minRatio) {
+        newL = testL
+        currentRatio = getContrast(newL)
+      }
+    }
+    step *= 0.6
+  }
+
+  // Convert back to RGB
+  const adjusted = oklchToRgb(newL, fgOklch.c, fgOklch.h)
+  return { ...adjusted, a: fg.a }
+}
+
+/**
+ * Calculate contrast ratio between two colors (WCAG formula).
+ */
+function contrastRatio(fg: RGBA, bg: RGBA): number {
+  const lumFg = relativeLuminance(fg)
+  const lumBg = relativeLuminance(bg)
+  const lighter = Math.max(lumFg, lumBg)
+  const darker = Math.min(lumFg, lumBg)
+  return (lighter + 0.05) / (darker + 0.05)
+}
+
+/**
+ * Calculate relative luminance per WCAG 2.1.
+ */
+function relativeLuminance(color: RGBA): number {
+  const toLinear = (c: number) => {
+    const s = c / 255
+    return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4)
+  }
+  return 0.2126 * toLinear(color.r) + 0.7152 * toLinear(color.g) + 0.0722 * toLinear(color.b)
+}
+
 // =============================================================================
 // Color Comparison
 // =============================================================================

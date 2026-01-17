@@ -41,7 +41,7 @@ The framework uses **parallel arrays** (ECS-style) instead of component objects:
 | File | Purpose |
 |------|---------|
 | `src/pipeline/layout/titan-engine.ts` | TITAN flexbox layout engine |
-| `src/primitives/box.ts`, `text.ts` | UI primitives |
+| `src/primitives/box.ts`, `text.ts`, `input.ts` | UI primitives |
 | `src/primitives/each.ts`, `show.ts`, `when.ts` | Template primitives (reactive control flow) |
 | `src/engine/arrays/` | Parallel arrays (core, dimensions, spacing, layout, visual, text, interaction) |
 | `src/state/keyboard.ts` | Keyboard handling with escape sequence parsing |
@@ -90,6 +90,62 @@ when(() => fetchData(), {
 ```
 
 **Pattern**: All template primitives capture parent context, render synchronously, then use an internal effect for reactive updates. Components inside use normal props (signals/getters work!).
+
+### Input Primitive
+
+Single-line text input with full reactivity and focus management:
+
+```typescript
+import { signal, input, mount, focusManager } from '@rlabs-inc/tui'
+
+const username = signal('')
+const password = signal('')
+
+// Basic input with placeholder
+input({
+  value: username,
+  placeholder: 'Enter username...',
+  onSubmit: (val) => console.log('Submitted:', val),
+  onChange: (val) => console.log('Changed:', val),
+})
+
+// Password input with custom mask
+input({
+  value: password,
+  placeholder: 'Enter password...',
+  password: true,
+  maskChar: '●',  // default: '•'
+})
+
+// Styled input with variant and cursor config
+input({
+  value: username,
+  variant: 'primary',  // Uses theme colors
+  cursor: {
+    style: 'bar',      // 'bar' | 'block' | 'underline'
+    blink: true,
+  },
+  maxLength: 50,
+  autoFocus: true,
+})
+```
+
+**Features:**
+- Two-way value binding via `WritableSignal` or `Binding`
+- Password mode with configurable mask character
+- Theme variants (`primary`, `success`, `error`, `warning`, `info`, etc.)
+- Cursor configuration (style, blink)
+- Max length constraint
+- Full keyboard handling: arrows, home/end, backspace/delete, enter/escape
+- Focus management integration (Tab/Shift+Tab navigation)
+- Callbacks: `onChange`, `onSubmit`, `onCancel`, `onFocus`, `onBlur`
+
+**Keyboard behavior when focused:**
+- `ArrowLeft/Right` - Move cursor
+- `Home/End` - Jump to start/end
+- `Backspace/Delete` - Delete characters
+- `Enter` - Triggers `onSubmit` callback
+- `Escape` - Triggers `onCancel` callback
 
 ### Lifecycle Hooks
 
@@ -172,8 +228,8 @@ MyComponent({ title: () => getTitle(), count: countSignal })
 
 ## Current State (Jan 2026)
 
-**Done**: TITAN v3 flexbox, box/text primitives, template primitives (each/show/when), all state modules (keyboard, mouse, focus, scroll, theme, cursor), lifecycle hooks (onMount/onDestroy), reactive context system
+**Done**: TITAN v3 flexbox, box/text/input primitives, template primitives (each/show/when), all state modules (keyboard, mouse, focus, scroll, theme, cursor), lifecycle hooks (onMount/onDestroy), reactive context system
 
-**Not Done**: input, select, progress, canvas primitives; grid layout; CLI scaffolding tool
+**Not Done**: textarea, select, progress, canvas primitives; modal/overlay component; grid layout; CLI scaffolding tool
 
 **Deprecated**: .tui compiler moved to `.backup/` - focusing on bulletproof raw TypeScript API instead

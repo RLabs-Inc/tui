@@ -9,8 +9,8 @@
 export { mount } from './src/api'
 
 // Primitives - UI building blocks
-export { box, text, each, show, when, scoped, onCleanup, useAnimation, AnimationFrames } from './src/primitives'
-export type { BoxProps, TextProps, Cleanup, AnimationOptions } from './src/primitives'
+export { box, text, input, each, show, when, scoped, onCleanup, useAnimation, AnimationFrames } from './src/primitives'
+export type { BoxProps, TextProps, InputProps, CursorConfig, CursorStyle, Cleanup, AnimationOptions } from './src/primitives'
 
 // Lifecycle hooks - Component mount/destroy callbacks
 export { onMount, onDestroy } from './src/engine/lifecycle'

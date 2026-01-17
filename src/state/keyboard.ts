@@ -66,7 +66,12 @@ const focusedHandlers = new Map<number, Set<KeyHandler>>()
  * Returns true if any handler consumed the event.
  */
 export function dispatch(event: KeyboardEvent): boolean {
+  // Always update reactive state (for monitoring)
   lastEvent.value = event
+
+  // Only dispatch press events to handlers
+  // (Kitty protocol sends press/repeat/release - we only want press)
+  if (event.state !== 'press') return false
 
   // Dispatch to key-specific handlers
   const handlers = keyHandlers.get(event.key)
@@ -90,6 +95,7 @@ export function dispatch(event: KeyboardEvent): boolean {
  */
 export function dispatchFocused(focusedIndex: number, event: KeyboardEvent): boolean {
   if (focusedIndex < 0) return false
+  if (event.state !== 'press') return false
 
   const handlers = focusedHandlers.get(focusedIndex)
   if (!handlers) return false

@@ -64,6 +64,9 @@ export function when<T>(
         if (promise !== currentPromise) return
         if (options.catch) {
           render(() => options.catch!(error))
+        } else {
+          // Don't silently swallow errors - log for debugging
+          console.error('[when] Unhandled promise rejection:', error)
         }
       })
   }

@@ -66,6 +66,48 @@ export const selectionStart: SlotArray<number> = slotArray<number>(-1)
 export const selectionEnd: SlotArray<number> = slotArray<number>(-1)
 
 // =============================================================================
+// CURSOR STYLING (for customizable cursor appearance)
+// =============================================================================
+
+/**
+ * Cursor character codepoint.
+ * 0 = use inverse block (default), >0 = custom character
+ * Presets: bar=0x2502 (│), underline=0x5F (_)
+ */
+export const cursorChar: SlotArray<number> = slotArray<number>(0)
+
+/**
+ * Cursor alternate character for blink "off" phase.
+ * 0 = space (invisible), >0 = custom character
+ */
+export const cursorAltChar: SlotArray<number> = slotArray<number>(0)
+
+/**
+ * Cursor blink rate in FPS.
+ * 0 = no blink, >0 = blink at this FPS (default would be 2 = 500ms cycle)
+ */
+export const cursorBlinkFps: SlotArray<number> = slotArray<number>(0)
+
+/**
+ * Custom cursor foreground color (packed RGBA or 0 for default).
+ * When 0, uses inverted colors from component's bg.
+ */
+export const cursorFg: SlotArray<number> = slotArray<number>(0)
+
+/**
+ * Custom cursor background color (packed RGBA or 0 for default).
+ * When 0, uses component's fg color.
+ */
+export const cursorBg: SlotArray<number> = slotArray<number>(0)
+
+/**
+ * Cursor visibility state for blink animation.
+ * 1 = visible (default), 0 = hidden
+ * Managed by input component's animation, read by frameBuffer.
+ */
+export const cursorVisible: SlotArray<number> = slotArray<number>(1)
+
+// =============================================================================
 // CAPACITY MANAGEMENT
 // =============================================================================
 
@@ -81,6 +123,12 @@ export function ensureCapacity(index: number): void {
   cursorPosition.ensureCapacity(index)
   selectionStart.ensureCapacity(index)
   selectionEnd.ensureCapacity(index)
+  cursorChar.ensureCapacity(index)
+  cursorAltChar.ensureCapacity(index)
+  cursorBlinkFps.ensureCapacity(index)
+  cursorFg.ensureCapacity(index)
+  cursorBg.ensureCapacity(index)
+  cursorVisible.ensureCapacity(index)
 }
 
 /** Clear slot at index (reset to default) */
@@ -95,4 +143,10 @@ export function clearAtIndex(index: number): void {
   cursorPosition.clear(index)
   selectionStart.clear(index)
   selectionEnd.clear(index)
+  cursorChar.clear(index)
+  cursorAltChar.clear(index)
+  cursorBlinkFps.clear(index)
+  cursorFg.clear(index)
+  cursorBg.clear(index)
+  cursorVisible.clear(index)
 }

@@ -288,6 +288,26 @@ export function computeLayoutTitan(
           intrinsicH[i] = 0
         }
       }
+    } else if (type === ComponentType.INPUT) {
+      // INPUT: Single-line, intrinsic width from content, height always 1
+      const content = text.textContent[i]  // SlotArray auto-unwraps & tracks
+      const str = content != null ? String(content) : ''
+
+      // Get borders and padding for this input
+      const borderStyle = visual.borderStyle[i] ?? 0
+      const borderT = borderStyle > 0 || (visual.borderTop[i] ?? 0) > 0 ? 1 : 0
+      const borderR = borderStyle > 0 || (visual.borderRight[i] ?? 0) > 0 ? 1 : 0
+      const borderB = borderStyle > 0 || (visual.borderBottom[i] ?? 0) > 0 ? 1 : 0
+      const borderL = borderStyle > 0 || (visual.borderLeft[i] ?? 0) > 0 ? 1 : 0
+      const padT = spacing.paddingTop[i] ?? 0
+      const padR = spacing.paddingRight[i] ?? 0
+      const padB = spacing.paddingBottom[i] ?? 0
+      const padL = spacing.paddingLeft[i] ?? 0
+
+      // Intrinsic width: text width + padding + borders
+      intrinsicW[i] = stringWidth(str) + padL + padR + borderL + borderR
+      // Intrinsic height: 1 line + padding + borders
+      intrinsicH[i] = 1 + padT + padB + borderT + borderB
     } else {
       // BOX/Container - calculate intrinsic from children + padding + borders
       // EXCEPTION: Scrollable containers should have minimal intrinsic height
@@ -653,6 +673,17 @@ export function computeLayoutTitan(
               outH[fkid] = Math.max(1, wrappedHeight)
             }
           }
+        }
+
+        // INPUT: Single-line, always height 1 (content scrolls horizontally)
+        if (core.componentType[fkid] === ComponentType.INPUT) {
+          // Add border height if borders are present
+          const borderStyle = visual.borderStyle[fkid] ?? 0
+          const borderT = borderStyle > 0 || (visual.borderTop[fkid] ?? 0) > 0 ? 1 : 0
+          const borderB = borderStyle > 0 || (visual.borderBottom[fkid] ?? 0) > 0 ? 1 : 0
+          const padT = spacing.paddingTop[fkid] ?? 0
+          const padB = spacing.paddingBottom[fkid] ?? 0
+          outH[fkid] = 1 + borderT + borderB + padT + padB
         }
 
         // Track max extent inline (zero overhead) - include margins

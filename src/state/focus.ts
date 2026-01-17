@@ -17,6 +17,46 @@ import { getAllocatedIndices } from '../engine/registry'
 export const focusedIndex = _focusedIndex
 
 // =============================================================================
+// FOCUS CALLBACKS (event integration at the source)
+// =============================================================================
+
+interface FocusCallbacks {
+  onFocus?: () => void
+  onBlur?: () => void
+}
+
+const focusCallbackRegistry = new Map<number, FocusCallbacks>()
+
+/** Register focus callbacks for a component - returns unsubscribe function */
+export function registerFocusCallbacks(index: number, callbacks: FocusCallbacks): () => void {
+  focusCallbackRegistry.set(index, callbacks)
+  return () => {
+    focusCallbackRegistry.delete(index)
+  }
+}
+
+/** Internal: Set focus and fire callbacks at the source */
+function setFocusWithCallbacks(newIndex: number): void {
+  const oldIndex = focusedIndex.value
+
+  // No change, no callbacks
+  if (oldIndex === newIndex) return
+
+  // Fire onBlur for old focus
+  if (oldIndex >= 0) {
+    focusCallbackRegistry.get(oldIndex)?.onBlur?.()
+  }
+
+  // Update reactive state
+  focusedIndex.value = newIndex
+
+  // Fire onFocus for new focus
+  if (newIndex >= 0) {
+    focusCallbackRegistry.get(newIndex)?.onFocus?.()
+  }
+}
+
+// =============================================================================
 // FOCUS TRAP (for modals/dialogs)
 // =============================================================================
 
@@ -69,7 +109,7 @@ export function restoreFocusFromHistory(): boolean {
     const isVisible = unwrap(visible[index])
     const isActuallyVisible = isVisible !== 0 && isVisible !== false
     if (unwrap(focusable[index]) && isActuallyVisible) {
-      focusedIndex.value = index
+      setFocusWithCallbacks(index)
       return true
     }
   }
@@ -152,7 +192,7 @@ export function focusNext(): boolean {
   const next = findNextFocusable(current, 1)
   if (next !== -1 && next !== current) {
     saveFocusToHistory()
-    focusedIndex.value = next
+    setFocusWithCallbacks(next)
     return true
   }
   return false
@@ -163,7 +203,7 @@ export function focusPrevious(): boolean {
   const prev = findNextFocusable(focusedIndex.value, -1)
   if (prev !== -1 && prev !== focusedIndex.value) {
     saveFocusToHistory()
-    focusedIndex.value = prev
+    setFocusWithCallbacks(prev)
     return true
   }
   return false
@@ -177,7 +217,7 @@ export function focus(index: number): boolean {
   if (unwrap(focusable[index]) && isActuallyVisible) {
     if (focusedIndex.value !== index) {
       saveFocusToHistory()
-      focusedIndex.value = index
+      setFocusWithCallbacks(index)
     }
     return true
   }
@@ -188,7 +228,7 @@ export function focus(index: number): boolean {
 export function blur(): void {
   if (focusedIndex.value >= 0) {
     saveFocusToHistory()
-    focusedIndex.value = -1
+    setFocusWithCallbacks(-1)
   }
 }
 
@@ -216,9 +256,10 @@ export function focusLast(): boolean {
 
 /** Reset all focus state (for testing) */
 export function resetFocusState(): void {
-  focusedIndex.value = -1
+  setFocusWithCallbacks(-1)
   focusTrapStack.length = 0
   focusHistory.length = 0
+  focusCallbackRegistry.clear()
 }
 
 // =============================================================================
@@ -249,4 +290,7 @@ export const focusManager = {
   // History
   saveFocusToHistory,
   restoreFocusFromHistory,
+
+  // Callbacks (event integration at source)
+  registerFocusCallbacks,
 }

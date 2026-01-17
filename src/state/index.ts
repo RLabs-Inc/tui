@@ -72,6 +72,15 @@ export {
 export * from './scroll'
 export * from './cursor'
 
+// Drawn cursor - for input components (style, blink, colors)
+export {
+  createCursor,
+  disposeCursor,
+  getCursorCharCode,
+  hasCursor,
+} from './drawnCursor'
+export type { DrawnCursorStyle, DrawnCursorConfig, DrawnCursor } from './drawnCursor'
+
 // Global keys - all shortcuts wired together
 export { globalKeys } from './global-keys'
 

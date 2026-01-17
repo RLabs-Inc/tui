@@ -166,21 +166,66 @@ export interface TextProps extends StyleProps, DimensionProps, SpacingProps, Lay
 // INPUT PROPS
 // =============================================================================
 
-export interface InputProps extends StyleProps, BorderProps, DimensionProps, SpacingProps {
+export type CursorStyle = 'block' | 'bar' | 'underline'
+
+export interface BlinkConfig {
+  /** Enable blink (default: true when BlinkConfig is used) */
+  enabled?: boolean
+  /** Character to show on "off" phase (default: space/invisible) */
+  altChar?: string
+  /** Blink rate in FPS (default: 2 = 500ms cycle) */
+  fps?: number
+}
+
+export interface CursorConfig {
+  /** Cursor shape preset: 'block' | 'bar' | 'underline' */
+  style?: CursorStyle
+  /** Custom cursor character (overrides style preset) */
+  char?: string
+  /** Blink configuration - boolean for simple on/off, or BlinkConfig for customization */
+  blink?: boolean | BlinkConfig
+  /** Custom cursor foreground color (defaults to inverted bg) */
+  fg?: Reactive<RGBA>
+  /** Custom cursor background color (defaults to component fg) */
+  bg?: Reactive<RGBA>
+}
+
+export interface InputProps extends StyleProps, BorderProps, DimensionProps, SpacingProps, InteractionProps {
   /** Current value (two-way bound) */
   value: WritableSignal<string> | Binding<string>
   /** Placeholder text */
   placeholder?: string
+  /** Placeholder color */
+  placeholderColor?: Reactive<RGBA | null>
   /** Text attributes */
   attrs?: Reactive<CellAttrs>
   /** Is visible */
   visible?: Reactive<boolean>
   /** Is focused by default */
   autoFocus?: boolean
+  /** Maximum input length (0 = unlimited) */
+  maxLength?: number
+  /** Password mode - mask characters */
+  password?: boolean
+  /** Password mask character (default: '•') */
+  maskChar?: string
+  /** Cursor configuration */
+  cursor?: CursorConfig
+  /**
+   * Style variant - applies theme colors automatically.
+   * Variants: 'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info' | 'ghost' | 'outline'
+   */
+  variant?: Variant
   /** Called when value changes */
   onChange?: (value: string) => void
   /** Called on Enter key */
   onSubmit?: (value: string) => void
+  /** Called on Escape key */
+  onCancel?: () => void
+  /** Called on focus */
+  onFocus?: () => void
+  /** Called on blur */
+  onBlur?: () => void
 }
 
 // =============================================================================
