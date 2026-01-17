@@ -18,6 +18,7 @@ export const focusedIndex = _focusedIndex
 
 // =============================================================================
 // FOCUS CALLBACKS (event integration at the source)
+// Supports MULTIPLE callback registrations per index (e.g., cursor blink + user callback)
 // =============================================================================
 
 interface FocusCallbacks {
@@ -25,13 +26,25 @@ interface FocusCallbacks {
   onBlur?: () => void
 }
 
-const focusCallbackRegistry = new Map<number, FocusCallbacks>()
+// Store arrays of callbacks - multiple registrations allowed per index
+const focusCallbackRegistry = new Map<number, FocusCallbacks[]>()
 
 /** Register focus callbacks for a component - returns unsubscribe function */
 export function registerFocusCallbacks(index: number, callbacks: FocusCallbacks): () => void {
-  focusCallbackRegistry.set(index, callbacks)
+  let list = focusCallbackRegistry.get(index)
+  if (!list) {
+    list = []
+    focusCallbackRegistry.set(index, list)
+  }
+  list.push(callbacks)
+
   return () => {
-    focusCallbackRegistry.delete(index)
+    const arr = focusCallbackRegistry.get(index)
+    if (arr) {
+      const idx = arr.indexOf(callbacks)
+      if (idx >= 0) arr.splice(idx, 1)
+      if (arr.length === 0) focusCallbackRegistry.delete(index)
+    }
   }
 }
 
@@ -42,17 +55,23 @@ function setFocusWithCallbacks(newIndex: number): void {
   // No change, no callbacks
   if (oldIndex === newIndex) return
 
-  // Fire onBlur for old focus
+  // Fire onBlur for all callbacks on old focus
   if (oldIndex >= 0) {
-    focusCallbackRegistry.get(oldIndex)?.onBlur?.()
+    const callbacks = focusCallbackRegistry.get(oldIndex)
+    if (callbacks) {
+      for (const cb of callbacks) cb.onBlur?.()
+    }
   }
 
   // Update reactive state
   focusedIndex.value = newIndex
 
-  // Fire onFocus for new focus
+  // Fire onFocus for all callbacks on new focus
   if (newIndex >= 0) {
-    focusCallbackRegistry.get(newIndex)?.onFocus?.()
+    const callbacks = focusCallbackRegistry.get(newIndex)
+    if (callbacks) {
+      for (const cb of callbacks) cb.onFocus?.()
+    }
   }
 }
 

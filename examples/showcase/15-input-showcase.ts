@@ -253,6 +253,7 @@ async function main() {
             inputRow('Error', errorValue, {
               placeholder: 'Error styled...',
               variant: 'error',
+              cursor: { blink: false },  // Test: no blink
             })
           },
         })
