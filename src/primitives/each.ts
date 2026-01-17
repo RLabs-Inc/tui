@@ -50,6 +50,14 @@ export function each<T>(
         for (let i = 0; i < items.length; i++) {
           const item = items[i]!
           const key = options.key(item)
+
+          // Warn about duplicate keys in the same render pass
+          if (currentKeys.has(key)) {
+            console.warn(
+              `[TUI each()] Duplicate key detected: "${key}". ` +
+                `Keys must be unique. This may cause unexpected behavior.`
+            )
+          }
           currentKeys.add(key)
 
           if (!itemSignals.has(key)) {

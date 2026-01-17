@@ -145,6 +145,8 @@ export interface BoxProps extends StyleProps, BorderProps, DimensionProps, Spaci
 // =============================================================================
 
 export interface TextProps extends StyleProps, DimensionProps, SpacingProps, LayoutProps {
+  /** Component ID (optional, auto-generated if not provided) */
+  id?: string
   /** Text content (strings and numbers auto-converted) */
   content: Reactive<string | number>
   /** Text alignment: 'left' | 'center' | 'right' */
@@ -191,6 +193,8 @@ export interface CursorConfig {
 }
 
 export interface InputProps extends StyleProps, BorderProps, DimensionProps, SpacingProps, InteractionProps {
+  /** Component ID (optional, auto-generated if not provided) */
+  id?: string
   /** Current value (two-way bound) */
   value: WritableSignal<string> | Binding<string>
   /** Placeholder text */

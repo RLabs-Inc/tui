@@ -127,9 +127,10 @@ const lineMainUsed: number[] = []
 // =============================================================================
 // INTRINSIC CACHE - Skip recomputation when inputs unchanged
 // =============================================================================
-// For TEXT components: cache based on text content hash + available width
+// For TEXT components: cache based on text content hash + available width + length
 // For BOX components: cache based on children intrinsics + layout props
 const cachedTextHash: bigint[] = []
+const cachedTextLength: number[] = []  // Length check prevents hash collisions
 const cachedAvailW: number[] = []
 const cachedIntrinsicW: number[] = []
 const cachedIntrinsicH: number[] = []
@@ -166,6 +167,7 @@ export function resetTitanArrays(): void {
   lineMainUsed.length = 0
   // Intrinsic cache
   cachedTextHash.length = 0
+  cachedTextLength.length = 0
   cachedAvailW.length = 0
   cachedIntrinsicW.length = 0
   cachedIntrinsicH.length = 0
@@ -269,8 +271,9 @@ export function computeLayoutTitan(
 
           // CACHE CHECK: Hash text content, compare with cached
           // Only recompute stringWidth/measureTextHeight if content or availableW changed
+          // Length check prevents hash collisions (two strings with same hash must also have same length)
           const textHash = BigInt(Bun.hash(str))
-          if (textHash === cachedTextHash[i] && availableW === cachedAvailW[i]) {
+          if (textHash === cachedTextHash[i] && availableW === cachedAvailW[i] && str.length === cachedTextLength[i]) {
             // Cache hit - reuse cached intrinsics (skip expensive computation!)
             intrinsicW[i] = cachedIntrinsicW[i]!
             intrinsicH[i] = cachedIntrinsicH[i]!
@@ -279,6 +282,7 @@ export function computeLayoutTitan(
             intrinsicW[i] = stringWidth(str)
             intrinsicH[i] = measureTextHeight(str, availableW)
             cachedTextHash[i] = textHash
+            cachedTextLength[i] = str.length
             cachedAvailW[i] = availableW
             cachedIntrinsicW[i] = intrinsicW[i]
             cachedIntrinsicH[i] = intrinsicH[i]

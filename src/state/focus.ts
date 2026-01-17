@@ -11,7 +11,7 @@
 import { signal, derived, unwrap } from '@rlabs-inc/signals'
 import { focusable, tabIndex, focusedIndex as _focusedIndex } from '../engine/arrays/interaction'
 import { visible } from '../engine/arrays/core'
-import { getAllocatedIndices } from '../engine/registry'
+import { getAllocatedIndices, getId } from '../engine/registry'
 
 // Re-export the focusedIndex from interaction arrays
 export const focusedIndex = _focusedIndex
@@ -86,14 +86,20 @@ export function getFocusTrapContainer(): number | undefined {
 // FOCUS HISTORY (for restoration)
 // =============================================================================
 
-const focusHistory: number[] = []
+interface FocusHistoryEntry {
+  index: number
+  id: string | undefined
+}
+
+const focusHistory: FocusHistoryEntry[] = []
 const MAX_HISTORY = 10
 
 /** Save current focus to history */
 export function saveFocusToHistory(): void {
   const current = focusedIndex.value
   if (current >= 0) {
-    focusHistory.push(current)
+    const id = getId(current)
+    focusHistory.push({ index: current, id })
     if (focusHistory.length > MAX_HISTORY) {
       focusHistory.shift()
     }
@@ -103,13 +109,15 @@ export function saveFocusToHistory(): void {
 /** Restore focus from history */
 export function restoreFocusFromHistory(): boolean {
   while (focusHistory.length > 0) {
-    const index = focusHistory.pop()!
+    const entry = focusHistory.pop()!
+    // Verify the index hasn't been recycled for a different component
+    if (getId(entry.index) !== entry.id) continue
     // Check if component is still valid and focusable
     // Match TITAN's logic: undefined means visible, only 0/false means hidden
-    const isVisible = unwrap(visible[index])
+    const isVisible = unwrap(visible[entry.index])
     const isActuallyVisible = isVisible !== 0 && isVisible !== false
-    if (unwrap(focusable[index]) && isActuallyVisible) {
-      setFocusWithCallbacks(index)
+    if (unwrap(focusable[entry.index]) && isActuallyVisible) {
+      setFocusWithCallbacks(entry.index)
       return true
     }
   }
@@ -139,7 +147,7 @@ export function getFocusableIndices(): number[] {
   result.sort((a, b) => {
     const tabA = unwrap(tabIndex[a]) ?? 0
     const tabB = unwrap(tabIndex[b]) ?? 0
-    if (tabA !== tabB) return tabA - tabB
+    if (tabA !== tabB) return tabA < tabB ? -1 : 1
     return a - b // Stable sort by index
   })
 

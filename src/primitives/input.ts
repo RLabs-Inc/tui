@@ -66,7 +66,7 @@ import type { KeyboardEvent } from '../state/keyboard'
  * - Surface: muted, surface, elevated, ghost, outline
  */
 export function input(props: InputProps): Cleanup {
-  const index = allocateIndex()
+  const index = allocateIndex(props.id)
 
   // Track current component for lifecycle hooks
   pushCurrentComponent(index)

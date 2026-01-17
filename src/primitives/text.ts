@@ -139,7 +139,7 @@ function enumSource<T extends string>(
  * - Surface: muted, surface, elevated, ghost, outline
  */
 export function text(props: TextProps): Cleanup {
-  const index = allocateIndex()
+  const index = allocateIndex(props.id)
 
   // Track current component for lifecycle hooks
   pushCurrentComponent(index)

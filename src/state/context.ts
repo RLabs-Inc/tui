@@ -116,8 +116,16 @@ export function createContext<T>(defaultValue: T, displayName?: string): Context
  * ```
  */
 export function provide<T>(context: Context<T>, value: T | WritableSignal<T>): void {
-  // Check if value is a signal (has .value property that's writable)
-  if (value !== null && typeof value === 'object' && 'value' in value) {
+  // Check if value is a signal from @rlabs-inc/signals
+  // Signals have a Symbol('signal.source') property that plain objects don't have
+  // This is more reliable than just checking for 'value' since regular objects
+  // might have a 'value' property but won't have the internal signal symbol
+  if (
+    value !== null &&
+    typeof value === 'object' &&
+    'value' in value &&
+    Object.getOwnPropertySymbols(value).some((sym) => sym.description === 'signal.source')
+  ) {
     // It's a signal - store it directly for reactive access
     contextSignals.set(context.id, value as WritableSignal<unknown>)
     contextValues.set(context.id, value)

@@ -34,6 +34,7 @@
 import { signal } from '@rlabs-inc/signals'
 import * as interaction from '../engine/arrays/interaction'
 import { registerFocusCallbacks } from './focus'
+import { onDestroy } from '../engine/lifecycle'
 
 // =============================================================================
 // TYPES
@@ -239,7 +240,12 @@ export function createCursor(index: number, config: DrawnCursorConfig = {}): Dra
     manualVisible,
   })
 
-  // Note: No auto-cleanup with scope - component manages cursor lifecycle via dispose()
+  // Register safety-net cleanup with lifecycle system.
+  // This ensures cursor is disposed even if component forgets to call dispose()
+  // or an error path skips cleanup. disposeCursor() is idempotent (safe to call twice).
+  onDestroy(() => {
+    disposeCursor(index)
+  })
 
   // Return control object
   return {

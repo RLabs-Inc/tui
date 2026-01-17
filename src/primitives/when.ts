@@ -57,11 +57,11 @@ export function when<T>(
 
     promise
       .then((value) => {
-        if (promise !== currentPromise) return
+        if (promise !== currentPromise || currentPromise === null) return
         render(() => options.then(value))
       })
       .catch((error) => {
-        if (promise !== currentPromise) return
+        if (promise !== currentPromise || currentPromise === null) return
         if (options.catch) {
           render(() => options.catch!(error))
         } else {

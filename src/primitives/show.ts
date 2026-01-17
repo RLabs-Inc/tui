@@ -58,14 +58,15 @@ export function show(
     // Initial render
     update(conditionGetter())
 
-    // Effect for updates - skip first run
+    // Effect for updates - skip first run (don't read condition to avoid double tracking)
     let initialized = false
     effect(() => {
-      const condition = conditionGetter()
-      if (initialized) {
-        update(condition)
+      if (!initialized) {
+        initialized = true
+        return
       }
-      initialized = true
+      const condition = conditionGetter()
+      update(condition)
     })
 
     onScopeDispose(() => {
