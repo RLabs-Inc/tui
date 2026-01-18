@@ -1,12 +1,113 @@
 # Lifecycle APIs
 
-> Component scope and cleanup management
+> Component lifecycle hooks and scope management
 
 ## Import
 
 ```typescript
-import { scoped, onCleanup, useAnimation } from '@rlabs-inc/tui'
+import { onMount, onDestroy, scoped, useAnimation } from '@rlabs-inc/tui'
 ```
+
+## onMount()
+
+Register a callback to run after the component is fully set up.
+
+### Signature
+
+```typescript
+function onMount(fn: () => void): void
+```
+
+### Parameters
+
+| Name | Type | Description |
+|------|------|-------------|
+| `fn` | `() => void` | Function to run after mount |
+
+### Example
+
+```typescript
+import { onMount, box, text } from '@rlabs-inc/tui'
+
+function MyComponent() {
+  onMount(() => {
+    console.log('Component mounted!')
+    // Initialize external resources, start animations, etc.
+  })
+
+  return box({
+    children: () => text({ content: 'Hello' })
+  })
+}
+```
+
+### Use Cases
+
+- Logging mount events
+- Starting animations or timers after setup
+- Focusing an input after render
+- Fetching initial data
+
+---
+
+## onDestroy()
+
+Register a cleanup callback to run when the component is destroyed.
+
+### Signature
+
+```typescript
+function onDestroy(fn: () => void): void
+```
+
+### Parameters
+
+| Name | Type | Description |
+|------|------|-------------|
+| `fn` | `() => void` | Cleanup function to run on destroy |
+
+### Example
+
+```typescript
+import { onDestroy, signal, text } from '@rlabs-inc/tui'
+
+function Timer() {
+  const count = signal(0)
+
+  const interval = setInterval(() => {
+    count.value++
+  }, 1000)
+
+  // Cleanup when component is destroyed
+  onDestroy(() => clearInterval(interval))
+
+  return text({ content: () => `Count: ${count.value}` })
+}
+```
+
+### Multiple Cleanups
+
+```typescript
+function ComplexComponent() {
+  const sub1 = eventBus.subscribe('event1', handler1)
+  onDestroy(() => sub1.unsubscribe())
+
+  const sub2 = eventBus.subscribe('event2', handler2)
+  onDestroy(() => sub2.unsubscribe())
+
+  const socket = new WebSocket(url)
+  onDestroy(() => socket.close())
+
+  // All cleanups run when component is destroyed
+  return box({ ... })
+}
+```
+
+### Zero Overhead
+
+`onDestroy` has zero overhead when not used - only components that call these hooks pay the cost.
+
+---
 
 ## scoped()
 
@@ -15,41 +116,38 @@ Create an isolated component scope for cleanup tracking.
 ### Signature
 
 ```typescript
-function scoped<T>(fn: () => T): ComponentScopeResult<T>
+function scoped(fn: () => void): Cleanup
 ```
 
 ### Parameters
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fn` | `() => T` | Function to execute in scope |
+| `fn` | `() => void` | Function to execute in scope |
 
 ### Returns
 
 ```typescript
-interface ComponentScopeResult<T> {
-  result: T        // Return value of fn
-  cleanup: Cleanup // Function to cleanup all registered cleanups
-}
+type Cleanup = () => void  // Function to cleanup all registered cleanups
 ```
 
 ### Example
 
 ```typescript
-import { scoped, onCleanup } from '@rlabs-inc/tui'
+import { scoped, onDestroy, box, text } from '@rlabs-inc/tui'
 
 function MyComponent() {
-  const { result, cleanup } = scoped(() => {
-    // Anything registered with onCleanup() in here
+  const cleanup = scoped(() => {
+    // Anything registered with onDestroy() in here
     // will be cleaned up when cleanup() is called
 
     const interval = setInterval(() => {
       // Update something
     }, 1000)
 
-    onCleanup(() => clearInterval(interval))
+    onDestroy(() => clearInterval(interval))
 
-    return box({
+    box({
       children: () => text({ content: 'Hello' })
     })
   })
@@ -63,81 +161,6 @@ function MyComponent() {
 - Grouping related cleanup operations
 - Creating reusable components with proper cleanup
 - Managing subscriptions and timers
-
----
-
-## onCleanup()
-
-Register a cleanup callback in the current scope.
-
-### Signature
-
-```typescript
-function onCleanup(fn: () => void): void
-```
-
-### Parameters
-
-| Name | Type | Description |
-|------|------|-------------|
-| `fn` | `() => void` | Cleanup function to register |
-
-### Example
-
-```typescript
-import { onCleanup } from '@rlabs-inc/tui'
-
-function Timer() {
-  const count = signal(0)
-
-  const interval = setInterval(() => {
-    count.value++
-  }, 1000)
-
-  // Cleanup when component unmounts
-  onCleanup(() => clearInterval(interval))
-
-  return text({ content: () => `Count: ${count.value}` })
-}
-```
-
-### Multiple Cleanups
-
-```typescript
-function ComplexComponent() {
-  // Multiple cleanups are supported
-  const sub1 = eventBus.subscribe('event1', handler1)
-  onCleanup(() => sub1.unsubscribe())
-
-  const sub2 = eventBus.subscribe('event2', handler2)
-  onCleanup(() => sub2.unsubscribe())
-
-  const socket = new WebSocket(url)
-  onCleanup(() => socket.close())
-
-  // All cleanups run when component unmounts
-  return box({ ... })
-}
-```
-
-### With Effects
-
-```typescript
-function DataSubscriber() {
-  const data = signal<Data | null>(null)
-
-  effect(() => {
-    const unsub = dataStore.subscribe(newData => {
-      data.value = newData
-    })
-
-    // Cleanup runs when effect re-runs or component unmounts
-    onCleanup(unsub)
-  })
-
-  return DataView({ data })
-}
-```
 
 ---
 

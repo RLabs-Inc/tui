@@ -11,7 +11,7 @@ TUI is built on **fine-grained reactivity**. Instead of re-rendering entire comp
 Signals are reactive containers for values:
 
 ```typescript
-import { signal } from '@rlabs-inc/signals'
+import { signal } from '@rlabs-inc/tui'
 
 const count = signal(0)
 
@@ -27,7 +27,7 @@ count.value = 5
 Derived signals compute values from other signals:
 
 ```typescript
-import { signal, derived } from '@rlabs-inc/signals'
+import { signal, derived } from '@rlabs-inc/tui'
 
 const count = signal(0)
 const doubled = derived(() => count.value * 2)
@@ -98,8 +98,8 @@ box({
 
   // Layout
   flexDirection: 'row',     // 'row' | 'column'
-  justifyContent: 'center', // 'start' | 'center' | 'end' | 'space-between' | 'space-around'
-  alignItems: 'center',     // 'start' | 'center' | 'end' | 'stretch'
+  justifyContent: 'center', // 'flex-start' | 'center' | 'flex-end' | 'space-between' | 'space-around'
+  alignItems: 'center',     // 'flex-start' | 'center' | 'flex-end' | 'stretch'
   gap: 1,
 
   // Spacing

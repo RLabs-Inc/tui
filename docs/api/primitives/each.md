@@ -14,7 +14,7 @@ import { each } from '@rlabs-inc/tui'
 function each<T>(
   items: () => T[],
   render: (getItem: () => T, key: string) => Cleanup,
-  options?: EachOptions<T>
+  options: { key: (item: T) => string }
 ): Cleanup
 ```
 
@@ -24,13 +24,13 @@ function each<T>(
 |------|------|-------------|
 | `items` | `() => T[]` | Getter returning array of items |
 | `render` | `(getItem: () => T, key: string) => Cleanup` | Render function for each item |
-| `options` | `EachOptions<T>` | Optional configuration |
+| `options` | `EachOptions<T>` | Key configuration (required) |
 
 ### EachOptions
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `key` | `(item: T, index: number) => string` | index | Function to extract stable key |
+| `key` | `(item: T) => string` | required | Function to extract stable key |
 
 ### Render Function Parameters
 
@@ -57,7 +57,7 @@ const items = signal(['Apple', 'Banana', 'Cherry'])
 each(
   () => items.value,
   (getItem, key) => text({ content: getItem }),
-  { key: (item, i) => String(i) }
+  { key: item => item }
 )
 ```
 
@@ -183,19 +183,18 @@ each(
 )
 ```
 
-### With Index
+### With Numbered Display
 
 ```typescript
 each(
   () => items.value,
   (getItem, key) => {
-    const index = parseInt(key)  // When using index as key
-
+    // Use item properties or derive index from data
     return text({
-      content: () => `${index + 1}. ${getItem()}`
+      content: () => `${getItem().order}. ${getItem().name}`
     })
   },
-  { key: (_, i) => String(i) }
+  { key: item => item.id }
 )
 ```
 
@@ -234,8 +233,8 @@ Keys enable efficient updates:
 ### Key Strategies
 
 ```typescript
-// Index-based (simple but loses state on reorder)
-{ key: (_, i) => String(i) }
+// Value-based for unique strings
+{ key: item => item }
 
 // ID-based (stable, recommended for objects)
 { key: item => item.id }

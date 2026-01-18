@@ -32,8 +32,7 @@ Press `Ctrl+C` to exit.
 Let's make it interactive. The magic of TUI is **signals** - reactive values that automatically update the UI when they change.
 
 ```typescript
-import { signal, derived } from '@rlabs-inc/signals'
-import { box, text, mount, keyboard } from '@rlabs-inc/tui'
+import { signal, derived, box, text, mount, keyboard } from '@rlabs-inc/tui'
 
 // Create reactive state
 const count = signal(0)
@@ -87,8 +86,7 @@ text({ content: () => `Value: ${count.value}` })   // inline template
 TUI includes a complete theme system:
 
 ```typescript
-import { signal } from '@rlabs-inc/signals'
-import { box, text, mount, keyboard, t, BorderStyle } from '@rlabs-inc/tui'
+import { signal, box, text, mount, keyboard, t, BorderStyle } from '@rlabs-inc/tui'
 
 const count = signal(0)
 

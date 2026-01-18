@@ -30,8 +30,7 @@ bun add @rlabs-inc/tui
 Create `src/index.ts`:
 
 ```typescript
-import { signal, derived } from '@rlabs-inc/signals'
-import { box, text, mount, keyboard, t, BorderStyle } from '@rlabs-inc/tui'
+import { signal, derived, box, text, mount, keyboard, t, BorderStyle } from '@rlabs-inc/tui'
 
 async function main() {
   // We'll build the app here
@@ -243,8 +242,7 @@ async function main() {
 Here's the full application:
 
 ```typescript
-import { signal, derived } from '@rlabs-inc/signals'
-import { box, text, mount, keyboard, t, BorderStyle } from '@rlabs-inc/tui'
+import { signal, derived, box, text, mount, keyboard, t, BorderStyle } from '@rlabs-inc/tui'
 
 // State
 const counter = signal(0)

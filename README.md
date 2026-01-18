@@ -84,12 +84,13 @@ User Signals → bind() → Parallel Arrays → layoutDerived → frameBufferDer
 
 ```bash
 # Run examples
-bun run examples/hello.ts
-bun run examples/showcase.ts
+bun run examples/showcase/01-hello-counter.ts
+bun run examples/showcase/08-todo-app.ts
+bun run examples/showcase/04-dashboard.ts
 
-# Run tests
-bun run examples/tests/01-box-basics.ts
+# Run visual tests
 bun run examples/tests/03-layout-flex.ts
+bun run examples/tests/05-flex-complete.ts
 ```
 
 ## Documentation
@@ -143,7 +144,7 @@ Reactive control flow for dynamic UIs - no manual effects needed!
 Renders a list of components that automatically updates when the array changes.
 
 ```typescript
-import { each, box, text, signal } from '@rlabs-inc/tui'
+import { signal, each, box, text } from '@rlabs-inc/tui'
 
 const todos = signal([
   { id: '1', text: 'Learn TUI', done: false },
@@ -153,14 +154,14 @@ const todos = signal([
 box({
   children: () => {
     each(
-      () => todos.value,                    // Reactive array getter
-      (todo) => box({                       // Render function per item
-        id: `todo-${todo.id}`,              // Stable ID for reconciliation
+      () => todos.value,                      // Reactive array getter
+      (getItem, key) => box({                 // Render function: getItem() + stable key
+        id: `todo-${key}`,                    // Use key for stable ID
         children: () => {
-          text({ content: todo.text })      // Static value from item
+          text({ content: () => getItem().text })  // Call getItem() to access value
         }
       }),
-      { key: (todo) => todo.id }            // Key function for efficient updates
+      { key: (todo) => todo.id }              // Key function for efficient updates
     )
   }
 })

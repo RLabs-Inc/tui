@@ -295,19 +295,21 @@ when(
 
 ### Without Catch
 
-If no catch handler, errors are swallowed (not recommended):
+If no catch handler, errors are logged to console:
 
 ```typescript
-// Not recommended - errors silently ignored
+// Errors will be logged: "[when] Unhandled promise rejection: ..."
 when(
   () => fetchData(),
   {
     pending: () => Loading(),
     then: (data) => DataView({ data })
-    // No catch - errors hidden!
+    // No catch - errors logged to console
   }
 )
 ```
+
+**Best practice**: Always provide a catch handler for user-friendly error display.
 
 ## See Also
 
