@@ -61,6 +61,17 @@ All props accept **static values, signals, deriveds, or getter functions**.
 
 > **Note**: Text supports padding. Margin props exist in the type for API consistency but are not processed by the layout engine for text components. Use a wrapper box if you need margin around text.
 
+#### Mouse Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `onClick` | `(event: MouseEvent) => boolean \| void` | - | Called when text is clicked. Return true to consume event |
+| `onMouseDown` | `(event: MouseEvent) => boolean \| void` | - | Called when mouse button is pressed |
+| `onMouseUp` | `(event: MouseEvent) => boolean \| void` | - | Called when mouse button is released |
+| `onMouseEnter` | `(event: MouseEvent) => void` | - | Called when mouse enters text bounds |
+| `onMouseLeave` | `(event: MouseEvent) => void` | - | Called when mouse leaves text bounds |
+| `onScroll` | `(event: MouseEvent) => boolean \| void` | - | Called on scroll wheel events |
+
 ## Returns
 
 ```typescript
@@ -179,6 +190,21 @@ text({
 text({
   content: 'Error occurred!',
   variant: 'error'
+})
+```
+
+### Clickable Text (Link Style)
+
+```typescript
+const isHovered = signal(false)
+
+text({
+  content: 'Click me',
+  fg: t.primary,
+  attrs: () => isHovered.value ? Attr.UNDERLINE : Attr.NORMAL,
+  onClick: () => console.log('Clicked!'),
+  onMouseEnter: () => { isHovered.value = true },
+  onMouseLeave: () => { isHovered.value = false }
 })
 ```
 

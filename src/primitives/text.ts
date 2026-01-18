@@ -32,6 +32,7 @@ import {
   runMountCallbacks,
 } from '../engine/lifecycle'
 import { cleanupIndex as cleanupKeyboardListeners } from '../state/keyboard'
+import { onComponent as onMouseComponent } from '../state/mouse'
 import { getVariantStyle } from '../state/theme'
 import { getActiveScope } from './scope'
 import { enumSource } from './utils'
@@ -200,12 +201,30 @@ export function text(props: TextProps): Cleanup {
   }
   if (props.opacity !== undefined) visual.opacity.setSource(index, props.opacity)
 
+  // ==========================================================================
+  // MOUSE HANDLERS
+  // Registered when any mouse callback provided
+  // ==========================================================================
+  let unsubMouse: (() => void) | undefined
+
+  if (props.onMouseDown || props.onMouseUp || props.onClick || props.onMouseEnter || props.onMouseLeave || props.onScroll) {
+    unsubMouse = onMouseComponent(index, {
+      onMouseDown: props.onMouseDown,
+      onMouseUp: props.onMouseUp,
+      onClick: props.onClick,
+      onMouseEnter: props.onMouseEnter,
+      onMouseLeave: props.onMouseLeave,
+      onScroll: props.onScroll,
+    })
+  }
+
   // Component setup complete - run lifecycle callbacks
   popCurrentComponent()
   runMountCallbacks(index)
 
   // Cleanup function
   const cleanup = () => {
+    unsubMouse?.()
     cleanupKeyboardListeners(index)
     releaseIndex(index)
   }

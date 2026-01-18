@@ -88,6 +88,33 @@ box({
 
 This makes custom focusable components fully self-contained.
 
+### Mouse Props on Primitives
+
+All primitives (box, text, input) support mouse event props:
+
+```typescript
+const isHovered = signal(false)
+
+box({
+  bg: () => isHovered.value ? t.surface : null,
+  onClick: (event) => console.log(`Clicked at ${event.x}, ${event.y}`),
+  onMouseDown: (event) => console.log('Mouse down'),
+  onMouseUp: (event) => console.log('Mouse up'),
+  onMouseEnter: () => { isHovered.value = true },
+  onMouseLeave: () => { isHovered.value = false },
+  onScroll: (event) => console.log(`Scrolled ${event.scroll?.direction}`),
+  children: () => text({ content: 'Hover and click me' })
+})
+```
+
+**Features:**
+- `onClick`, `onMouseDown`, `onMouseUp` - Click events (return `true` to consume)
+- `onMouseEnter`, `onMouseLeave` - Hover tracking
+- `onScroll` - Scroll wheel events
+- **Click-to-Focus**: Focusable elements auto-focus when clicked
+
+This is the recommended approach for component mouse handling. Use global `mouse.*` handlers only for app-wide events.
+
 ### TITAN Layout Engine
 Complete flexbox: direction, wrap, grow, shrink, basis, justify-content, align-items, align-self, gap, min/max constraints, percentage dimensions. Skips `visible=false` components (takes no space).
 

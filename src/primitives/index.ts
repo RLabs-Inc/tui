@@ -15,6 +15,6 @@ export { scoped, onCleanup, componentScope, cleanupCollector } from './scope'
 export { useAnimation, AnimationFrames } from './animation'
 
 // Types
-export type { BoxProps, TextProps, InputProps, CursorConfig, CursorStyle, BlinkConfig, Cleanup } from './types'
+export type { BoxProps, TextProps, InputProps, CursorConfig, CursorStyle, BlinkConfig, Cleanup, MouseProps } from './types'
 export type { ComponentScopeResult } from './scope'
 export type { AnimationOptions } from './animation'

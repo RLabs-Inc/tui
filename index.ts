@@ -10,7 +10,7 @@ export { mount } from './src/api'
 
 // Primitives - UI building blocks
 export { box, text, input, each, show, when, scoped, onCleanup, useAnimation, AnimationFrames } from './src/primitives'
-export type { BoxProps, TextProps, InputProps, CursorConfig, CursorStyle, Cleanup, AnimationOptions } from './src/primitives'
+export type { BoxProps, TextProps, InputProps, CursorConfig, CursorStyle, Cleanup, AnimationOptions, MouseProps } from './src/primitives'
 
 // Lifecycle hooks - Component mount/destroy callbacks
 export { onMount, onDestroy } from './src/engine/lifecycle'
@@ -35,6 +35,7 @@ export {
   onScroll,
   onComponent,
 } from './src/state/mouse'
+export type { MouseEvent as TuiMouseEvent, MouseHandler, MouseHandlers } from './src/state/mouse'
 export { focusManager, focusedIndex, pushFocusTrap, popFocusTrap, isFocusTrapped, getFocusTrapContainer } from './src/state/focus'
 export { scroll } from './src/state/scroll'
 export { globalKeys } from './src/state/global-keys'

@@ -450,6 +450,103 @@ This pattern is powerful because:
 
 Compare this to the older approach that required external `keyboard.onFocused()` calls - the new props make components truly self-contained.
 
+## Mouse Events
+
+Boxes can respond to mouse events directly via props.
+
+### Basic Mouse Handlers
+
+```typescript
+box({
+  border: BorderStyle.SINGLE,
+  padding: 1,
+  onClick: (event) => {
+    console.log(`Clicked at ${event.x}, ${event.y}`)
+  },
+  onMouseDown: (event) => console.log('Mouse down'),
+  onMouseUp: (event) => console.log('Mouse up'),
+  children: () => text({ content: 'Click me' })
+})
+```
+
+### Hover Effects
+
+Track mouse enter/leave for hover effects:
+
+```typescript
+const isHovered = signal(false)
+
+box({
+  border: BorderStyle.ROUNDED,
+  bg: () => isHovered.value ? t.surface : null,
+  borderColor: () => isHovered.value ? t.primary : t.border,
+  onMouseEnter: () => { isHovered.value = true },
+  onMouseLeave: () => { isHovered.value = false },
+  children: () => text({ content: 'Hover over me' })
+})
+```
+
+### Scroll Events
+
+Handle mouse wheel scrolling:
+
+```typescript
+box({
+  height: 10,
+  overflow: 'scroll',
+  onScroll: (event) => {
+    console.log(`Scroll: ${event.scroll?.direction} by ${event.scroll?.delta}`)
+    return true  // Consume the event
+  },
+  children: () => { /* scrollable content */ }
+})
+```
+
+### Click-to-Focus
+
+Focusable boxes automatically focus when clicked. Your `onClick` handler fires after:
+
+```typescript
+box({
+  focusable: true,           // Enables Tab navigation
+  border: BorderStyle.SINGLE,
+  onClick: () => {
+    // This fires AFTER the box is focused
+    console.log('Clicked and focused!')
+  },
+  onKey: (e) => {
+    if (e.key === 'Enter') handleAction()
+  },
+  children: () => text({ content: 'Click or Tab to focus' })
+})
+```
+
+### Event Consumption
+
+Return `true` from a handler to consume the event (prevent propagation):
+
+```typescript
+box({
+  onClick: (event) => {
+    handleInnerClick()
+    return true  // Parent onClick won't fire
+  }
+})
+```
+
+### Mouse Event Properties
+
+The `MouseEvent` object contains:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `action` | `'down' \| 'up' \| 'move' \| 'drag' \| 'scroll'` | Event type |
+| `button` | `MouseButton` | Which button (LEFT, MIDDLE, RIGHT, NONE) |
+| `x`, `y` | `number` | Terminal coordinates |
+| `shiftKey`, `altKey`, `ctrlKey` | `boolean` | Modifier keys |
+| `scroll` | `{ direction, delta }` | Scroll info (for scroll events) |
+| `componentIndex` | `number` | Target component index |
+
 ## Overflow
 
 ```typescript

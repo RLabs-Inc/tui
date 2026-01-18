@@ -32,6 +32,7 @@ import {
   runMountCallbacks,
 } from '../engine/lifecycle'
 import { cleanupIndex as cleanupKeyboardListeners, onFocused } from '../state/keyboard'
+import { onComponent as onMouseComponent } from '../state/mouse'
 import { getVariantStyle, t } from '../state/theme'
 import { focus as focusComponent, registerFocusCallbacks } from '../state/focus'
 import { createCursor, disposeCursor } from '../state/drawnCursor'
@@ -323,6 +324,23 @@ export function input(props: InputProps): Cleanup {
   })
 
   // ==========================================================================
+  // MOUSE HANDLERS
+  // Always registered for inputs (click-to-focus) + any user callbacks
+  // ==========================================================================
+  const unsubMouse = onMouseComponent(index, {
+    onMouseDown: props.onMouseDown,
+    onMouseUp: props.onMouseUp,
+    // Click-to-focus: inputs are always focusable, so click always focuses
+    onClick: (event) => {
+      focusComponent(index)
+      return props.onClick?.(event)
+    },
+    onMouseEnter: props.onMouseEnter,
+    onMouseLeave: props.onMouseLeave,
+    onScroll: props.onScroll,
+  })
+
+  // ==========================================================================
   // AUTO FOCUS
   // ==========================================================================
 
@@ -343,6 +361,7 @@ export function input(props: InputProps): Cleanup {
 
   const cleanup = () => {
     unsubFocusCallbacks()
+    unsubMouse()
     cursor.dispose()
     unsubKeyboard()
     cleanupKeyboardListeners(index)

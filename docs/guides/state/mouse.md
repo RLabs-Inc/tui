@@ -11,7 +11,73 @@ TUI provides complete mouse support:
 - **Scroll events** - Wheel scrolling
 - **Component targeting** - Know which component was clicked
 
-## Basic Usage
+## Prop-Based Handlers (Recommended)
+
+The simplest way to handle mouse events is directly on primitives via props:
+
+```typescript
+import { box, text, signal } from '@rlabs-inc/tui'
+
+const isHovered = signal(false)
+
+box({
+  border: BorderStyle.ROUNDED,
+  bg: () => isHovered.value ? t.surface : null,
+  onClick: (event) => {
+    console.log(`Clicked at ${event.x}, ${event.y}`)
+  },
+  onMouseEnter: () => { isHovered.value = true },
+  onMouseLeave: () => { isHovered.value = false },
+  children: () => text({ content: 'Click me' })
+})
+```
+
+All primitives (box, text, input) support these mouse props:
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `onClick` | `(event: MouseEvent) => boolean \| void` | Called when clicked. Return true to consume event |
+| `onMouseDown` | `(event: MouseEvent) => boolean \| void` | Called when mouse button is pressed |
+| `onMouseUp` | `(event: MouseEvent) => boolean \| void` | Called when mouse button is released |
+| `onMouseEnter` | `(event: MouseEvent) => void` | Called when mouse enters component bounds |
+| `onMouseLeave` | `(event: MouseEvent) => void` | Called when mouse leaves component bounds |
+| `onScroll` | `(event: MouseEvent) => boolean \| void` | Called on scroll wheel events |
+
+### Click-to-Focus
+
+Focusable components (boxes with `focusable: true`, inputs) automatically focus when clicked:
+
+```typescript
+box({
+  focusable: true,           // Enables Tab navigation
+  border: BorderStyle.SINGLE,
+  onClick: () => {
+    // This fires AFTER the box is focused
+    console.log('Clicked and focused!')
+  },
+  onKey: (e) => {
+    if (e.key === 'Enter') handleAction()
+  },
+  children: () => text({ content: 'Click or Tab to focus' })
+})
+```
+
+### Event Consumption
+
+Return `true` from a handler to consume the event (prevent propagation to parent handlers):
+
+```typescript
+box({
+  onClick: (event) => {
+    handleInnerClick()
+    return true  // Parent onClick won't fire
+  }
+})
+```
+
+## Global Handlers
+
+For app-wide mouse handling, use the global `mouse` API:
 
 ```typescript
 import { mouse } from '@rlabs-inc/tui'
@@ -118,7 +184,9 @@ mouse.onScroll((event) => {
 })
 ```
 
-## Per-Component Handlers
+## Per-Component Handlers (Advanced)
+
+> **Note**: For most use cases, [prop-based handlers](#prop-based-handlers-recommended) are simpler and recommended. Use per-component handlers only when you need to register handlers dynamically or from outside the component.
 
 Register handlers for specific components. The component index must be allocated before creating the box, or retrieved after creation using `getIndex()`:
 
@@ -203,85 +271,53 @@ text({
 
 ### Clickable Button
 
+Using prop-based handlers (recommended):
+
 ```typescript
 const isHovered = signal(false)
 const isPressed = signal(false)
 
 box({
-  id: 'button',
   border: BorderStyle.ROUNDED,
   padding: 1,
-  bg: derived(() => {
+  bg: () => {
     if (isPressed.value) return t.primary
     if (isHovered.value) return t.surface
     return null
-  }),
-  children: () => {
-    text({ content: 'Click Me' })
-  }
-})
-
-// After mount, register handlers
-const index = getIndex('button')
-
-mouse.onComponent(index, {
-  onClick: () => {
-    handleClick()
   },
-  onMouseEnter: () => {
-    isHovered.value = true
-  },
+  onClick: () => handleClick(),
+  onMouseEnter: () => { isHovered.value = true },
   onMouseLeave: () => {
     isHovered.value = false
     isPressed.value = false
   },
-  onMouseDown: () => {
-    isPressed.value = true
-  },
-  onMouseUp: () => {
-    isPressed.value = false
-  }
+  onMouseDown: () => { isPressed.value = true },
+  onMouseUp: () => { isPressed.value = false },
+  children: () => text({ content: 'Click Me' })
 })
 ```
 
 ### Hover Highlight in List
 
-```typescript
-import { mouse, allocateIndex, each, box, text, signal, derived } from '@rlabs-inc/tui'
+Using prop-based handlers (recommended):
 
-const hoveredIndex = signal(-1)
+```typescript
+import { each, box, text, signal } from '@rlabs-inc/tui'
+
+const hoveredKey = signal<string | null>(null)
 
 each(
   () => items.value,
   (getItem, key) => {
-    // Allocate index first - before creating the box
-    const index = allocateIndex(`item-${key}`)
-
-    // Create the box with matching id
-    const cleanup = box({
-      id: `item-${key}`,
-      bg: derived(() => hoveredIndex.value === index ? t.surface : null),
-      children: () => {
-        text({ content: getItem })
-      }
-    })
-
-    // Register handlers after box creation
-    mouse.onComponent(index, {
-      onMouseEnter: () => {
-        hoveredIndex.value = index
-      },
+    return box({
+      bg: () => hoveredKey.value === key ? t.surface : null,
+      onMouseEnter: () => { hoveredKey.value = key },
       onMouseLeave: () => {
-        if (hoveredIndex.value === index) {
-          hoveredIndex.value = -1
-        }
+        if (hoveredKey.value === key) hoveredKey.value = null
       },
-      onClick: () => {
-        selectItem(key)
-      }
+      onClick: () => selectItem(key),
+      children: () => text({ content: getItem })
     })
-
-    return cleanup
   },
   { key: item => item.id }
 )

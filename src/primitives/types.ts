@@ -9,6 +9,7 @@ import type { RGBA, CellAttrs, Dimension } from '../types'
 import type { WritableSignal, Binding, ReadonlyBinding } from '@rlabs-inc/signals'
 import type { Variant } from '../state/theme'
 import type { KeyHandler } from '../state/keyboard'
+import type { MouseEvent, MouseHandler } from '../state/mouse'
 
 // =============================================================================
 // REACTIVE PROP TYPES
@@ -123,11 +124,26 @@ export interface InteractionProps {
   tabIndex?: Reactive<number>
 }
 
+export interface MouseProps {
+  /** Called on mouse down over this component. Return true to consume event. */
+  onMouseDown?: (event: MouseEvent) => void | boolean
+  /** Called on mouse up over this component. Return true to consume event. */
+  onMouseUp?: (event: MouseEvent) => void | boolean
+  /** Called on click (down + up on same component). Return true to consume event. */
+  onClick?: (event: MouseEvent) => void | boolean
+  /** Called when mouse enters this component */
+  onMouseEnter?: (event: MouseEvent) => void
+  /** Called when mouse leaves this component */
+  onMouseLeave?: (event: MouseEvent) => void
+  /** Called on scroll over this component. Return true to consume event. */
+  onScroll?: (event: MouseEvent) => void | boolean
+}
+
 // =============================================================================
 // BOX PROPS
 // =============================================================================
 
-export interface BoxProps extends StyleProps, BorderProps, DimensionProps, SpacingProps, LayoutProps, InteractionProps {
+export interface BoxProps extends StyleProps, BorderProps, DimensionProps, SpacingProps, LayoutProps, InteractionProps, MouseProps {
   /** Component ID (optional, auto-generated if not provided) */
   id?: string
   /** Is visible */
@@ -155,7 +171,7 @@ export interface BoxProps extends StyleProps, BorderProps, DimensionProps, Spaci
 // TEXT PROPS
 // =============================================================================
 
-export interface TextProps extends StyleProps, DimensionProps, SpacingProps, LayoutProps {
+export interface TextProps extends StyleProps, DimensionProps, SpacingProps, LayoutProps, MouseProps {
   /** Component ID (optional, auto-generated if not provided) */
   id?: string
   /** Text content (strings and numbers auto-converted) */
@@ -203,7 +219,7 @@ export interface CursorConfig {
   bg?: Reactive<RGBA>
 }
 
-export interface InputProps extends StyleProps, BorderProps, DimensionProps, SpacingProps, InteractionProps {
+export interface InputProps extends StyleProps, BorderProps, DimensionProps, SpacingProps, InteractionProps, MouseProps {
   /** Component ID (optional, auto-generated if not provided) */
   id?: string
   /** Current value (two-way bound) */

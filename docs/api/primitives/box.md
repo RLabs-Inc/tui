@@ -102,6 +102,19 @@ All props accept **static values, signals, deriveds, or getter functions**.
 | `onFocus` | `() => void` | - | Called when this box receives focus |
 | `onBlur` | `() => void` | - | Called when this box loses focus |
 
+#### Mouse Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `onClick` | `(event: MouseEvent) => boolean \| void` | - | Called when box is clicked. Return true to consume event |
+| `onMouseDown` | `(event: MouseEvent) => boolean \| void` | - | Called when mouse button is pressed |
+| `onMouseUp` | `(event: MouseEvent) => boolean \| void` | - | Called when mouse button is released |
+| `onMouseEnter` | `(event: MouseEvent) => void` | - | Called when mouse enters box bounds |
+| `onMouseLeave` | `(event: MouseEvent) => void` | - | Called when mouse leaves box bounds |
+| `onScroll` | `(event: MouseEvent) => boolean \| void` | - | Called on scroll wheel events |
+
+> **Click-to-Focus**: Focusable boxes automatically focus when clicked. Your `onClick` handler fires after focus is applied.
+
 ## Returns
 
 ```typescript
@@ -232,6 +245,41 @@ box({
   onFocus: () => console.log('Button focused'),
   onBlur: () => console.log('Button blurred'),
   children: () => text({ content: 'Click Me' })
+})
+```
+
+### With Mouse Events
+
+```typescript
+const isHovered = signal(false)
+
+box({
+  border: BorderStyle.SINGLE,
+  bg: () => isHovered.value ? t.surface : null,
+  onClick: (e) => {
+    console.log(`Clicked at ${e.x}, ${e.y}`)
+  },
+  onMouseEnter: () => { isHovered.value = true },
+  onMouseLeave: () => { isHovered.value = false },
+  children: () => text({ content: 'Hover and click me' })
+})
+```
+
+### Clickable Button with Focus
+
+```typescript
+box({
+  focusable: true,           // Enables Tab navigation
+  border: BorderStyle.SINGLE,
+  padding: 1,
+  onClick: () => handleAction(),  // Fires after auto-focus
+  onKey: (e) => {
+    if (e.key === 'Enter') {
+      handleAction()
+      return true
+    }
+  },
+  children: () => text({ content: 'Click or Press Enter' })
 })
 ```
 

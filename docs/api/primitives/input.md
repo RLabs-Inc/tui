@@ -104,6 +104,19 @@ All props accept **static values, signals, deriveds, or getter functions**.
 | `onFocus` | `() => void` | - | Called when input gains focus |
 | `onBlur` | `() => void` | - | Called when input loses focus |
 
+#### Mouse Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `onClick` | `(event: MouseEvent) => boolean \| void` | - | Called when input is clicked. Return true to consume event |
+| `onMouseDown` | `(event: MouseEvent) => boolean \| void` | - | Called when mouse button is pressed |
+| `onMouseUp` | `(event: MouseEvent) => boolean \| void` | - | Called when mouse button is released |
+| `onMouseEnter` | `(event: MouseEvent) => void` | - | Called when mouse enters input bounds |
+| `onMouseLeave` | `(event: MouseEvent) => void` | - | Called when mouse leaves input bounds |
+| `onScroll` | `(event: MouseEvent) => boolean \| void` | - | Called on scroll wheel events |
+
+> **Click-to-Focus**: Inputs automatically focus when clicked. Your `onClick` handler fires after focus is applied.
+
 ## Returns
 
 ```typescript

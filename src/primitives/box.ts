@@ -36,7 +36,8 @@ import {
   runMountCallbacks,
 } from '../engine/lifecycle'
 import { cleanupIndex as cleanupKeyboardListeners, onFocused } from '../state/keyboard'
-import { registerFocusCallbacks } from '../state/focus'
+import { registerFocusCallbacks, focus as focusComponent } from '../state/focus'
+import { onComponent as onMouseComponent } from '../state/mouse'
 import { getVariantStyle } from '../state/theme'
 import { getActiveScope } from './scope'
 import { enumSource } from './utils'
@@ -256,6 +257,31 @@ export function box(props: BoxProps = {}): Cleanup {
   }
 
   // ==========================================================================
+  // MOUSE HANDLERS
+  // Registered when focusable (for click-to-focus) OR any mouse callback provided
+  // ==========================================================================
+  let unsubMouse: (() => void) | undefined
+
+  const hasMouseHandlers = props.onMouseDown || props.onMouseUp || props.onClick || props.onMouseEnter || props.onMouseLeave || props.onScroll
+
+  if (shouldBeFocusable || hasMouseHandlers) {
+    unsubMouse = onMouseComponent(index, {
+      onMouseDown: props.onMouseDown,
+      onMouseUp: props.onMouseUp,
+      // Click-to-focus: focus this component on click (if focusable), then call user's handler
+      onClick: (event) => {
+        if (shouldBeFocusable) {
+          focusComponent(index)
+        }
+        return props.onClick?.(event)
+      },
+      onMouseEnter: props.onMouseEnter,
+      onMouseLeave: props.onMouseLeave,
+      onScroll: props.onScroll,
+    })
+  }
+
+  // ==========================================================================
   // VISUAL - Colors and borders (only bind what's passed)
   // ==========================================================================
   if (props.variant && props.variant !== 'default') {
@@ -308,6 +334,7 @@ export function box(props: BoxProps = {}): Cleanup {
   // Cleanup function
   const cleanup = () => {
     unsubFocusCallbacks?.()
+    unsubMouse?.()
     unsubKeyboard?.()
     cleanupKeyboardListeners(index)  // Remove any focused key handlers
     releaseIndex(index)
