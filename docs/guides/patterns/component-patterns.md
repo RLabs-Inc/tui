@@ -34,7 +34,7 @@ interface GreetingProps {
 }
 
 function Greeting(rawProps: GreetingProps): Cleanup {
-  const props = reactiveProps<{ name: string }>(rawProps)
+  const props = reactiveProps(rawProps)
 
   return box({
     padding: 1,
@@ -61,7 +61,7 @@ interface CardProps {
 }
 
 function Card(rawProps: CardProps): Cleanup {
-  const props = reactiveProps<{ title: string }>({ title: rawProps.title })
+  const props = reactiveProps({ title: rawProps.title })
 
   return box({
     border: BorderStyle.ROUNDED,
@@ -98,7 +98,7 @@ interface ButtonProps {
 }
 
 function Button(rawProps: ButtonProps): Cleanup {
-  const props = reactiveProps<{ label: string }>({ label: rawProps.label })
+  const props = reactiveProps({ label: rawProps.label })
   const isPressed = signal(false)
 
   const buttonIndex = allocateIndex()
@@ -138,7 +138,7 @@ interface CounterProps {
 }
 
 function Counter(rawProps: CounterProps): Cleanup {
-  const props = reactiveProps<{ initial: number }>({
+  const props = reactiveProps({
     initial: rawProps.initial ?? 0
   })
 
@@ -223,7 +223,7 @@ function createButton(variant: 'primary' | 'secondary' | 'danger') {
   }
 
   return function Button(props: { label: PropInput<string>, onPress?: () => void }): Cleanup {
-    const normalized = reactiveProps<{ label: string }>({ label: props.label })
+    const normalized = reactiveProps({ label: props.label })
     const style = variantStyles[variant]
 
     return box({

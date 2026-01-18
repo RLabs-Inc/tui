@@ -39,9 +39,11 @@ interface MyComponentProps {
 
 function MyComponent(rawProps: MyComponentProps) {
   // Normalize all props - everything becomes a DerivedSignal
-  const props = reactiveProps<{ title: string; count: number }>(rawProps)
+  // TypeScript infers the types automatically from the input object
+  const props = reactiveProps(rawProps)
 
   // props.title and props.count are now DerivedSignals
+  // TypeScript infers { title: DerivedSignal<string>; count: DerivedSignal<number> }
   // Pass them directly to primitives - no wrapper needed!
   return box({
     children: () => {
@@ -67,6 +69,23 @@ interface ReactiveProps<T> {
 }
 ```
 
+## Type Inference
+
+TypeScript automatically infers the types from the object you pass to `reactiveProps()`. You do **not** need to provide explicit generic type parameters:
+
+```typescript
+// Good - TypeScript infers types automatically
+const props = reactiveProps({
+  label: rawProps.label,
+  count: rawProps.count
+})
+
+// Bad - explicit generics are unnecessary and verbose
+const props = reactiveProps<{ label: string; count: number }>({...})
+```
+
+The return type is automatically inferred as `{ label: DerivedSignal<string>; count: DerivedSignal<number> }` based on the input object's property types.
+
 ## Usage Pattern
 
 ### 1. Define Props Interface
@@ -87,11 +106,7 @@ interface ButtonProps {
 import { reactiveProps } from '@rlabs-inc/tui'
 
 function Button(rawProps: ButtonProps) {
-  const props = reactiveProps<{
-    label: string
-    disabled: boolean
-    variant: 'primary' | 'secondary'
-  }>({
+  const props = reactiveProps({
     label: rawProps.label,
     disabled: rawProps.disabled ?? false,
     variant: rawProps.variant ?? 'primary'
@@ -107,7 +122,7 @@ After `reactiveProps()`, each prop is a `DerivedSignal`. **Pass them directly** 
 
 ```typescript
 function Button(rawProps: ButtonProps) {
-  const props = reactiveProps<{ label: string; disabled: boolean }>({
+  const props = reactiveProps({
     label: rawProps.label,
     disabled: rawProps.disabled ?? false
   })
@@ -170,11 +185,7 @@ interface CardProps {
 
 // Component function
 function Card(rawProps: CardProps): Cleanup {
-  const props = reactiveProps<{
-    title: string
-    content: string
-    highlighted: boolean
-  }>({
+  const props = reactiveProps({
     title: rawProps.title,
     content: rawProps.content,
     highlighted: rawProps.highlighted ?? false
@@ -222,11 +233,7 @@ Handle defaults when normalizing:
 
 ```typescript
 function Button(rawProps: ButtonProps) {
-  const props = reactiveProps<{
-    label: string
-    size: 'small' | 'medium' | 'large'
-    disabled: boolean
-  }>({
+  const props = reactiveProps({
     label: rawProps.label,
     size: rawProps.size ?? 'medium',      // Default: 'medium'
     disabled: rawProps.disabled ?? false  // Default: false
@@ -242,7 +249,7 @@ Create named deriveds for complex logic, then pass them directly:
 
 ```typescript
 function Progress(rawProps: { value: PropInput<number> }) {
-  const props = reactiveProps<{ value: number }>({ value: rawProps.value })
+  const props = reactiveProps({ value: rawProps.value })
 
   // Create deriveds for complex computations
   const percent = derived(() => Math.round(props.value.value * 100))
@@ -279,10 +286,7 @@ interface MyProps {
 }
 
 function MyComponent(rawProps: MyProps): Cleanup {
-  const props = reactiveProps<{
-    required: string
-    optional: boolean
-  }>({
+  const props = reactiveProps({
     required: rawProps.required,
     optional: rawProps.optional ?? false
   })

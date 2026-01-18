@@ -207,7 +207,8 @@ interface MyComponentProps {
 }
 
 function MyComponent(rawProps: MyComponentProps): Cleanup {
-  const props = reactiveProps<{ title: string; count: number }>(rawProps)
+  // TypeScript infers the output type automatically - no generic needed!
+  const props = reactiveProps(rawProps)
 
   // Everything is now a DerivedSignal - consistent .value access
   const display = derived(() => `${props.title.value}: ${props.count.value}`)
