@@ -275,7 +275,7 @@ async function main() {
                 content: derived(() =>
                   theme.name === name ? `[${i + 1}] ${name.toUpperCase()}` : `[${i + 1}] ${name}`
                 ),
-                fg: derived(() => (theme.name === name ? t.primary.value : t.textMuted.value)),
+                fg: derived(() => (theme.name === name ? t.primary : t.textMuted)),
               })
             })
           },

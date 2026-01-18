@@ -176,7 +176,7 @@ describe('Theme - t.* Color Accessors', () => {
   afterEach(resetTheme)
 
   test('t.primary returns RGBA', () => {
-    const color = t.primary.value
+    const color = t.primary
 
     expect(color).toHaveProperty('r')
     expect(color).toHaveProperty('g')
@@ -185,57 +185,57 @@ describe('Theme - t.* Color Accessors', () => {
   })
 
   test('t.success returns resolved color', () => {
-    const color = t.success.value
+    const color = t.success
 
     expect(typeof color.r).toBe('number')
     expect(typeof color.a).toBe('number')
   })
 
   test('t.error returns resolved color', () => {
-    const color = t.error.value
+    const color = t.error
 
     expect(color).toBeDefined()
     expect(color.a).toBe(255)
   })
 
   test('t.warning returns resolved color', () => {
-    const color = t.warning.value
+    const color = t.warning
 
     expect(color).toBeDefined()
   })
 
   test('t.info returns resolved color', () => {
-    const color = t.info.value
+    const color = t.info
 
     expect(color).toBeDefined()
   })
 
   test('t.text returns resolved text color', () => {
-    const color = t.text.value
+    const color = t.text
 
     expect(color).toBeDefined()
   })
 
   test('t.bg returns resolved background color', () => {
-    const color = t.bg.value
+    const color = t.bg
 
     expect(color).toBeDefined()
   })
 
   test('t.border returns resolved border color', () => {
-    const color = t.border.value
+    const color = t.border
 
     expect(color).toBeDefined()
   })
 
   test('t.* accessors are reactive - update when theme changes', () => {
     // Read initial value
-    const initialPrimary = t.primary.value
+    const initialPrimary = t.primary
 
     // Change to dracula theme which has different primary
     setTheme('dracula')
 
-    const newPrimary = t.primary.value
+    const newPrimary = t.primary
 
     // Colors should be different (dracula uses OKLCH purple)
     expect(newPrimary).not.toEqual(initialPrimary)

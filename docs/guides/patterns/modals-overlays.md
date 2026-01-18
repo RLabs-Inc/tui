@@ -220,7 +220,7 @@ function ConfirmDialog(props: ConfirmDialogProps): Cleanup {
                 paddingLeft: 2,
                 paddingRight: 2,
                 bg: derived(() =>
-                  selectedButton.value === 'cancel' ? t.surface.value : null
+                  selectedButton.value === 'cancel' ? t.surface : null
                 ),
                 children: () => text({ content: 'Cancel' })
               })
@@ -229,12 +229,12 @@ function ConfirmDialog(props: ConfirmDialogProps): Cleanup {
                 paddingLeft: 2,
                 paddingRight: 2,
                 bg: derived(() =>
-                  selectedButton.value === 'confirm' ? t.error.value : null
+                  selectedButton.value === 'confirm' ? t.error : null
                 ),
                 children: () => text({
                   content: 'Confirm',
                   fg: derived(() =>
-                    selectedButton.value === 'confirm' ? t.background.value : t.error.value
+                    selectedButton.value === 'confirm' ? t.bg : t.error
                   )
                 })
               })
@@ -377,10 +377,10 @@ box({
               return box({
                 paddingLeft: 1,
                 paddingRight: 1,
-                bg: derived(() => selectedOption.value === index ? t.primary.value : null),
+                bg: derived(() => selectedOption.value === index ? t.primary : null),
                 children: () => text({
                   content: getOption,
-                  fg: derived(() => selectedOption.value === index ? t.background.value : t.text.value)
+                  fg: derived(() => selectedOption.value === index ? t.bg : t.text)
                 })
               })
             },

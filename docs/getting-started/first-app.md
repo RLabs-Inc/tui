@@ -123,9 +123,9 @@ box({
     // Dynamic color based on value
     const counterColor = derived(() => {
       const val = counter.value
-      if (val > 0) return t.success.value
-      if (val < 0) return t.error.value
-      return t.text.value
+      if (val > 0) return t.success
+      if (val < 0) return t.error
+      return t.text
     })
 
     text({
@@ -140,7 +140,7 @@ box({
     })
 
     const barColor = derived(() =>
-      counter.value >= 0 ? t.success.value : t.error.value
+      counter.value >= 0 ? t.success : t.error
     )
 
     text({
@@ -283,9 +283,9 @@ async function main() {
 
             const counterColor = derived(() => {
               const val = counter.value
-              if (val > 0) return t.success.value
-              if (val < 0) return t.error.value
-              return t.text.value
+              if (val > 0) return t.success
+              if (val < 0) return t.error
+              return t.text
             })
 
             text({ content: counterDisplay, fg: counterColor })
@@ -295,7 +295,7 @@ async function main() {
               return char.repeat(Math.max(1, Math.min(Math.abs(counter.value), 20)))
             })
             const barColor = derived(() =>
-              counter.value >= 0 ? t.success.value : t.error.value
+              counter.value >= 0 ? t.success : t.error
             )
 
             text({ content: barContent, fg: barColor })

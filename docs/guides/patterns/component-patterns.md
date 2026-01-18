@@ -117,8 +117,8 @@ function Button(rawProps: ButtonProps): Cleanup {
     border: BorderStyle.ROUNDED,
     paddingLeft: 2,
     paddingRight: 2,
-    bg: derived(() => isFocused.value ? t.surface.value : null),
-    borderColor: derived(() => isFocused.value ? t.primary.value : t.border.value),
+    bg: derived(() => isFocused.value ? t.surface : null),
+    borderColor: derived(() => isFocused.value ? t.primary : t.border),
     onFocus: () => { isFocused.value = true },
     onBlur: () => { isFocused.value = false },
     onKey: (event) => {

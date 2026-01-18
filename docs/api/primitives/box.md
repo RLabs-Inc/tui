@@ -175,7 +175,7 @@ Props accept signals and deriveds directly - no wrapper needed.
 ```typescript
 const width = signal(40)
 const isVisible = signal(true)
-const bgColor = derived(() => isActive.value ? t.primary.value : null)
+const bgColor = derived(() => isActive.value ? t.primary : null)
 
 box({
   width,                // Signal directly
@@ -192,7 +192,7 @@ Use `() =>` only for inline computations that don't warrant a named derived:
 ```typescript
 box({
   width,
-  bg: () => isHovered.value ? t.surface.value : t.bg.value,  // Inline computation
+  bg: () => isHovered.value ? t.surface : t.bg,  // Inline computation
   children: () => { ... }
 })
 ```
@@ -201,7 +201,7 @@ box({
 
 ```typescript
 const borderColor = derived(() =>
-  isFocused(myIndex) ? t.primary.value : t.border.value
+  isFocused(myIndex) ? t.primary : t.border
 )
 
 box({

@@ -12,6 +12,12 @@ TUI implements a full flexbox layout system (TITAN engine):
 - **Flex items** - Grow, shrink, basis
 - **Gap** - Space between children
 
+## Import
+
+```typescript
+import { box, text, BorderStyle, t } from '@rlabs-inc/tui'
+```
+
 ## Basic Concepts
 
 Flexbox organizes children along two axes:

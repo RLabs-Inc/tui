@@ -67,7 +67,7 @@ each(
   (getItem, key) => {
     return box({
       // key is stable - use it for selection!
-      bg: derived(() => selectedKey.value === key ? t.surface.value : null),
+      bg: derived(() => selectedKey.value === key ? t.surface : null),
       children: () => {
         text({ content: getItem })
       }
@@ -101,7 +101,7 @@ each(
         // These deriveds only re-run when THIS task changes
         text({
           content: derived(() => getItem().done ? '[x]' : '[ ]'),
-          fg: derived(() => getItem().done ? t.success.value : t.textDim.value)
+          fg: derived(() => getItem().done ? t.success : t.textDim)
         })
         text({
           content: derived(() => getItem().text)

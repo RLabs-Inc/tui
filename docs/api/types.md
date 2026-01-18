@@ -183,7 +183,7 @@ box({
   width,                           // Signal directly - works!
   height,                          // Derived directly - works!
   padding: 2,                      // Static value - works!
-  bg: () => isActive.value ? t.primary.value : null  // Inline computation
+  bg: () => isActive.value ? t.primary : null  // Inline computation
 })
 ```
 

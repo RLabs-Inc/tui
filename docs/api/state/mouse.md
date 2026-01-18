@@ -277,8 +277,8 @@ function Button(label: string, onPress: () => void) {
     id: buttonIndex.toString(),
     border: BorderStyle.ROUNDED,
     bg: derived(() => {
-      if (isPressed.value) return t.primary.value
-      if (isHovered.value) return t.surface.value
+      if (isPressed.value) return t.primary
+      if (isHovered.value) return t.surface
       return null
     }),
     children: () => text({ content: label })

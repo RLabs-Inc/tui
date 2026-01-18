@@ -393,7 +393,7 @@ const isValid = derived(() => email.value.includes('@'))
 input({
   value: email,
   placeholder: 'Email address',
-  borderColor: derived(() => isValid.value ? t.border.value : t.error.value)
+  borderColor: derived(() => isValid.value ? t.border : t.error)
 })
 ```
 

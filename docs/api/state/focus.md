@@ -14,19 +14,34 @@ import {
 } from '@rlabs-inc/tui'
 ```
 
+## Making Components Focusable
+
+The simplest way to create focusable components:
+
+```typescript
+import { box, text } from '@rlabs-inc/tui'
+
+box({
+  focusable: true,           // Enables Tab navigation
+  tabIndex: 1,               // Optional: explicit tab order
+  onFocus: () => console.log('Got focus'),
+  onBlur: () => console.log('Lost focus'),
+  onKey: (event) => {
+    if (event.key === 'Enter') handleAction()
+    return true  // consume event
+  },
+  children: () => text({ content: 'Focusable box' })
+})
+```
+
 ## API Reference
 
 ### focusManager.focus()
 
-Focus a specific component.
+Focus a specific component by index (advanced).
 
 ```typescript
 focusManager.focus(index: number): void
-```
-
-```typescript
-const myComponentIndex = allocateIndex()
-focusManager.focus(myComponentIndex)
 ```
 
 ### focusManager.blur()
@@ -74,14 +89,10 @@ focusManager.focusPrevious(): void
 Trap focus within a container.
 
 ```typescript
-focusManager.pushFocusTrap(containerIndex: number): void
+focusManager.pushFocusTrap(containerIndices: number[]): void
 ```
 
-```typescript
-// Trap focus in modal
-const modalIndex = allocateIndex()
-focusManager.pushFocusTrap(modalIndex)
-```
+Focus traps are typically used for modals - see the [Modals Guide](../../guides/patterns/modals-overlays.md) for complete examples.
 
 ### focusManager.popFocusTrap()
 
@@ -137,13 +148,18 @@ effect(() => {
 
 ### isFocused()
 
-Check if a component is focused.
+Check if a component is focused (internal use - prefer `onFocus`/`onBlur` props).
 
 ```typescript
-import { isFocused } from '@rlabs-inc/tui'
+// Prefer using box props for focus state:
+const isFocused = signal(false)
 
-const myIndex = allocateIndex()
-const focused = isFocused(myIndex)  // Returns boolean
+box({
+  focusable: true,
+  onFocus: () => { isFocused.value = true },
+  onBlur: () => { isFocused.value = false },
+  children: () => text({ content: 'Focusable' })
+})
 ```
 
 ### hasFocus()
@@ -196,15 +212,17 @@ const indices = getFocusableIndices()
 
 ```typescript
 function FocusableItem(index: number) {
-  const itemIndex = allocateIndex()
+  const focused = signal(false)
 
   return box({
     focusable: true,
     tabIndex: index + 1,
     border: BorderStyle.SINGLE,
     borderColor: derived(() =>
-      isFocused(itemIndex) ? t.primary.value : t.border.value
+      focused.value ? t.primary : t.border
     ),
+    onFocus: () => { focused.value = true },
+    onBlur: () => { focused.value = false },
     children: () => text({ content: `Item ${index}` })
   })
 }
@@ -229,26 +247,40 @@ box({
 ### Focus Trap for Modal
 
 ```typescript
-function Modal() {
-  const modalIndex = allocateIndex()
+import { box, text, focusManager, onMount, onDestroy } from '@rlabs-inc/tui'
 
-  // On mount: trap focus
-  focusManager.saveFocusToHistory()
-  focusManager.pushFocusTrap(modalIndex)
-  focusManager.focusFirst()
+function Modal({ onClose }: { onClose: () => void }) {
+  // Save and restore focus automatically
+  onMount(() => {
+    focusManager.saveFocusToHistory()
+    focusManager.focusFirst()
+  })
 
-  // On unmount: release trap
-  onCleanup(() => {
-    focusManager.popFocusTrap()
+  onDestroy(() => {
     focusManager.restoreFocusFromHistory()
   })
 
   return box({
-    id: modalIndex.toString(),
     zIndex: 100,
+    border: BorderStyle.DOUBLE,
     children: () => {
-      box({ focusable: true, tabIndex: 1, children: () => text({ content: 'OK' }) })
-      box({ focusable: true, tabIndex: 2, children: () => text({ content: 'Cancel' }) })
+      text({ content: 'Modal Title' })
+      box({
+        focusable: true,
+        tabIndex: 1,
+        onKey: (e) => {
+          if (e.key === 'Enter') { onClose(); return true }
+        },
+        children: () => text({ content: 'OK' })
+      })
+      box({
+        focusable: true,
+        tabIndex: 2,
+        onKey: (e) => {
+          if (e.key === 'Escape') { onClose(); return true }
+        },
+        children: () => text({ content: 'Cancel' })
+      })
     }
   })
 }
@@ -258,18 +290,20 @@ function Modal() {
 
 ```typescript
 function FocusRing() {
-  const myIndex = allocateIndex()
+  const focused = signal(false)
 
   return box({
     focusable: true,
     tabIndex: 1,
     border: BorderStyle.ROUNDED,
     borderColor: derived(() =>
-      isFocused(myIndex) ? t.primary.value : null
+      focused.value ? t.primary : t.border
     ),
     bg: derived(() =>
-      isFocused(myIndex) ? t.surface.value : null
+      focused.value ? t.surface : null
     ),
+    onFocus: () => { focused.value = true },
+    onBlur: () => { focused.value = false },
     children: () => text({ content: 'Focus me!' })
   })
 }
@@ -278,18 +312,15 @@ function FocusRing() {
 ### Keyboard Focus Handler
 
 ```typescript
-const myIndex = allocateIndex()
-
-keyboard.onFocused(myIndex, (event) => {
-  if (event.key === 'Enter') {
-    activate()
-    return true
-  }
-})
-
 box({
   focusable: true,
   tabIndex: 1,
+  onKey: (event) => {
+    if (event.key === 'Enter') {
+      activate()
+      return true  // consume event
+    }
+  },
   children: () => text({ content: 'Press Enter when focused' })
 })
 ```
@@ -297,19 +328,19 @@ box({
 ### Focus on Mount
 
 ```typescript
-function AutoFocusInput() {
-  const inputIndex = allocateIndex()
+import { box, text, focusManager, onMount, BorderStyle } from '@rlabs-inc/tui'
 
-  // Focus on mount
-  effect(() => {
-    focusManager.focus(inputIndex)
+function AutoFocusComponent() {
+  // Focus the first focusable element on mount
+  onMount(() => {
+    focusManager.focusFirst()
   })
 
   return box({
     focusable: true,
     tabIndex: 1,
     border: BorderStyle.SINGLE,
-    children: () => text({ content: 'Auto-focused input' })
+    children: () => text({ content: 'Auto-focused!' })
   })
 }
 ```
@@ -318,15 +349,18 @@ function AutoFocusInput() {
 
 ```typescript
 function FocusGroup(items: string[]) {
-  const groupIndex = allocateIndex()
-
   return box({
-    id: groupIndex.toString(),
     children: () => {
       items.forEach((item, i) => {
         box({
           focusable: true,
           tabIndex: i + 1,
+          onKey: (e) => {
+            if (e.key === 'Enter') {
+              selectItem(item)
+              return true
+            }
+          },
           children: () => text({ content: item })
         })
       })

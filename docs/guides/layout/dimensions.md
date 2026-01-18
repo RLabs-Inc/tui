@@ -11,6 +11,12 @@ TUI supports flexible dimension specifications:
 - **Auto** - Size to content
 - **Constraints** - Min/max limits
 
+## Import
+
+```typescript
+import { box, text, BorderStyle } from '@rlabs-inc/tui'
+```
+
 ## Fixed Dimensions
 
 Specify exact character sizes:

@@ -73,7 +73,7 @@ const isError = signal(false)
 
 text({
   content: 'Status',
-  fg: derived(() => isError.value ? t.error.value : t.success.value)
+  fg: derived(() => isError.value ? t.error : t.success)
 })
 ```
 
@@ -264,9 +264,9 @@ text({
   }),
   fg: derived(() => {
     switch (status.value) {
-      case 'loading': return t.textDim.value
-      case 'success': return t.success.value
-      case 'error': return t.error.value
+      case 'loading': return t.textDim
+      case 'success': return t.success
+      case 'error': return t.error
     }
   })
 })

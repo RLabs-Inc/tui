@@ -111,6 +111,16 @@ box({
   borderColor: t.primary,
   bg: t.surface,
 
+  // Focus & Keyboard (self-contained interaction)
+  focusable: true,          // Enable Tab navigation
+  tabIndex: 1,              // Explicit tab order
+  onKey: (e) => {           // Keyboard handler (only when focused)
+    if (e.key === 'Enter') handleAction()
+    return true  // consume event
+  },
+  onFocus: () => { /* called when box gains focus */ },
+  onBlur: () => { /* called when box loses focus */ },
+
   // Children
   children: () => {
     // Nested components
@@ -217,18 +227,33 @@ keyboard.onKey('s', (event) => {
 
 ### Focus
 
+Boxes support self-contained focus and keyboard handling:
+
+```typescript
+import { box, text } from '@rlabs-inc/tui'
+
+// Focusable box with keyboard handler
+box({
+  focusable: true,
+  onKey: (e) => {
+    if (e.key === 'Enter') handleAction()
+    if (e.key === 'ArrowUp') moveUp()
+    if (e.key === 'ArrowDown') moveDown()
+    return true  // consume event
+  },
+  onFocus: () => console.log('Focused'),
+  onBlur: () => console.log('Blurred'),
+  children: () => text({ content: 'Press Enter to activate' })
+})
+```
+
+For programmatic focus control:
+
 ```typescript
 import { focusManager } from '@rlabs-inc/tui'
 
-// Make component focusable
-box({ focusable: true, tabIndex: 1 })
-
-// Navigate focus
-keyboard.onKey('Tab', () => focusManager.focusNext())
-keyboard.onKey('Tab', (e) => {
-  if (e.modifiers.shift) focusManager.focusPrevious()
-  else focusManager.focusNext()
-})
+focusManager.focusNext()
+focusManager.focusPrevious()
 ```
 
 ### Mouse

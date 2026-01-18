@@ -177,8 +177,8 @@ async function main() {
             text({
               content: statusText,
               fg: derived(() => completedCount.value === totalCount.value && totalCount.value > 0
-                ? t.success.value
-                : t.text.value),
+                ? t.success
+                : t.text),
             })
 
             // Visual progress bar
@@ -257,7 +257,7 @@ async function main() {
               box({
                 visible: isVisible,
                 flexDirection: 'row',
-                bg: derived(() => isSelected.value ? t.surface.value : null),
+                bg: derived(() => isSelected.value ? t.surface : null),
                 children: () => {
                   // Selection indicator
                   text({
@@ -269,14 +269,14 @@ async function main() {
                   // Checkbox
                   text({
                     content: derived(() => isDone.value ? '[x]' : '[ ]'),
-                    fg: derived(() => isDone.value ? t.success.value : t.textDim.value),
+                    fg: derived(() => isDone.value ? t.success : t.textDim),
                     width: 4,
                   })
 
                   // Status label
                   text({
                     content: derived(() => isDone.value ? 'Done' : 'Todo'),
-                    fg: derived(() => isDone.value ? t.success.value : t.warning.value),
+                    fg: derived(() => isDone.value ? t.success : t.warning),
                     width: 6,
                   })
 
@@ -290,7 +290,7 @@ async function main() {
                       }
                       return txt
                     }),
-                    fg: derived(() => isDone.value ? t.textDim.value : t.text.value),
+                    fg: derived(() => isDone.value ? t.textDim : t.text),
                   })
                 },
               })

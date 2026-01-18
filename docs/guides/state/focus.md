@@ -106,8 +106,8 @@ box({
   border: BorderStyle.ROUNDED,
   borderColor: derived(() =>
     focusedIndex.value === getIndex('my-component')
-      ? t.primary.value
-      : t.border.value
+      ? t.primary
+      : t.border
   ),
   children: () => { /* ... */ }
 })
@@ -156,58 +156,53 @@ Benefits of this approach:
 - **No index management** - framework handles it internally
 - **Automatic cleanup** - no manual unsubscribe needed
 
-### keyboard.onFocused() (Advanced)
-
-For cases where you need to register handlers separately from box creation (e.g., dynamic handlers, conditional registration), use `keyboard.onFocused()`:
-
-```typescript
-import { keyboard, allocateIndex, box, text } from '@rlabs-inc/tui'
-
-// Allocate index before creating the component
-const componentIndex = allocateIndex('my-input')
-
-box({
-  id: 'my-input',
-  focusable: true,
-  children: () => text({ content: 'My input' })
-})
-
-// Register handler after component creation
-// Only fires when this component is focused
-keyboard.onFocused(componentIndex, (event) => {
-  if (event.key === 'Enter') {
-    submit()
-    return true
-  }
-})
-```
-
-> **Note:** Prefer the `onKey` prop for most use cases. Use `keyboard.onFocused()` only when you need to decouple handler registration from component creation.
-
 ## Focus Trapping (Modals)
 
-Keep focus contained within a modal:
+Keep focus contained within a modal. The framework handles focus trapping when you use `show()` with modal components:
 
 ```typescript
-import { focusManager } from '@rlabs-inc/tui'
+import { focusManager, signal, show, box, text, onMount, onDestroy } from '@rlabs-inc/tui'
 
-const modalIndex = allocateIndex('modal')
+const showModal = signal(false)
 
-function openModal() {
-  showModal.value = true
+function Modal() {
+  // Save and restore focus automatically
+  onMount(() => {
+    focusManager.saveFocusToHistory()
+    focusManager.focusFirst()
+  })
 
-  // Save current focus and trap within modal
-  focusManager.saveFocusToHistory()
-  focusManager.pushFocusTrap(modalIndex)
-  focusManager.focusFirst()  // Focus first element in modal
-}
+  onDestroy(() => {
+    focusManager.restoreFocusFromHistory()
+  })
 
-function closeModal() {
-  showModal.value = false
-
-  // Release trap and restore previous focus
-  focusManager.popFocusTrap()
-  focusManager.restoreFocusFromHistory()
+  return box({
+    zIndex: 100,
+    border: 'double',
+    children: () => {
+      text({ content: 'Modal Title' })
+      box({
+        focusable: true,
+        onKey: (e) => {
+          if (e.key === 'Enter') {
+            showModal.value = false
+            return true
+          }
+        },
+        children: () => text({ content: 'OK' })
+      })
+      box({
+        focusable: true,
+        onKey: (e) => {
+          if (e.key === 'Escape') {
+            showModal.value = false
+            return true
+          }
+        },
+        children: () => text({ content: 'Cancel' })
+      })
+    }
+  })
 }
 
 show(
@@ -298,7 +293,7 @@ each(
     id: `item-${key}`,
     focusable: true,
     tabIndex: parseInt(key),
-    bg: derived(() => selectedIndex.value === parseInt(key) ? t.surface.value : null),
+    bg: derived(() => selectedIndex.value === parseInt(key) ? t.surface : null),
     children: () => {
       text({ content: getItem })
     }
@@ -341,19 +336,18 @@ each(
 ### Auto-Focus on Mount
 
 ```typescript
-const inputIndex = allocateIndex('input')
+import { box, text, focusManager, onMount } from '@rlabs-inc/tui'
 
-box({
-  id: 'input',
-  focusable: true,
-  tabIndex: 1,
-  children: () => { /* ... */ }
+// Focus the first focusable element after mount
+onMount(() => {
+  focusManager.focusFirst()
 })
 
-// Focus after mount
-setTimeout(() => {
-  focusManager.focus(inputIndex)
-}, 0)
+box({
+  focusable: true,
+  tabIndex: 1,
+  children: () => text({ content: 'Auto-focused!' })
+})
 ```
 
 ## Visibility and Focus

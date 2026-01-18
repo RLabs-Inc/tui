@@ -129,7 +129,7 @@ const cleanup = await mount(() => {
       options.forEach((opt, i) => {
         text({
           content: () => `${selected.value === i ? '>' : ' '} ${opt}`,
-          fg: () => selected.value === i ? t.primary.value : t.text.value
+          fg: () => selected.value === i ? t.primary : t.text
         })
       })
     }

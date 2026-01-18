@@ -10,6 +10,12 @@ TUI provides CSS-like spacing:
 - **Margin** - Space outside the component
 - **Gap** - Space between children
 
+## Import
+
+```typescript
+import { box, text, BorderStyle, t } from '@rlabs-inc/tui'
+```
+
 ## Padding
 
 Space between the component's border/edge and its content:

@@ -32,7 +32,7 @@ function SidebarItem(id: string, label: string) {
     children: () => {
       text({
         content: () => isActive.value ? `> ${label}` : `  ${label}`,
-        fg: () => isActive.value ? t.primary.value : t.text.value
+        fg: () => isActive.value ? t.primary : t.text
       })
     }
   })

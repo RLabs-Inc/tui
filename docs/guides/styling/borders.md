@@ -138,7 +138,7 @@ const isFocused = signal(false)
 box({
   border: BorderStyle.ROUNDED,
   borderColor: derived(() =>
-    isFocused.value ? t.primary.value : t.border.value
+    isFocused.value ? t.primary : t.border
   ),
   children: () => { /* ... */ }
 })
@@ -147,18 +147,17 @@ box({
 ### Focus Ring
 
 ```typescript
-import { focusedIndex } from '@rlabs-inc/tui'
+import { signal, box, text, BorderStyle, t } from '@rlabs-inc/tui'
+
+const isFocused = signal(false)
 
 box({
-  id: 'input',
   focusable: true,
+  onFocus: () => { isFocused.value = true },
+  onBlur: () => { isFocused.value = false },
   border: BorderStyle.ROUNDED,
-  borderColor: derived(() => {
-    const inputIndex = getIndex('input')
-    return focusedIndex.value === inputIndex
-      ? t.borderFocus.value
-      : t.border.value
-  }),
+  borderColor: () => isFocused.value ? t.primary : t.border,
+  children: () => text({ content: 'Focus me with Tab' })
 })
 ```
 
@@ -202,7 +201,7 @@ const value = signal('')
 
 box({
   border: BorderStyle.ROUNDED,
-  borderColor: derived(() => isFocused.value ? t.primary.value : t.border.value),
+  borderColor: derived(() => isFocused.value ? t.primary : t.border),
   padding: 0,
   paddingLeft: 1,
   paddingRight: 1,

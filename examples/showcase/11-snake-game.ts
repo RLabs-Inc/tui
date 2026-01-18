@@ -187,9 +187,9 @@ async function main() {
   })
   const statusColor = derived(() => {
     switch (gameState.value) {
-      case 'playing': return t.success.value
-      case 'paused': return t.warning.value
-      case 'gameover': return t.error.value
+      case 'playing': return t.success
+      case 'paused': return t.warning
+      case 'gameover': return t.error
     }
   })
 

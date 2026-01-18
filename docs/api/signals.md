@@ -242,7 +242,7 @@ TUI primitives accept signals and deriveds directly - `bind()` is used internall
 ```typescript
 const width = signal(40)
 const height = derived(() => width.value / 2)
-const bgColor = derived(() => isActive.value ? t.primary.value : null)
+const bgColor = derived(() => isActive.value ? t.primary : null)
 
 box({
   width,      // Signal directly - TUI binds it internally
@@ -257,7 +257,7 @@ box({
 ```typescript
 box({
   width,
-  bg: () => isHovered.value ? t.surface.value : null  // Inline computation
+  bg: () => isHovered.value ? t.surface : null  // Inline computation
 })
 ```
 

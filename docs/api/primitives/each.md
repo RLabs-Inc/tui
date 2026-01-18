@@ -99,7 +99,7 @@ each(
   () => items.value,
   (getItem, key) => {
     const isSelected = derived(() => selectedId.value === key)
-    const bgColor = derived(() => isSelected.value ? t.surface.value : null)
+    const bgColor = derived(() => isSelected.value ? t.surface : null)
     const prefix = derived(() => isSelected.value ? '> ' : '  ')
     const itemName = derived(() => getItem().name)
 
@@ -130,7 +130,7 @@ each(
     const todoText = derived(() => getTodo().text)
     const isDone = derived(() => getTodo().done)
     const checkbox = derived(() => isDone.value ? '[x]' : '[ ]')
-    const checkColor = derived(() => isDone.value ? t.success.value : t.text.value)
+    const checkColor = derived(() => isDone.value ? t.success : t.text)
 
     return box({
       children: () => {

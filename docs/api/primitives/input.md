@@ -216,7 +216,7 @@ const focused = signal(false)
 input({
   value: text,
   border: BorderStyle.ROUNDED,
-  borderColor: () => focused.value ? t.primary.value : t.border.value,
+  borderColor: () => focused.value ? t.primary : t.border,
   width: 40,
   onFocus: () => focused.value = true,
   onBlur: () => focused.value = false

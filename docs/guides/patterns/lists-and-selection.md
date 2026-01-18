@@ -42,7 +42,7 @@ box({
         const isSelected = derived(() => selectedIndex.value === index)
 
         return box({
-          bg: derived(() => isSelected.value ? t.surface.value : null),
+          bg: derived(() => isSelected.value ? t.surface : null),
           paddingLeft: 1,
           children: () => {
             text({
@@ -102,7 +102,7 @@ box({
         const isSelected = derived(() => selectedId.value === key)
 
         return box({
-          bg: derived(() => isSelected.value ? t.surface.value : null),
+          bg: derived(() => isSelected.value ? t.surface : null),
           children: () => {
             text({
               content: derived(() => getTask().done ? '[x]' : '[ ]')
@@ -175,7 +175,7 @@ box({
         const isSelected = derived(() => selectedIds.value.has(key))
 
         return box({
-          bg: derived(() => isSelected.value ? t.surface.value : null),
+          bg: derived(() => isSelected.value ? t.surface : null),
           children: () => {
             text({
               content: derived(() => isSelected.value ? '[x]' : '[ ]')
@@ -211,7 +211,7 @@ box({
 
         return text({
           content: derived(() => `${isSelected.value ? '>' : ' '} ${getItem()}`),
-          bg: derived(() => isSelected.value ? t.surface.value : null)
+          bg: derived(() => isSelected.value ? t.surface : null)
         })
       },
       { key: (_, i) => String(i) }
@@ -267,7 +267,7 @@ box({
 
         return text({
           content: getItem,
-          bg: derived(() => isSelected.value ? t.surface.value : null)
+          bg: derived(() => isSelected.value ? t.surface : null)
         })
       },
       { key: (_, i) => String(i) }

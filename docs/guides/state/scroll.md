@@ -146,7 +146,7 @@ box({
         const itemIndex = parseInt(key)
         return box({
           bg: derived(() =>
-            selectedIndex.value === itemIndex ? t.surface.value : null
+            selectedIndex.value === itemIndex ? t.surface : null
           ),
           children: () => {
             text({ content: getItem })

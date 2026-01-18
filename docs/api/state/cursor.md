@@ -164,40 +164,28 @@ type CursorShape = 'block' | 'underline' | 'bar'
 
 ### Input Field Cursor
 
+The `input` primitive handles cursor management automatically:
+
 ```typescript
-function InputField() {
-  const value = signal('')
-  const cursorPos = signal(0)
+import { signal, input, mount } from '@rlabs-inc/tui'
 
-  // Show cursor when focused
-  const inputIndex = allocateIndex()
+const username = signal('')
 
-  effect(() => {
-    if (isFocused(inputIndex).value) {
-      cursor.show()
-      cursor.setShape('bar')
-    }
+await mount(() => {
+  // Input primitive handles cursor automatically!
+  input({
+    value: username,
+    placeholder: 'Enter username...',
+    cursor: {
+      style: 'bar',    // 'bar' | 'block' | 'underline'
+      blink: true,
+    },
+    autoFocus: true,
   })
-
-  keyboard.onFocused(inputIndex, (event) => {
-    if (event.char) {
-      // Insert character
-      const before = value.value.slice(0, cursorPos.value)
-      const after = value.value.slice(cursorPos.value)
-      value.value = before + event.char + after
-      cursorPos.value++
-      return true
-    }
-    // ... handle other keys
-  })
-
-  return box({
-    focusable: true,
-    tabIndex: 1,
-    children: () => text({ content: value })
-  })
-}
+})
 ```
+
+The input primitive is fully self-contained - it manages focus, keyboard, and cursor internally. For most text input use cases, you don't need to touch cursor APIs directly.
 
 ### Custom Cursor Position
 

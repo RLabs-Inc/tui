@@ -39,7 +39,6 @@ lastEvent         // Signal<KeyboardEvent | null> - Full event details
 // Handler registration
 keyboard.on(handler)              // All keyboard events
 keyboard.onKey(key, handler)      // Specific key(s)
-keyboard.onFocused(index, handler) // When component has focus
 ```
 
 ## onKey() - Key-Specific Handlers
@@ -168,40 +167,10 @@ box({
 })
 ```
 
-This is preferred over `keyboard.onFocused()` because:
+**Benefits of this approach:**
 - **Self-contained** - component owns its keyboard behavior
 - **No index management** - framework handles it internally
 - **Automatic cleanup** - no manual unsubscribe needed
-
-### keyboard.onFocused()
-
-For advanced cases where you need to register handlers separately from box creation (e.g., dynamic handler logic, or handlers set up after the component is created), use `keyboard.onFocused()`:
-
-```typescript
-import { keyboard, allocateIndex } from '@rlabs-inc/tui'
-
-// Allocate index before creating the box
-const inputIndex = allocateIndex('my-input')
-
-box({
-  id: 'my-input',
-  focusable: true,
-  children: () => {
-    text({ content: 'Press Enter to submit' })
-  }
-})
-
-// Register handler after box creation
-// This handler only fires when this component is focused
-keyboard.onFocused(inputIndex, (event) => {
-  if (event.key === 'Enter') {
-    submitInput()
-    return true
-  }
-})
-```
-
-> **Note:** For most use cases, the `onKey` prop on box is simpler and recommended.
 
 ## Handler Return Values
 
@@ -222,8 +191,8 @@ keyboard.on((event) => {
 Events are dispatched in this order:
 
 1. **Global shortcuts** (Ctrl+C, Tab) - handled by framework
-2. **Focused component handlers** - `onFocused()`
-3. **User handlers** - `on()` and `onKey()`
+2. **Focused component handlers** - `box({ onKey })`
+3. **Global user handlers** - `keyboard.on()` and `keyboard.onKey()`
 4. **Framework defaults** - Arrow key scrolling, etc.
 
 If any handler returns `true`, subsequent handlers don't receive the event.
@@ -382,22 +351,6 @@ keyboard.on((event) => {
       break
   }
 })
-```
-
-## Cleanup
-
-Handlers are automatically cleaned up when components unmount (if using `onFocused`). Global handlers persist for the application lifetime.
-
-```typescript
-import { keyboard, allocateIndex } from '@rlabs-inc/tui'
-
-// Global handlers - persist until app exits
-keyboard.onKey('q', () => process.exit(0))
-
-// Focused handlers - cleaned up with component
-const index = allocateIndex('my-component')
-keyboard.onFocused(index, handler)
-// Handler removed when component is released
 ```
 
 ## See Also

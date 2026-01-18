@@ -321,7 +321,7 @@ async function main() {
                 for (let i = 0; i < themeList.length; i++) {
                   const idx = i  // Capture loop variable
                   const fgColor = derived(() =>
-                    currentThemeIndex.value === idx ? t.accent.value : t.textDim.value
+                    currentThemeIndex.value === idx ? t.accent : t.textDim
                   )
                   text({
                     content: `[${i + 1}]${themeList[i]}`,

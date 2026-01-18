@@ -151,7 +151,7 @@ async function main() {
             text({ content: 'TERMINAL CLOCK', fg: t.primary, attrs: Attr.BOLD })
             text({
               content: statusText,
-              fg: derived(() => paused.value ? t.warning.value : t.success.value),
+              fg: derived(() => paused.value ? t.warning : t.success),
             })
           },
         })

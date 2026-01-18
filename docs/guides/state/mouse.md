@@ -212,8 +212,8 @@ box({
   border: BorderStyle.ROUNDED,
   padding: 1,
   bg: derived(() => {
-    if (isPressed.value) return t.primary.value
-    if (isHovered.value) return t.surface.value
+    if (isPressed.value) return t.primary
+    if (isHovered.value) return t.surface
     return null
   }),
   children: () => {
@@ -260,7 +260,7 @@ each(
     // Create the box with matching id
     const cleanup = box({
       id: `item-${key}`,
-      bg: derived(() => hoveredIndex.value === index ? t.surface.value : null),
+      bg: derived(() => hoveredIndex.value === index ? t.surface : null),
       children: () => {
         text({ content: getItem })
       }

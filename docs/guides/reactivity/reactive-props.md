@@ -197,7 +197,7 @@ function Card(rawProps: CardProps): Cleanup {
   // Create derived for computed borderColor
   // t.primary and t.border are theme colors (reactive)
   const borderColor = derived(() =>
-    props.highlighted.value ? t.primary.value : t.border.value
+    props.highlighted.value ? t.primary : t.border
   )
 
   return box({

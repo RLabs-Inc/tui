@@ -154,7 +154,7 @@ import {
 
 // Reactive props example - pass signals/deriveds directly
 const width = signal(40)
-const bgColor = derived(() => isActive.value ? t.primary.value : null)
+const bgColor = derived(() => isActive.value ? t.primary : null)
 
 box({
   width,      // Signal directly

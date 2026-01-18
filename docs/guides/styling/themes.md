@@ -186,13 +186,16 @@ effect(() => {
 
 ## Custom Themes
 
-Create your own theme:
+Create your own theme using `setTheme()`:
 
 ```typescript
-import { theme } from '@rlabs-inc/tui'
+import { setTheme } from '@rlabs-inc/tui'
 
-// Modify theme directly
-theme.value = {
+// Use a preset
+setTheme('dracula')
+
+// Or define a custom theme
+setTheme({
   name: 'my-theme',
 
   // Brand
@@ -223,7 +226,7 @@ theme.value = {
   // Borders
   border: { r: 69, g: 71, b: 90, a: 255 },
   borderFocus: { r: 129, g: 140, b: 248, a: 255 },
-}
+})
 ```
 
 ## Terminal Theme
@@ -265,7 +268,7 @@ each(
     const i = parseInt(key)
     return text({
       content: getName,
-      fg: derived(() => selectedIndex.value === i ? t.primary.value : t.textDim.value)
+      fg: derived(() => selectedIndex.value === i ? t.primary : t.textDim)
     })
   },
   { key: (_, i) => String(i) }

@@ -192,7 +192,7 @@ const isError = signal(false)
 
 text({
   content: 'Status',
-  fg: derived(() => isError.value ? t.error.value : t.success.value)
+  fg: derived(() => isError.value ? t.error : t.success)
 })
 ```
 

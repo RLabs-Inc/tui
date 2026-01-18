@@ -6,8 +6,6 @@
 
 ```typescript
 import { keyboard } from '@rlabs-inc/tui'
-// Or individual functions
-import { onKey, onFocused, on } from '@rlabs-inc/tui'
 ```
 
 ## API Reference
@@ -65,51 +63,6 @@ keyboard.onKey(['ArrowUp', 'k'], () => {
 })
 ```
 
-### keyboard.onFocused()
-
-Subscribe to keys only when a component is focused.
-
-```typescript
-keyboard.onFocused(
-  componentIndex: number,
-  handler: KeyHandler
-): Cleanup
-```
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `componentIndex` | `number` | Component index to check focus |
-| `handler` | `KeyHandler` | Called when key pressed and focused |
-
-**Returns**: Cleanup function
-
-```typescript
-const myIndex = allocateIndex()
-
-keyboard.onFocused(myIndex, (event) => {
-  if (event.key === 'Enter') {
-    activate()
-    return true
-  }
-})
-```
-
-### keyboard.cleanupIndex()
-
-Remove all focused handlers for a component index. Called automatically when components are released.
-
-```typescript
-keyboard.cleanupIndex(index: number): void
-```
-
-### keyboard.cleanup()
-
-Clear all state and handlers (internal, called on unmount).
-
-```typescript
-keyboard.cleanup(): void
-```
-
 ## Types
 
 ### KeyboardEvent
@@ -143,7 +96,7 @@ type KeyState = 'press' | 'repeat' | 'release'
 ### KeyHandler
 
 ```typescript
-// For keyboard.on() and keyboard.onFocused() - receives event
+// For keyboard.on() - receives event
 type KeyHandler = (event: KeyboardEvent) => boolean | void
 
 // For keyboard.onKey() - no arguments
@@ -282,26 +235,30 @@ keyboard.on((event) => {
 })
 ```
 
-### Focus-Scoped Handlers
+### Focused Keyboard (Component-Level)
+
+For keyboard handling that only fires when a specific component has focus, use the `onKey` prop on `box`:
 
 ```typescript
+import { box, text } from '@rlabs-inc/tui'
+
 function ListItem(index: number) {
-  const itemIndex = allocateIndex()
-
-  keyboard.onFocused(itemIndex, (event) => {
-    if (event.key === 'Enter') {
-      selectItem(index)
-      return true
-    }
-    if (event.key === 'Delete') {
-      deleteItem(index)
-      return true
-    }
-  })
-
   return box({
     focusable: true,
     tabIndex: index + 1,
+    onKey: (event) => {
+      // Only fires when THIS box has focus
+      if (event.key === 'Enter') {
+        selectItem(index)
+        return true
+      }
+      if (event.key === 'Delete') {
+        deleteItem(index)
+        return true
+      }
+    },
+    onFocus: () => console.log('Focused'),
+    onBlur: () => console.log('Blurred'),
     children: () => text({ content: `Item ${index}` })
   })
 }

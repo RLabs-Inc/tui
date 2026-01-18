@@ -156,12 +156,12 @@ function renderCategoryTabs() {
           paddingLeft: 1,
           paddingRight: 1,
           border: derived(() => isSelected.value ? BorderStyle.ROUNDED : BorderStyle.SINGLE),
-          borderColor: derived(() => isSelected.value ? t[category.variant].value : t.border.value),
+          borderColor: derived(() => isSelected.value ? t[category.variant].value : t.border),
           bg: derived(() => isSelected.value ? t[category.variant].value : Colors.TRANSPARENT),
           children: () => {
             text({
               content: `${category.icon} ${category.name}`,
-              fg: derived(() => isSelected.value ? t.textBright.value : t.textMuted.value),
+              fg: derived(() => isSelected.value ? t.textBright : t.textMuted),
               attrs: derived(() => isSelected.value ? Attr.BOLD : Attr.NONE),
             })
           },
@@ -366,7 +366,7 @@ async function main() {
                   content: derived(() => `${selectedCategory.value?.name ?? ''}`),
                   fg: derived(() => {
                     const cat = selectedCategory.value
-                    return cat ? t[cat.variant].value : t.text.value
+                    return cat ? t[cat.variant].value : t.text
                   }),
                   attrs: Attr.BOLD,
                 })

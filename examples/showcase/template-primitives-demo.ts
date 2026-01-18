@@ -56,8 +56,8 @@ async function main() {
                 border: 1,
                 paddingLeft: 1,
                 paddingRight: 1,
-                bg: derived(() => activePanel.value === i ? t.primary.value : undefined),
-                fg: derived(() => activePanel.value === i ? t.bg.value : t.text.value),
+                bg: derived(() => activePanel.value === i ? t.primary : undefined),
+                fg: derived(() => activePanel.value === i ? t.bg : t.text),
                 children: () => text({ content: `${i + 1}. ${name}` })
               })
             })
@@ -89,7 +89,7 @@ async function main() {
                       height: 1,
                       flexDirection: 'row',
                       gap: 1,
-                      bg: derived(() => selectedId.value === key ? t.surface.value : undefined),
+                      bg: derived(() => selectedId.value === key ? t.surface : undefined),
                       children: () => {
                         text({
                           content: derived(() => selectedId.value === key ? '>' : ' '),
@@ -97,11 +97,11 @@ async function main() {
                         })
                         text({
                           content: derived(() => getItem().done ? '[x]' : '[ ]'),
-                          fg: derived(() => getItem().done ? t.success.value : t.textMuted.value)
+                          fg: derived(() => getItem().done ? t.success : t.textMuted)
                         })
                         text({
                           content: derived(() => getItem().text),
-                          fg: derived(() => getItem().done ? t.textMuted.value : t.text.value)
+                          fg: derived(() => getItem().done ? t.textMuted : t.text)
                         })
                       }
                     })

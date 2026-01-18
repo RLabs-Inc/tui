@@ -171,7 +171,7 @@ function SliderBar(props: {
   })
 
   const labelColor = derived(() =>
-    props.isSelected.value ? t.accent.value : t.textMuted.value
+    props.isSelected.value ? t.accent : t.textMuted
   )
 
   const valueDisplay = derived(() =>
@@ -296,9 +296,9 @@ function PresetPalette() {
                   green.value === preset.color.g &&
                   blue.value === preset.color.b
                 ) {
-                  return t.accent.value
+                  return t.accent
                 }
-                return t.border.value
+                return t.border
               }),
               justifyContent: 'center',
               alignItems: 'center',

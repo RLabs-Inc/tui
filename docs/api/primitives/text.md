@@ -103,7 +103,7 @@ Props accept signals and deriveds directly:
 ```typescript
 const count = signal(0)
 const display = derived(() => `Count: ${count.value}`)
-const textColor = derived(() => count.value > 10 ? t.error.value : t.text.value)
+const textColor = derived(() => count.value > 10 ? t.error : t.text)
 
 text({
   content: display,    // Derived directly
@@ -116,7 +116,7 @@ Use `() =>` only for inline computations:
 ```typescript
 text({
   content: () => `Count: ${count.value}`,  // Inline computation
-  fg: () => count.value > 10 ? t.error.value : t.text.value
+  fg: () => count.value > 10 ? t.error : t.text
 })
 ```
 

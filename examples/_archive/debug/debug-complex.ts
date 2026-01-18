@@ -58,7 +58,7 @@ async function main() {
                 children: () => {
                   text({
                     content: () => isActive.value ? `> ${id}` : `  ${id}`,
-                    fg: () => isActive.value ? t.primary.value : t.text.value
+                    fg: () => isActive.value ? t.primary : t.text
                   })
                 }
               })

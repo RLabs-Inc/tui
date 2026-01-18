@@ -480,7 +480,7 @@ All props can be reactive. **Pass signals and deriveds directly** - only use `()
 const width = signal(40)
 const height = signal(20)
 const isExpanded = signal(false)
-const bgColor = derived(() => isExpanded.value ? t.surface.value : null)
+const bgColor = derived(() => isExpanded.value ? t.surface : null)
 
 box({
   // Pass signals directly (preferred)

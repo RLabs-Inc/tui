@@ -118,7 +118,7 @@ function SidebarItem(id: string, label: string) {
       text({
         content: () => (isActive.value ? `> ${label}` : `  ${label}`),
         // Use theme colors directly
-        fg: () => isActive.value ? t.primary.value : t.textMuted.value,
+        fg: () => isActive.value ? t.primary : t.textMuted,
       })
     }
   })
