@@ -26,7 +26,8 @@ All props accept **static values, signals, deriveds, or getter functions**.
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `content` | `Reactive<string>` | required | Text content to display |
+| `id` | `string` | auto | Component identifier |
+| `content` | `Reactive<string \| number>` | required | Text content (numbers auto-converted) |
 | `visible` | `Reactive<boolean>` | `true` | Whether text is rendered |
 | `variant` | `Variant` | - | Style variant preset |
 
@@ -57,11 +58,8 @@ All props accept **static values, signals, deriveds, or getter functions**.
 | `paddingRight` | `Reactive<number>` | `0` | Right padding |
 | `paddingBottom` | `Reactive<number>` | `0` | Bottom padding |
 | `paddingLeft` | `Reactive<number>` | `0` | Left padding |
-| `margin` | `Reactive<number>` | `0` | All sides margin |
-| `marginTop` | `Reactive<number>` | `0` | Top margin |
-| `marginRight` | `Reactive<number>` | `0` | Right margin |
-| `marginBottom` | `Reactive<number>` | `0` | Bottom margin |
-| `marginLeft` | `Reactive<number>` | `0` | Left margin |
+
+> **Note**: Text supports padding. Margin props exist in the type for API consistency but are not processed by the layout engine for text components. Use a wrapper box if you need margin around text.
 
 ## Returns
 

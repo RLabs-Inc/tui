@@ -16,12 +16,11 @@ A blazing-fast, fine-grained reactive terminal UI framework with complete flexbo
 ## Quick Start
 
 ```bash
-bun add tui @rlabs-inc/signals
+bun add @rlabs-inc/tui
 ```
 
 ```typescript
-import { mount, box, text, derived } from 'tui'
-import { signal } from '@rlabs-inc/signals'
+import { mount, box, text, signal, derived } from '@rlabs-inc/tui'
 
 // Create reactive state
 const count = signal(0)
@@ -125,7 +124,7 @@ bun run examples/tests/03-layout-flex.ts
 |-----------|--------|-------------|
 | `box` | Complete | Container with flexbox layout |
 | `text` | Complete | Text display with styling |
-| `input` | Planned | Text input field |
+| `input` | Complete | Text input field |
 | `select` | Planned | Dropdown selection |
 | `progress` | Planned | Progress bar |
 

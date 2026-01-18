@@ -182,7 +182,7 @@ box({
   focusable: true,
   children: () => {
     // Get the component index after creation
-    const index = getComponentIndex('my-input')
+    const index = getIndex('my-input')
 
     // This handler only fires when this component is focused
     keyboard.onFocused(index, (event) => {

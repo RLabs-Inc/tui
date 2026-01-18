@@ -211,7 +211,7 @@ box({
 })
 
 // After mount, register handlers
-const index = getComponentIndex('button')
+const index = getIndex('button')
 
 mouse.onComponent(index, {
   onClick: () => {

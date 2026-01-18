@@ -105,7 +105,7 @@ box({
   tabIndex: 1,
   border: BorderStyle.ROUNDED,
   borderColor: derived(() =>
-    focusedIndex.value === getComponentIndex('my-component')
+    focusedIndex.value === getIndex('my-component')
       ? t.primary.value
       : t.border.value
   ),

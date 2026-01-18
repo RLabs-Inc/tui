@@ -141,7 +141,7 @@ box({
   focusable: true,
   border: BorderStyle.ROUNDED,
   borderColor: derived(() => {
-    const inputIndex = getComponentIndex('input')
+    const inputIndex = getIndex('input')
     return focusedIndex.value === inputIndex
       ? t.borderFocus.value
       : t.border.value
