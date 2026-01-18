@@ -13,14 +13,27 @@ Building interactive lists with selection is a common pattern. This guide covers
 
 ## Basic Selectable List
 
+Use a focusable box with `onKey` for self-contained keyboard navigation:
+
 ```typescript
-import { signal, derived } from '@rlabs-inc/signals'
-import { box, text, each, keyboard, t } from '@rlabs-inc/tui'
+import { signal, derived, box, text, each, t } from '@rlabs-inc/tui'
 
 const items = signal(['Apple', 'Banana', 'Cherry', 'Date'])
 const selectedIndex = signal(0)
 
 box({
+  focusable: true,
+  tabIndex: 1,
+  onKey: (event) => {
+    if (event.key === 'ArrowUp' || event.key === 'k') {
+      if (selectedIndex.value > 0) selectedIndex.value--
+      return true
+    }
+    if (event.key === 'ArrowDown' || event.key === 'j') {
+      if (selectedIndex.value < items.value.length - 1) selectedIndex.value++
+      return true
+    }
+  },
   children: () => {
     each(
       () => items.value,
@@ -44,15 +57,6 @@ box({
     )
   }
 })
-
-// Navigation
-keyboard.onKey(['ArrowUp', 'k'], () => {
-  if (selectedIndex.value > 0) selectedIndex.value--
-})
-
-keyboard.onKey(['ArrowDown', 'j'], () => {
-  if (selectedIndex.value < items.value.length - 1) selectedIndex.value++
-})
 ```
 
 ## Using Stable Keys
@@ -60,6 +64,8 @@ keyboard.onKey(['ArrowDown', 'j'], () => {
 For object lists, use a stable identifier as key:
 
 ```typescript
+import { signal, derived, box, text, each, t } from '@rlabs-inc/tui'
+
 interface Task {
   id: string
   text: string
@@ -73,31 +79,39 @@ const tasks = signal<Task[]>([
 
 const selectedId = signal<string | null>('1')
 
-each(
-  () => tasks.value,
-  (getTask, key) => {
-    // key is the task.id - stable across reorders!
-    const isSelected = derived(() => selectedId.value === key)
-
-    return box({
-      bg: derived(() => isSelected.value ? t.surface.value : null),
-      children: () => {
-        text({
-          content: derived(() => getTask().done ? '[x]' : '[ ]')
-        })
-        text({ content: derived(() => getTask().text) })
+box({
+  focusable: true,
+  tabIndex: 1,
+  onKey: (event) => {
+    // Enter toggles done state for selected item
+    if (event.key === 'Enter') {
+      const id = selectedId.value
+      if (id) {
+        tasks.value = tasks.value.map(t =>
+          t.id === id ? { ...t, done: !t.done } : t
+        )
       }
-    })
+      return true
+    }
   },
-  { key: task => task.id }  // Use stable ID
-)
+  children: () => {
+    each(
+      () => tasks.value,
+      (getTask, key) => {
+        // key is the task.id - stable across reorders!
+        const isSelected = derived(() => selectedId.value === key)
 
-// Selection uses ID, not index
-keyboard.onKey('Enter', () => {
-  const id = selectedId.value
-  if (id) {
-    tasks.value = tasks.value.map(t =>
-      t.id === id ? { ...t, done: !t.done } : t
+        return box({
+          bg: derived(() => isSelected.value ? t.surface.value : null),
+          children: () => {
+            text({
+              content: derived(() => getTask().done ? '[x]' : '[ ]')
+            })
+            text({ content: derived(() => getTask().text) })
+          }
+        })
+      },
+      { key: task => task.id }  // Use stable ID
     )
   }
 })
@@ -106,7 +120,18 @@ keyboard.onKey('Enter', () => {
 ## Multi-Selection
 
 ```typescript
+import { signal, derived, box, text, each, t } from '@rlabs-inc/tui'
+
+interface Item { id: string, name: string }
+
+const items = signal<Item[]>([
+  { id: '1', name: 'Apple' },
+  { id: '2', name: 'Banana' },
+  { id: '3', name: 'Cherry' },
+])
+
 const selectedIds = signal(new Set<string>())
+const focusedIndex = signal(0)
 
 function toggleSelection(id: string) {
   const newSet = new Set(selectedIds.value)
@@ -118,34 +143,49 @@ function toggleSelection(id: string) {
   selectedIds.value = newSet
 }
 
-each(
-  () => items.value,
-  (getItem, key) => {
-    const isSelected = derived(() => selectedIds.value.has(key))
-
-    return box({
-      bg: derived(() => isSelected.value ? t.surface.value : null),
-      children: () => {
-        text({
-          content: derived(() => isSelected.value ? '[x]' : '[ ]')
-        })
-        text({ content: getItem })
-      }
-    })
+box({
+  focusable: true,
+  tabIndex: 1,
+  onKey: (event) => {
+    // Space toggles selection on focused item
+    if (event.key === ' ') {
+      const item = items.value[focusedIndex.value]
+      if (item) toggleSelection(item.id)
+      return true
+    }
+    // Ctrl+A selects all
+    if (event.key === 'a' && event.ctrlKey) {
+      selectedIds.value = new Set(items.value.map(i => i.id))
+      return true
+    }
+    // Arrow navigation
+    if (event.key === 'ArrowDown' && focusedIndex.value < items.value.length - 1) {
+      focusedIndex.value++
+      return true
+    }
+    if (event.key === 'ArrowUp' && focusedIndex.value > 0) {
+      focusedIndex.value--
+      return true
+    }
   },
-  { key: item => item.id }
-)
+  children: () => {
+    each(
+      () => items.value,
+      (getItem, key) => {
+        const isSelected = derived(() => selectedIds.value.has(key))
 
-// Space toggles selection
-keyboard.onKey('Space', () => {
-  toggleSelection(focusedId.value)
-})
-
-// Ctrl+A selects all
-keyboard.on((event) => {
-  if (event.key === 'a' && event.modifiers.ctrl) {
-    selectedIds.value = new Set(items.value.map(i => i.id))
-    return true
+        return box({
+          bg: derived(() => isSelected.value ? t.surface.value : null),
+          children: () => {
+            text({
+              content: derived(() => isSelected.value ? '[x]' : '[ ]')
+            })
+            text({ content: () => getItem().name })
+          }
+        })
+      },
+      { key: item => item.id }
+    )
   }
 })
 ```
@@ -153,6 +193,8 @@ keyboard.on((event) => {
 ## Scrollable List
 
 ```typescript
+import { signal, derived, effect, box, text, each, t } from '@rlabs-inc/tui'
+
 const items = signal([...Array(100)].map((_, i) => `Item ${i + 1}`))
 const selectedIndex = signal(0)
 
@@ -187,6 +229,8 @@ effect(() => {
 ## Filtered List
 
 ```typescript
+import { signal, derived, effect, box, text, each, show, t } from '@rlabs-inc/tui'
+
 const allItems = signal(['Apple', 'Banana', 'Cherry', 'Date', 'Elderberry'])
 const filter = signal('')
 const selectedIndex = signal(0)
@@ -241,6 +285,8 @@ box({
 ## Grouped List
 
 ```typescript
+import { signal, derived, box, text, each, Attr, t } from '@rlabs-inc/tui'
+
 interface GroupedItem {
   category: string
   items: string[]
@@ -286,7 +332,9 @@ box({
 ## List with Actions
 
 ```typescript
-const items = signal([...])
+import { signal, derived, box, text, each, t } from '@rlabs-inc/tui'
+
+const items = signal([{ id: '1', name: 'Item 1' }, { id: '2', name: 'Item 2' }])
 
 each(
   () => items.value,
@@ -324,6 +372,8 @@ each(
 For very large lists, render only visible items:
 
 ```typescript
+import { signal, derived, box, text, each } from '@rlabs-inc/tui'
+
 const allItems = signal([...Array(10000)].map((_, i) => `Item ${i}`))
 const scrollOffset = signal(0)
 const viewportHeight = 20
@@ -338,7 +388,22 @@ const visibleItems = derived(() => {
 })
 
 box({
+  focusable: true,
+  tabIndex: 1,
   height: viewportHeight,
+  onKey: (event) => {
+    if (event.key === 'ArrowDown') {
+      scrollOffset.value = Math.min(
+        scrollOffset.value + 1,
+        allItems.value.length - viewportHeight
+      )
+      return true
+    }
+    if (event.key === 'ArrowUp') {
+      scrollOffset.value = Math.max(scrollOffset.value - 1, 0)
+      return true
+    }
+  },
   children: () => {
     each(
       () => visibleItems.value,
@@ -348,14 +413,6 @@ box({
       { key: v => String(v.index) }
     )
   }
-})
-
-// Scroll handlers update scrollOffset
-keyboard.onKey('ArrowDown', () => {
-  scrollOffset.value = Math.min(
-    scrollOffset.value + 1,
-    allItems.value.length - viewportHeight
-  )
 })
 ```
 

@@ -25,7 +25,7 @@ text({ content: 'Hello, World!' })
 The `content` prop can be static, a signal, a derived, or a getter. **Pass signals and deriveds directly** - only use `() =>` for inline computations:
 
 ```typescript
-import { signal, derived } from '@rlabs-inc/signals'
+import { signal, derived, text } from '@rlabs-inc/tui'
 
 const count = signal(0)
 const title = signal('Hello')
@@ -347,7 +347,7 @@ box({
 
 4. **Batch updates when changing multiple signals**:
    ```typescript
-   import { batch } from '@rlabs-inc/signals'
+   import { batch } from '@rlabs-inc/tui'
 
    batch(() => {
      name.value = 'New name'

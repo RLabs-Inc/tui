@@ -14,8 +14,7 @@ Modals and overlays are common UI patterns. This guide covers:
 ## Basic Modal
 
 ```typescript
-import { signal, derived } from '@rlabs-inc/signals'
-import { box, text, show, keyboard, t, BorderStyle, focusManager } from '@rlabs-inc/tui'
+import { signal, derived, box, text, show, keyboard, Attr, t, BorderStyle, focusManager } from '@rlabs-inc/tui'
 
 const isModalOpen = signal(false)
 
@@ -74,6 +73,9 @@ keyboard.onKey('Escape', () => {
 Prevent focus from leaving the modal:
 
 ```typescript
+import { signal, box, text, show, allocateIndex, focusManager } from '@rlabs-inc/tui'
+
+const isModalOpen = signal(false)
 const modalContainerIndex = allocateIndex('modal-container')
 
 function openModal() {
@@ -124,6 +126,8 @@ show(
 ## Confirmation Dialog
 
 ```typescript
+import { signal, derived, box, text, keyboard, BorderStyle, Attr, t, type Cleanup } from '@rlabs-inc/tui'
+
 interface ConfirmDialogProps {
   title: string
   message: string
@@ -134,6 +138,8 @@ interface ConfirmDialogProps {
 function ConfirmDialog(props: ConfirmDialogProps): Cleanup {
   const selectedButton = signal<'confirm' | 'cancel'>('cancel')
 
+  // Global keyboard handler is appropriate for modal dialogs
+  // since they capture ALL input regardless of focus
   keyboard.on((event) => {
     if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
       selectedButton.value = selectedButton.value === 'confirm' ? 'cancel' : 'confirm'
@@ -231,6 +237,8 @@ show(
 ## Toast / Notification
 
 ```typescript
+import { signal, box, text, each, BorderStyle, t } from '@rlabs-inc/tui'
+
 interface Toast {
   id: string
   message: string
@@ -285,11 +293,33 @@ box({
 ## Dropdown Menu
 
 ```typescript
+import { signal, derived, box, text, show, each, keyboard, BorderStyle, t } from '@rlabs-inc/tui'
+
 const isDropdownOpen = signal(false)
 const selectedOption = signal(0)
-const options = ['Option 1', 'Option 2', 'Option 3']
+const options = signal(['Option 1', 'Option 2', 'Option 3'])
 
 box({
+  focusable: true,
+  tabIndex: 1,
+  onKey: (event) => {
+    if (event.key === 'Enter') {
+      isDropdownOpen.value = !isDropdownOpen.value
+      return true
+    }
+    if (event.key === 'Escape' && isDropdownOpen.value) {
+      isDropdownOpen.value = false
+      return true
+    }
+    if (event.key === 'ArrowDown' && isDropdownOpen.value) {
+      selectedOption.value = Math.min(selectedOption.value + 1, options.value.length - 1)
+      return true
+    }
+    if (event.key === 'ArrowUp' && isDropdownOpen.value) {
+      selectedOption.value = Math.max(selectedOption.value - 1, 0)
+      return true
+    }
+  },
   children: () => {
     // Trigger button
     box({
@@ -297,7 +327,7 @@ box({
       paddingLeft: 1,
       paddingRight: 1,
       children: () => {
-        text({ content: () => `Selected: ${options[selectedOption.value]} ▼` })
+        text({ content: () => `Selected: ${options.value[selectedOption.value]} ▼` })
       }
     })
 
@@ -309,36 +339,25 @@ box({
         border: BorderStyle.SINGLE,
         bg: t.surface,
         children: () => {
-          options.forEach((option, i) => {
-            box({
-              paddingLeft: 1,
-              paddingRight: 1,
-              bg: derived(() => selectedOption.value === i ? t.primary.value : null),
-              children: () => text({
-                content: option,
-                fg: derived(() => selectedOption.value === i ? t.background.value : t.text.value)
+          each(
+            () => options.value,
+            (getOption, key) => {
+              const index = parseInt(key)
+              return box({
+                paddingLeft: 1,
+                paddingRight: 1,
+                bg: derived(() => selectedOption.value === index ? t.primary.value : null),
+                children: () => text({
+                  content: getOption,
+                  fg: derived(() => selectedOption.value === index ? t.background.value : t.text.value)
+                })
               })
-            })
-          })
+            },
+            { key: (_, i) => String(i) }
+          )
         }
       })
     )
-  }
-})
-
-keyboard.onKey('Enter', () => {
-  if (!isDropdownOpen.value) {
-    isDropdownOpen.value = true
-  } else {
-    isDropdownOpen.value = false
-  }
-  return true
-})
-
-keyboard.onKey('Escape', () => {
-  if (isDropdownOpen.value) {
-    isDropdownOpen.value = false
-    return true
   }
 })
 ```
@@ -346,12 +365,22 @@ keyboard.onKey('Escape', () => {
 ## Sidebar Overlay
 
 ```typescript
+import { signal, box, text, show, BorderStyle, t } from '@rlabs-inc/tui'
+
 const isSidebarOpen = signal(false)
 
 box({
+  focusable: true,
+  tabIndex: 1,
   flexDirection: 'row',
   width: '100%',
   height: '100%',
+  onKey: (event) => {
+    if (event.key === 's') {
+      isSidebarOpen.value = !isSidebarOpen.value
+      return true
+    }
+  },
   children: () => {
     // Sidebar
     show(
@@ -379,10 +408,6 @@ box({
       }
     })
   }
-})
-
-keyboard.onKey('s', () => {
-  isSidebarOpen.value = !isSidebarOpen.value
 })
 ```
 

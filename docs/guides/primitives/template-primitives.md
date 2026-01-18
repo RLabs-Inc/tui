@@ -19,8 +19,7 @@ Render a component for each item in an array. When items change, only the affect
 ### Basic Usage
 
 ```typescript
-import { signal } from '@rlabs-inc/signals'
-import { each, text } from '@rlabs-inc/tui'
+import { signal, each, text } from '@rlabs-inc/tui'
 
 const items = signal(['Apple', 'Banana', 'Cherry'])
 
@@ -172,8 +171,7 @@ Render different content based on a condition.
 ### Basic Usage
 
 ```typescript
-import { signal } from '@rlabs-inc/signals'
-import { show, text } from '@rlabs-inc/tui'
+import { signal, show, text } from '@rlabs-inc/tui'
 
 const isLoggedIn = signal(false)
 
@@ -402,35 +400,55 @@ when(
 
 ```typescript
 // Bad - index changes on reorder
-each(items, (item, i) => ..., { key: (_, i) => String(i) })
+each(
+  () => items.value,
+  (getItem, key) => text({ content: getItem }),
+  { key: (_, i) => String(i) }  // Index-based keys cause recreation on reorder
+)
 
 // Good - stable ID
-each(items, (item, key) => ..., { key: item => item.id })
+each(
+  () => items.value,
+  (getItem, key) => text({ content: getItem }),
+  { key: item => item.id }  // Stable keys enable efficient updates
+)
 ```
 
 ### 2. Keep Render Functions Pure
 
 ```typescript
 // Bad - side effect in render
-each(items, (getItem, key) => {
-  console.log('Rendering', key)  // Don't do this
-  return text({ content: getItem })
-}, ...)
+each(
+  () => items.value,
+  (getItem, key) => {
+    console.log('Rendering', key)  // Don't do this
+    return text({ content: getItem })
+  },
+  { key: item => item.id }
+)
 
 // Good - pure render
-each(items, (getItem, key) => {
-  return text({ content: getItem })
-}, ...)
+each(
+  () => items.value,
+  (getItem, key) => {
+    return text({ content: getItem })
+  },
+  { key: item => item.id }
+)
 ```
 
 ### 3. Use Derived for Computed Values
 
 ```typescript
 // Good - derived caches computation
-each(items, (getItem, key) => {
-  const displayName = derived(() => formatName(getItem()))
-  return text({ content: displayName })
-}, ...)
+each(
+  () => items.value,
+  (getItem, key) => {
+    const displayName = derived(() => formatName(getItem()))
+    return text({ content: displayName })
+  },
+  { key: item => item.id }
+)
 ```
 
 ### 4. Handle Empty States
@@ -438,7 +456,11 @@ each(items, (getItem, key) => {
 ```typescript
 box({
   children: () => {
-    each(items, renderItem, { key: ... })
+    each(
+      () => items.value,
+      (getItem, key) => text({ content: getItem }),
+      { key: item => item.id }
+    )
 
     show(
       () => items.value.length === 0,

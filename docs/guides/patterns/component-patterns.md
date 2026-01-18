@@ -55,6 +55,8 @@ Greeting({ name: () => user.value.name })
 ## Component with Children
 
 ```typescript
+import { box, text, reactiveProps, BorderStyle, Attr, t, type Cleanup, type PropInput } from '@rlabs-inc/tui'
+
 interface CardProps {
   title: PropInput<string>
   children: () => void
@@ -91,7 +93,11 @@ Card({
 
 ## Component with Events
 
+Use `onFocus`, `onBlur`, and `onKey` props for self-contained event handling:
+
 ```typescript
+import { signal, derived, box, text, reactiveProps, BorderStyle, t, type Cleanup, type PropInput } from '@rlabs-inc/tui'
+
 interface ButtonProps {
   label: PropInput<string>
   onPress?: () => void
@@ -99,24 +105,24 @@ interface ButtonProps {
 
 function Button(rawProps: ButtonProps): Cleanup {
   const props = reactiveProps({ label: rawProps.label })
-  const isPressed = signal(false)
-
-  const buttonIndex = allocateIndex()
-
-  mouse.onComponent(buttonIndex, {
-    onClick: () => rawProps.onPress?.(),
-    onMouseDown: () => { isPressed.value = true },
-    onMouseUp: () => { isPressed.value = false },
-    onMouseLeave: () => { isPressed.value = false }
-  })
+  const isFocused = signal(false)
 
   return box({
-    id: buttonIndex.toString(),
+    focusable: true,
+    tabIndex: 1,
     border: BorderStyle.ROUNDED,
-    padding: 0,
     paddingLeft: 2,
     paddingRight: 2,
-    bg: derived(() => isPressed.value ? t.primary.value : t.surface.value),
+    bg: derived(() => isFocused.value ? t.surface.value : null),
+    borderColor: derived(() => isFocused.value ? t.primary.value : t.border.value),
+    onFocus: () => { isFocused.value = true },
+    onBlur: () => { isFocused.value = false },
+    onKey: (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        rawProps.onPress?.()
+        return true  // Mark as handled
+      }
+    },
     children: () => {
       text({ content: props.label })
     }
@@ -133,6 +139,8 @@ Button({
 ## Component with Internal State
 
 ```typescript
+import { signal, box, text, reactiveProps, BorderStyle, t, type Cleanup, type PropInput } from '@rlabs-inc/tui'
+
 interface CounterProps {
   initial?: PropInput<number>
 }
@@ -176,6 +184,8 @@ The `onKey` prop automatically handles focus-aware keyboard events - the handler
 Build complex components from simpler ones:
 
 ```typescript
+import { box, text, t, type Cleanup, type PropInput } from '@rlabs-inc/tui'
+
 // Simple building blocks
 function Label({ text: labelText }: { text: PropInput<string> }): Cleanup {
   return text({
@@ -214,6 +224,8 @@ LabeledValue({ label: 'Name:', value: user.name })
 Create component factories for variations:
 
 ```typescript
+import { box, text, reactiveProps, BorderStyle, t, type Cleanup, type PropInput } from '@rlabs-inc/tui'
+
 function createButton(variant: 'primary' | 'secondary' | 'danger') {
   const variantStyles = {
     primary: { bg: t.primary, fg: t.background },
@@ -251,6 +263,8 @@ DangerButton({ label: 'Delete', onPress: handleDelete })
 Wrap components with additional behavior:
 
 ```typescript
+import { box, BorderStyle, t, type Cleanup } from '@rlabs-inc/tui'
+
 function withBorder<P extends object>(
   Component: (props: P) => Cleanup,
   borderStyle: number = BorderStyle.SINGLE
@@ -273,24 +287,47 @@ BorderedGreeting({ name: 'Alice' })
 
 ## Cleanup Best Practices
 
-Always return cleanup functions:
+The `onKey`, `onFocus`, and `onBlur` props on box handle cleanup automatically - no manual unsubscribe needed:
 
 ```typescript
+import { signal, box, text, type Cleanup } from '@rlabs-inc/tui'
+
 function MyComponent(): Cleanup {
-  const index = allocateIndex()
+  const count = signal(0)
 
-  // Register handlers
-  const unsubscribe = keyboard.onFocused(index, handler)
-
-  // Return cleanup
-  const boxCleanup = box({
-    children: () => { /* ... */ }
+  // onKey cleanup is automatic when box is cleaned up!
+  return box({
+    focusable: true,
+    tabIndex: 1,
+    onKey: (event) => {
+      if (event.key === 'Enter') {
+        count.value++
+        return true
+      }
+    },
+    children: () => {
+      text({ content: () => `Count: ${count.value}` })
+    }
   })
+}
+```
 
-  return () => {
-    unsubscribe()
-    boxCleanup()
-  }
+For external resources (timers, subscriptions), use `onDestroy`:
+
+```typescript
+import { signal, box, text, onDestroy, type Cleanup } from '@rlabs-inc/tui'
+
+function Timer(): Cleanup {
+  const seconds = signal(0)
+  const interval = setInterval(() => { seconds.value++ }, 1000)
+
+  onDestroy(() => clearInterval(interval))  // Cleanup on component destroy
+
+  return box({
+    children: () => {
+      text({ content: () => `Elapsed: ${seconds.value}s` })
+    }
+  })
 }
 ```
 

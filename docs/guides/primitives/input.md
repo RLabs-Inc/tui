@@ -34,7 +34,7 @@ The `value` prop requires a `WritableSignal` or `Binding` for two-way synchroniz
 ### Using a Signal
 
 ```typescript
-import { signal } from '@rlabs-inc/signals'
+import { signal, input } from '@rlabs-inc/tui'
 
 const username = signal('')
 
@@ -50,7 +50,7 @@ username.value = 'default-user'
 ### Using a Binding
 
 ```typescript
-import { signal, bind } from '@rlabs-inc/signals'
+import { signal, bind, input } from '@rlabs-inc/tui'
 
 const formData = signal({ name: '', email: '' })
 
