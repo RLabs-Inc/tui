@@ -251,8 +251,27 @@ interface MountOptions {
   mode?: 'fullscreen' | 'inline' | 'append'
   mouse?: boolean           // Enable mouse tracking (default: true)
   kittyKeyboard?: boolean   // Use Kitty protocol (default: true)
+  getStaticHeight?: () => number  // Append mode: lines to freeze in history
 }
 ```
+
+### getStaticHeight (Append Mode)
+
+For append mode, `getStaticHeight` controls the boundary between frozen history and the reactive active region:
+
+```typescript
+mount(App, {
+  mode: 'append',
+  mouse: false,
+  getStaticHeight: () => {
+    // Return number of lines to freeze in terminal history
+    // Active content = total height - static height
+    return completedMessageLines
+  }
+})
+```
+
+See the [Append Mode Guide](./append-mode.md) for detailed usage.
 
 ### Mouse Option
 

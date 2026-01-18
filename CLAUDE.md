@@ -11,8 +11,8 @@ bun test test/titan-engine.test.ts          # Single test file
 bun test --watch                            # Watch mode
 
 # Run examples
-bun run dev                                 # Hello counter showcase
-bun run examples/showcase/showcase.ts       # Full showcase
+bun run dev                                 # Hello counter (default)
+bun run examples/showcase/01-hello-counter.ts  # Or run directly
 
 # Type checking
 bun run typecheck                           # Root package

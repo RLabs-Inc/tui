@@ -202,15 +202,15 @@ function renderBox(buffer: FrameBuffer, index: number, layout: LayoutResult) {
   const h = layout.h[index]
 
   // 1. Fill background
-  const bg = visual.bg[index]
+  const bg = visual.bgColor[index]
   if (bg) {
     fillRect(buffer, x, y, w, h, bg)
   }
 
   // 2. Draw border
-  const borderStyle = visual.border[index]
-  if (borderStyle) {
-    drawBorder(buffer, x, y, w, h, borderStyle, visual.borderColor[index])
+  const border = visual.borderStyle[index]
+  if (border) {
+    drawBorder(buffer, x, y, w, h, border, visual.borderColor[index])
   }
 }
 ```
@@ -223,7 +223,7 @@ function renderText(buffer: FrameBuffer, index: number, layout: LayoutResult) {
   const y = layout.y[index]
   const w = layout.w[index]
   const content = text.textContent[index]
-  const fg = visual.fg[index]
+  const fg = visual.fgColor[index]
   const attrs = text.textAttrs[index]
 
   // Handle wrapping/truncation

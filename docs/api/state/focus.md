@@ -143,7 +143,7 @@ Check if a component is focused.
 import { isFocused } from '@rlabs-inc/tui'
 
 const myIndex = allocateIndex()
-const focused = isFocused(myIndex)  // Returns DerivedSignal<boolean>
+const focused = isFocused(myIndex)  // Returns boolean
 ```
 
 ### hasFocus()
@@ -197,14 +197,13 @@ const indices = getFocusableIndices()
 ```typescript
 function FocusableItem(index: number) {
   const itemIndex = allocateIndex()
-  const focused = isFocused(itemIndex)
 
   return box({
     focusable: true,
     tabIndex: index + 1,
     border: BorderStyle.SINGLE,
     borderColor: derived(() =>
-      focused.value ? t.primary.value : t.border.value
+      isFocused(itemIndex) ? t.primary.value : t.border.value
     ),
     children: () => text({ content: `Item ${index}` })
   })
@@ -260,17 +259,16 @@ function Modal() {
 ```typescript
 function FocusRing() {
   const myIndex = allocateIndex()
-  const focused = isFocused(myIndex)
 
   return box({
     focusable: true,
     tabIndex: 1,
     border: BorderStyle.ROUNDED,
     borderColor: derived(() =>
-      focused.value ? t.primary.value : null
+      isFocused(myIndex) ? t.primary.value : null
     ),
     bg: derived(() =>
-      focused.value ? t.surface.value : null
+      isFocused(myIndex) ? t.surface.value : null
     ),
     children: () => text({ content: 'Focus me!' })
   })

@@ -68,11 +68,11 @@ bun test --watch
 ### 3. Run Examples
 
 ```bash
-# Basic example
-bun run examples/hello.ts
+# Hello counter example
+bun run dev
 
-# Full showcase
-bun run examples/showcase/showcase.ts
+# Or run showcase files directly
+bun run examples/showcase/01-hello-counter.ts
 ```
 
 ### 4. Type Check
@@ -112,15 +112,15 @@ bun run test/stress-benchmark.ts
 
 ### 1. Parallel Arrays
 
-Components write to arrays via `bind()`, not effect-based reconciliation.
+Components write to arrays via `setSource()`, not effect-based reconciliation.
 
 ```typescript
-// Good: Direct bind
-dimensions.width[index] = bind(props.width ?? 0)
+// Good: Direct setSource
+dimensions.width.setSource(index, props.width ?? 0)
 
 // Bad: Effect-based update
 effect(() => {
-  dimensions.width[index] = props.width?.value ?? 0
+  dimensions.width.setValue(index, props.width?.value ?? 0)
 })
 ```
 
@@ -157,12 +157,12 @@ effect(() => {
 Components bind props directly without extracting values first.
 
 ```typescript
-// Good: Bind prop directly
-dimensions.width[index] = bind(props.width ?? 0)
+// Good: setSource prop directly
+dimensions.width.setSource(index, props.width ?? 0)
 
-// Bad: Extract then bind (loses reactivity)
+// Bad: Extract then setSource (loses reactivity)
 const w = props.width?.value ?? 0
-dimensions.width[index] = bind(w)  // Static!
+dimensions.width.setSource(index, w)  // Static!
 ```
 
 ## Testing

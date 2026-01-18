@@ -139,16 +139,17 @@ box({
 | Use case | Consistent spacing | Individual positioning |
 
 ```typescript
-// Gap - uniform spacing
+// Gap - uniform spacing (column layout = vertical gap)
 box({
   gap: 2,
   children: () => {
-    text({ content: 'A' })  // No margin
-    text({ content: 'B' })  // No margin
+    text({ content: 'A' })
+    text({ content: 'B' })
   }
 })
+// Output:
 // A
-//
+//        <- 2 rows gap
 // B
 
 // Margin - individual spacing
@@ -158,11 +159,12 @@ box({
     text({ content: 'B', marginBottom: 1 })
   }
 })
+// Output:
 // A
-//
+//        <- 3 rows margin
 //
 // B
-//
+//        <- 1 row margin
 ```
 
 ## Combining Spacing

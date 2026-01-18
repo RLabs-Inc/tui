@@ -49,12 +49,14 @@ mouse.onMouseUp(handler: MouseHandler): Cleanup
 Subscribe to scroll wheel events.
 
 ```typescript
-mouse.onScroll(handler: (info: ScrollInfo) => void): Cleanup
+mouse.onScroll(handler: MouseHandler): Cleanup
 ```
 
 ```typescript
-onScroll((info) => {
-  console.log(`Scroll ${info.direction} at ${info.x}, ${info.y}`)
+onScroll((event) => {
+  if (event.scroll) {
+    console.log(`Scroll ${event.scroll.direction} at ${event.x}, ${event.y}`)
+  }
 })
 ```
 
@@ -95,14 +97,6 @@ Disable mouse tracking.
 
 ```typescript
 mouse.disableTracking(): void
-```
-
-### mouse.dispatch()
-
-Manually dispatch a mouse event (for testing).
-
-```typescript
-mouse.dispatch(event: MouseEvent): void
 ```
 
 ## HitGrid
@@ -147,21 +141,21 @@ hitGrid.fillRect(
 ```typescript
 interface MouseEvent {
   action: MouseAction
-  button: MouseButton
+  button: MouseButton | number
   x: number
   y: number
-  modifiers: {
-    shift: boolean
-    ctrl: boolean
-    alt: boolean
-  }
+  shiftKey: boolean
+  altKey: boolean
+  ctrlKey: boolean
+  scroll?: ScrollInfo
+  componentIndex: number
 }
 ```
 
 ### MouseAction
 
 ```typescript
-type MouseAction = 'press' | 'release' | 'move' | 'scroll'
+type MouseAction = 'down' | 'up' | 'move' | 'drag' | 'scroll'
 ```
 
 ### MouseButton
@@ -171,10 +165,7 @@ enum MouseButton {
   LEFT = 0,
   MIDDLE = 1,
   RIGHT = 2,
-  SCROLL_UP = 64,
-  SCROLL_DOWN = 65,
-  SCROLL_LEFT = 66,
-  SCROLL_RIGHT = 67
+  NONE = 3,
 }
 ```
 
@@ -183,8 +174,7 @@ enum MouseButton {
 ```typescript
 interface ScrollInfo {
   direction: 'up' | 'down' | 'left' | 'right'
-  x: number
-  y: number
+  delta: number
 }
 ```
 
@@ -192,12 +182,12 @@ interface ScrollInfo {
 
 ```typescript
 interface MouseHandlers {
-  onClick?: () => void
-  onMouseDown?: () => void
-  onMouseUp?: () => void
-  onMouseEnter?: () => void
-  onMouseLeave?: () => void
-  onMouseMove?: () => void
+  onMouseDown?: (event: MouseEvent) => void | boolean
+  onMouseUp?: (event: MouseEvent) => void | boolean
+  onClick?: (event: MouseEvent) => void | boolean
+  onMouseEnter?: (event: MouseEvent) => void
+  onMouseLeave?: (event: MouseEvent) => void
+  onScroll?: (event: MouseEvent) => void | boolean
 }
 ```
 
@@ -332,14 +322,12 @@ effect(() => {
 ### Scroll Handling
 
 ```typescript
-onScroll((info) => {
-  const componentIndex = hitGrid.get(info.x, info.y)
-
-  if (componentIndex >= 0 && scroll.isScrollable(componentIndex)) {
-    if (info.direction === 'up') {
-      scroll.scrollBy(componentIndex, 0, -3)
-    } else if (info.direction === 'down') {
-      scroll.scrollBy(componentIndex, 0, 3)
+onScroll((event) => {
+  if (event.componentIndex >= 0 && scroll.isScrollable(event.componentIndex) && event.scroll) {
+    if (event.scroll.direction === 'up') {
+      scroll.scrollBy(event.componentIndex, 0, -3)
+    } else if (event.scroll.direction === 'down') {
+      scroll.scrollBy(event.componentIndex, 0, 3)
     }
   }
 })

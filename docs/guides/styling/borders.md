@@ -6,7 +6,7 @@
 
 TUI provides multiple border styles for terminal UI:
 
-- **8 built-in styles** - From simple to decorative
+- **11 built-in styles** - From simple to decorative
 - **Per-side control** - Different borders on each side
 - **Color customization** - Match your theme
 
@@ -27,14 +27,17 @@ box({
 ```typescript
 import { BorderStyle } from '@rlabs-inc/tui'
 
-BorderStyle.NONE           // No border
-BorderStyle.SINGLE         // ─│┌┐└┘
-BorderStyle.DOUBLE         // ═║╔╗╚╝
-BorderStyle.ROUNDED        // ─│╭╮╰╯
-BorderStyle.BOLD           // ━┃┏┓┗┛
-BorderStyle.DOUBLE_SINGLE  // ═│╒╕╘╛
-BorderStyle.SINGLE_DOUBLE  // ─║╓╖╙╜
-BorderStyle.CLASSIC        // -|++++ (ASCII)
+BorderStyle.NONE        // No border
+BorderStyle.SINGLE      // ─│┌┐└┘
+BorderStyle.DOUBLE      // ═║╔╗╚╝
+BorderStyle.ROUNDED     // ─│╭╮╰╯
+BorderStyle.BOLD        // ━┃┏┓┗┛
+BorderStyle.DASHED      // ┄┆┌┐└┘
+BorderStyle.DOTTED      // ······
+BorderStyle.ASCII       // -|++++ (ASCII-safe)
+BorderStyle.BLOCK       // ██████
+BorderStyle.DOUBLE_HORZ // ═│╒╕╘╛ (double horizontal, single vertical)
+BorderStyle.DOUBLE_VERT // ─║╓╖╙╜ (single horizontal, double vertical)
 ```
 
 ### Visual Examples
@@ -45,10 +48,20 @@ SINGLE:           DOUBLE:           ROUNDED:
 │ Content │       ║ Content ║       │ Content │
 └─────────┘       ╚═════════╝       ╰─────────╯
 
-BOLD:             CLASSIC:
-┏━━━━━━━━━┓       +---------+
-┃ Content ┃       | Content |
-┗━━━━━━━━━┛       +---------+
+BOLD:             DASHED:           DOTTED:
+┏━━━━━━━━━┓       ┌┄┄┄┄┄┄┄┄┄┐       ···········
+┃ Content ┃       ┆ Content ┆       · Content ·
+┗━━━━━━━━━┛       └┄┄┄┄┄┄┄┄┄┘       ···········
+
+ASCII:            BLOCK:
++---------+       ███████████
+| Content |       █ Content █
++---------+       ███████████
+
+DOUBLE_HORZ:      DOUBLE_VERT:
+╒═════════╕       ╓─────────╖
+│ Content │       ║ Content ║
+╘═════════╛       ╙─────────╜
 ```
 
 ## Border Color

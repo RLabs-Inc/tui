@@ -354,10 +354,9 @@ type CellAttrs = number
 ```typescript
 interface KeyboardEvent {
   key: string
-  char: string
   modifiers: Modifiers
   state: KeyState
-  raw: string
+  raw?: string
 }
 ```
 
@@ -366,14 +365,14 @@ interface KeyboardEvent {
 ```typescript
 interface MouseEvent {
   action: MouseAction
-  button: MouseButton
+  button: MouseButton | number
   x: number
   y: number
-  modifiers: {
-    shift: boolean
-    ctrl: boolean
-    alt: boolean
-  }
+  shiftKey: boolean
+  altKey: boolean
+  ctrlKey: boolean
+  scroll?: ScrollInfo
+  componentIndex: number
 }
 ```
 
@@ -397,7 +396,7 @@ type KeyState = 'press' | 'repeat' | 'release'
 ### MouseAction
 
 ```typescript
-type MouseAction = 'press' | 'release' | 'move' | 'scroll'
+type MouseAction = 'down' | 'up' | 'move' | 'drag' | 'scroll'
 ```
 
 ### MouseButton
@@ -407,10 +406,7 @@ enum MouseButton {
   LEFT = 0,
   MIDDLE = 1,
   RIGHT = 2,
-  SCROLL_UP = 64,
-  SCROLL_DOWN = 65,
-  SCROLL_LEFT = 66,
-  SCROLL_RIGHT = 67
+  NONE = 3,
 }
 ```
 
@@ -419,8 +415,7 @@ enum MouseButton {
 ```typescript
 interface ScrollInfo {
   direction: 'up' | 'down' | 'left' | 'right'
-  x: number
-  y: number
+  delta: number
 }
 ```
 
@@ -444,12 +439,12 @@ type MouseHandler = (event: MouseEvent) => boolean | void
 
 ```typescript
 interface MouseHandlers {
-  onClick?: () => void
-  onMouseDown?: () => void
-  onMouseUp?: () => void
-  onMouseEnter?: () => void
-  onMouseLeave?: () => void
-  onMouseMove?: () => void
+  onMouseDown?: (event: MouseEvent) => void | boolean
+  onMouseUp?: (event: MouseEvent) => void | boolean
+  onClick?: (event: MouseEvent) => void | boolean
+  onMouseEnter?: (event: MouseEvent) => void
+  onMouseLeave?: (event: MouseEvent) => void
+  onScroll?: (event: MouseEvent) => void | boolean
 }
 ```
 

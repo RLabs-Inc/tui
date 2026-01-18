@@ -241,9 +241,9 @@ const filteredItems = derived(() =>
   )
 )
 
-// Reset selection when filter changes
+// Reset selection when filtered items change
 effect(() => {
-  filter.value  // Track filter
+  filteredItems.value  // Subscribe to filtered results
   selectedIndex.value = 0
 })
 
@@ -336,35 +336,40 @@ import { signal, derived, box, text, each, t } from '@rlabs-inc/tui'
 
 const items = signal([{ id: '1', name: 'Item 1' }, { id: '2', name: 'Item 2' }])
 
-each(
-  () => items.value,
-  (getItem, key) => {
-    return box({
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      children: () => {
-        text({ content: derived(() => getItem().name) })
-
-        // Action buttons
-        box({
+// each() must be inside a parent box's children callback
+box({
+  children: () => {
+    each(
+      () => items.value,
+      (getItem, key) => {
+        return box({
           flexDirection: 'row',
-          gap: 1,
+          justifyContent: 'space-between',
           children: () => {
-            text({
-              content: '[Edit]',
-              fg: t.primary
-            })
-            text({
-              content: '[Delete]',
-              fg: t.error
+            text({ content: derived(() => getItem().name) })
+
+            // Action buttons
+            box({
+              flexDirection: 'row',
+              gap: 1,
+              children: () => {
+                text({
+                  content: '[Edit]',
+                  fg: t.primary
+                })
+                text({
+                  content: '[Delete]',
+                  fg: t.error
+                })
+              }
             })
           }
         })
-      }
-    })
-  },
-  { key: item => item.id }
-)
+      },
+      { key: item => item.id }
+    )
+  }
+})
 ```
 
 ## Virtual List (Large Data)

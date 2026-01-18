@@ -111,19 +111,16 @@ box({
 })
 ```
 
-## Terminal Size
+## Full Terminal Size
 
-Components can use full terminal dimensions:
+Use percentage dimensions for full terminal coverage:
 
 ```typescript
-import { terminalWidth, terminalHeight } from '@rlabs-inc/tui'
-
-// Read terminal size
-console.log(`Terminal: ${terminalWidth.value}x${terminalHeight.value}`)
-
-// Reactive to terminal resize
-text({
-  content: derived(() => `Size: ${terminalWidth.value}x${terminalHeight.value}`)
+// Full terminal width and height
+box({
+  width: '100%',
+  height: '100%',
+  children: () => text({ content: 'Full screen!' })
 })
 ```
 
@@ -218,24 +215,23 @@ isExpanded.value = true
 
 ## Common Patterns
 
-### Responsive Sidebar
+### Sidebar with Fixed Width
 
 ```typescript
-const sidebarWidth = derived(() => {
-  const tw = terminalWidth.value
-  if (tw < 80) return 0        // Hide on small terminals
-  if (tw < 120) return 20      // Narrow sidebar
-  return 30                    // Full sidebar
-})
-
 box({
   flexDirection: 'row',
+  width: '100%',
   children: () => {
-    show(
-      () => sidebarWidth.value > 0,
-      () => box({ width: sidebarWidth, children: () => { /* sidebar */ } })
-    )
-    box({ grow: 1, children: () => { /* content */ } })
+    // Fixed sidebar
+    box({
+      width: 30,
+      children: () => { /* sidebar */ }
+    })
+    // Flexible content area
+    box({
+      grow: 1,
+      children: () => { /* content */ }
+    })
   }
 })
 ```
@@ -261,13 +257,17 @@ box({
 
 ### Aspect Ratio (Manual)
 
+Terminal characters are typically taller than wide (roughly 2:1 height:width ratio). Adjust dimensions accordingly:
+
 ```typescript
-// 2:1 aspect ratio
+// Approximate square in visual appearance
 box({
   width: 40,
-  height: 20,  // In terminal, chars are ~2x tall as wide
+  height: 20,  // Half the width to appear square
 })
 ```
+
+> **Note**: The exact character aspect ratio varies by terminal and font. Test visually in your target terminal.
 
 ## See Also
 

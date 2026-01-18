@@ -140,46 +140,58 @@ For dynamic UIs, TUI provides control flow primitives:
 ### each() - Lists
 
 ```typescript
-import { each } from '@rlabs-inc/tui'
+import { signal, box, text, each } from '@rlabs-inc/tui'
 
 const items = signal(['Apple', 'Banana', 'Cherry'])
 
-each(
-  () => items.value,           // Data source
-  (getItem, key) => {          // Render function
-    text({ content: getItem }) // getItem() returns current value
-  },
-  { key: item => item }        // Key function for identity
-)
+box({
+  children: () => {
+    each(
+      () => items.value,           // Data source
+      (getItem, key) => {          // Render function
+        text({ content: getItem }) // getItem() returns current value
+      },
+      { key: item => item }        // Key function for identity
+    )
+  }
+})
 ```
 
 ### show() - Conditionals
 
 ```typescript
-import { show } from '@rlabs-inc/tui'
+import { signal, box, text, show } from '@rlabs-inc/tui'
 
 const isVisible = signal(true)
 
-show(
-  () => isVisible.value,       // Condition
-  () => text({ content: 'Visible!' }),   // True branch
-  () => text({ content: 'Hidden' })      // False branch (optional)
-)
+box({
+  children: () => {
+    show(
+      () => isVisible.value,       // Condition
+      () => text({ content: 'Visible!' }),   // True branch
+      () => text({ content: 'Hidden' })      // False branch (optional)
+    )
+  }
+})
 ```
 
 ### when() - Async
 
 ```typescript
-import { when } from '@rlabs-inc/tui'
+import { box, text, when } from '@rlabs-inc/tui'
 
-when(
-  () => fetchData(),           // Promise
-  {
-    pending: () => text({ content: 'Loading...' }),
-    then: (data) => text({ content: data }),
-    catch: (err) => text({ content: err.message })
+box({
+  children: () => {
+    when(
+      () => fetchData(),           // Promise
+      {
+        pending: () => text({ content: 'Loading...' }),
+        then: (data) => text({ content: data }),
+        catch: (err) => text({ content: err.message })
+      }
+    )
   }
-)
+})
 ```
 
 ## State Modules
@@ -258,12 +270,12 @@ The children function is called once during mount. Reactivity comes from signals
 All components return a cleanup function:
 
 ```typescript
-const cleanup = mount(() => {
+const cleanup = await mount(() => {
   box({ /* ... */ })
 })
 
 // Later, to unmount:
-cleanup()
+await cleanup()
 ```
 
 For conditional rendering, cleanup happens automatically:

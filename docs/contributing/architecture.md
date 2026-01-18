@@ -4,7 +4,7 @@
 
 ## Core Philosophy
 
-1. **Parallel Arrays** with `Binding<T>[]` - components write via `bind()`
+1. **Parallel Arrays** with `SlotArray<T>` - components write via `setSource()`
 2. **Deriveds** compute and RETURN results (pure functions, no mutation)
 3. **One Effect** outputs to terminal (the ONLY side effect)
 4. **No reconciliation** - components write directly to arrays
@@ -27,14 +27,14 @@
 │                                                                             │
 │   box() / text()                                                            │
 │   - Allocate index in registry                                              │
-│   - Write properties via bind() to parallel arrays                         │
+│   - Write properties via setSource() to parallel arrays                    │
 │   - Set up parent-child relationships                                       │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
                                       │
                                       ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                     PARALLEL ARRAYS (Binding<T>[])                          │
+│                     PARALLEL ARRAYS (SlotArray<T>)                          │
 │                                                                             │
 │   componentType[]:  [box]   [text]  [box]   ...                            │
 │   parentIndex[]:    [-1]    [0]     [0]     ...                            │
@@ -43,7 +43,7 @@
 │   bgColor[]:        [...]   [...]   [...]   ...                            │
 │   textContent[]:    [null]  ["Hi"]  [null]  ...                            │
 │                                                                             │
-│   Arrays use Binding<T>[] - bind() preserves reactive links                │
+│   Arrays use SlotArray<T> - setSource() preserves reactive links           │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
                                       │

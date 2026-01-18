@@ -16,7 +16,7 @@ TUI uses **fine-grained reactivity** powered by signals:
 ### Creating Signals
 
 ```typescript
-import { signal } from '@rlabs-inc/signals'
+import { signal } from '@rlabs-inc/tui'
 
 // Create a signal with initial value
 const count = signal(0)
@@ -37,7 +37,7 @@ items.value = [...items.value, 'new item']
 ### Signal Types
 
 ```typescript
-import { signal, type WritableSignal } from '@rlabs-inc/signals'
+import { signal, type WritableSignal } from '@rlabs-inc/tui'
 
 // Explicit typing
 const count: WritableSignal<number> = signal(0)
@@ -58,7 +58,7 @@ const user = signal<User | null>(null)
 Derived signals compute values from other signals:
 
 ```typescript
-import { signal, derived } from '@rlabs-inc/signals'
+import { signal, derived } from '@rlabs-inc/tui'
 
 const count = signal(0)
 
@@ -110,7 +110,7 @@ const display = derived(() => {
 Effects run side effects when dependencies change:
 
 ```typescript
-import { signal, effect } from '@rlabs-inc/signals'
+import { signal, effect } from '@rlabs-inc/tui'
 
 const count = signal(0)
 
@@ -156,7 +156,7 @@ effect(() => {
 Group multiple updates to prevent intermediate renders:
 
 ```typescript
-import { signal, batch } from '@rlabs-inc/signals'
+import { signal, batch } from '@rlabs-inc/tui'
 
 const firstName = signal('Alice')
 const lastName = signal('Smith')
@@ -274,7 +274,7 @@ keyboard.onKey('v', () => {
 TUI re-exports `state()` for object proxies:
 
 ```typescript
-import { state, signal } from '@rlabs-inc/signals'
+import { state, signal } from '@rlabs-inc/tui'
 
 // signal() - for primitives and any value
 const count = signal(0)

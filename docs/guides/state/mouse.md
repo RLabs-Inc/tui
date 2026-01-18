@@ -120,30 +120,41 @@ mouse.onScroll((event) => {
 
 ## Per-Component Handlers
 
-Register handlers for specific components:
+Register handlers for specific components. The component index must be allocated before creating the box, or retrieved after creation using `getIndex()`:
 
 ```typescript
-import { mouse, allocateIndex } from '@rlabs-inc/tui'
+import { mouse, allocateIndex, box, text, signal } from '@rlabs-inc/tui'
 
+const isHovered = signal(false)
+const isPressed = signal(false)
+
+// Allocate index BEFORE creating the component
 const buttonIndex = allocateIndex('my-button')
 
+// Create the component with matching id
+box({
+  id: 'my-button',
+  children: () => text({ content: 'Click me' })
+})
+
+// Register handlers AFTER the component exists
 mouse.onComponent(buttonIndex, {
   onClick: (event) => {
     console.log('Button clicked!')
   },
   onMouseEnter: (event) => {
     // Mouse entered component area
-    setHovered(true)
+    isHovered.value = true
   },
   onMouseLeave: (event) => {
     // Mouse left component area
-    setHovered(false)
+    isHovered.value = false
   },
   onMouseDown: (event) => {
-    setPressed(true)
+    isPressed.value = true
   },
   onMouseUp: (event) => {
-    setPressed(false)
+    isPressed.value = false
   },
   onScroll: (event) => {
     // Scroll while over this component
@@ -236,13 +247,26 @@ mouse.onComponent(index, {
 ### Hover Highlight in List
 
 ```typescript
+import { mouse, allocateIndex, each, box, text, signal, derived } from '@rlabs-inc/tui'
+
 const hoveredIndex = signal(-1)
 
 each(
   () => items.value,
   (getItem, key) => {
+    // Allocate index first - before creating the box
     const index = allocateIndex(`item-${key}`)
 
+    // Create the box with matching id
+    const cleanup = box({
+      id: `item-${key}`,
+      bg: derived(() => hoveredIndex.value === index ? t.surface.value : null),
+      children: () => {
+        text({ content: getItem })
+      }
+    })
+
+    // Register handlers after box creation
     mouse.onComponent(index, {
       onMouseEnter: () => {
         hoveredIndex.value = index
@@ -257,13 +281,7 @@ each(
       }
     })
 
-    return box({
-      id: `item-${key}`,
-      bg: derived(() => hoveredIndex.value === index ? t.surface.value : null),
-      children: () => {
-        text({ content: getItem })
-      }
-    })
+    return cleanup
   },
   { key: item => item.id }
 )
@@ -272,6 +290,9 @@ each(
 ### Drag and Drop
 
 ```typescript
+import { mouse, allocateIndex, signal, effect, lastMouseEvent } from '@rlabs-inc/tui'
+
+const draggableIndex = allocateIndex('draggable')
 const isDragging = signal(false)
 const dragStart = signal({ x: 0, y: 0 })
 const dragOffset = signal({ x: 0, y: 0 })
@@ -283,8 +304,10 @@ mouse.onMouseDown((event) => {
   }
 })
 
-mouse.on((event) => {
-  if (isDragging.value && event.action === 'drag') {
+// Track drag movement using the reactive lastMouseEvent signal
+effect(() => {
+  const event = lastMouseEvent.value
+  if (isDragging.value && event && event.action === 'drag') {
     dragOffset.value = {
       x: event.x - dragStart.value.x,
       y: event.y - dragStart.value.y

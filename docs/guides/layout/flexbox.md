@@ -100,9 +100,10 @@ box({
   alignItems: 'flex-start',  // Align to start
   alignItems: 'center',      // Center on cross axis
   alignItems: 'flex-end',    // Align to end
-  alignItems: 'baseline',    // Align text baselines
 })
 ```
+
+> **Note**: `baseline` alignment is accepted but currently behaves like `flex-start`. True baseline alignment may be added in a future release.
 
 ### Example: Centered Content
 

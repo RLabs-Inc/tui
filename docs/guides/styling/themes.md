@@ -6,7 +6,7 @@
 
 TUI includes a complete theming system:
 
-- **Built-in themes** - Terminal, Dracula, Nord, Monokai, Solarized
+- **14 built-in themes** - Terminal, Dracula, Nord, Monokai, Solarized, Catppuccin, Gruvbox, Tokyo Night, One Dark, Rose Pine, Kanagawa, Everforest, Night Owl
 - **Semantic colors** - Colors with meaning, not just values
 - **Variants** - Pre-styled component states
 - **Reactive** - Theme changes update UI automatically
@@ -97,6 +97,14 @@ console.log(Object.keys(themes))
 | `nord` | Arctic, bluish theme |
 | `monokai` | Classic syntax-highlighting inspired |
 | `solarized` | Precision colors for readability |
+| `catppuccin` | Catppuccin Mocha - soothing pastel theme |
+| `gruvbox` | Gruvbox Dark - retro groove color scheme |
+| `tokyoNight` | Tokyo Night - clean dark theme inspired by Tokyo city lights |
+| `oneDark` | One Dark - Atom's iconic dark theme |
+| `rosePine` | Rose Pine - natural pine with soho vibes |
+| `kanagawa` | Kanagawa - inspired by Hokusai's wave painting |
+| `everforest` | Everforest - comfortable green-tinted theme |
+| `nightOwl` | Night Owl - designed with accessibility in mind |
 
 ## Variants
 
@@ -121,10 +129,15 @@ text({
 | `default` | No special styling |
 | `primary` | Primary actions, emphasis |
 | `secondary` | Secondary actions |
+| `tertiary` | Tertiary brand color |
+| `accent` | Highlight, attention-grabbing |
 | `success` | Positive outcomes |
 | `warning` | Caution, warnings |
 | `error` | Errors, destructive actions |
 | `info` | Informational content |
+| `muted` | Subdued, secondary content |
+| `surface` | Raised surface styling |
+| `elevated` | Elevated surface with border emphasis |
 | `ghost` | Minimal styling, subtle |
 | `outline` | Border only, no fill |
 

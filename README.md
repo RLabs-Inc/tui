@@ -26,15 +26,14 @@ import { mount, box, text, signal, derived } from '@rlabs-inc/tui'
 const count = signal(0)
 const doubled = derived(() => count.value * 2)
 
-// Build your UI
-box({ width: 40, height: 10, children: () => {
-  text({ content: count })                         // signal directly
-  text({ content: doubled })                       // derived directly
-  text({ content: () => `Count: ${count.value}` }) // () => for formatting
-}})
-
-// Mount to terminal
-mount()
+// Mount to terminal - build UI inside mount()
+mount(() => {
+  box({ width: 40, height: 10, children: () => {
+    text({ content: count })                         // signal directly
+    text({ content: doubled })                       // derived directly
+    text({ content: () => `Count: ${count.value}` }) // () => for formatting
+  }})
+})
 
 // Update anywhere - UI reacts automatically
 setInterval(() => count.value++, 1000)
@@ -102,7 +101,7 @@ bun run examples/tests/05-flex-complete.ts
 - [First App Tutorial](./docs/getting-started/first-app.md) - Build a complete app
 
 ### User Guides
-- [Primitives](./docs/guides/primitives/) - box, text, each, show, when
+- [Primitives](./docs/guides/primitives/box.md) - box, text, each, show, when
 - [Layout](./docs/guides/layout/flexbox.md) - Flexbox layout system
 - [Styling](./docs/guides/styling/colors.md) - Colors, themes, borders
 - [Reactivity](./docs/guides/reactivity/signals.md) - Signals and reactivity
@@ -144,26 +143,28 @@ Reactive control flow for dynamic UIs - no manual effects needed!
 Renders a list of components that automatically updates when the array changes.
 
 ```typescript
-import { signal, each, box, text } from '@rlabs-inc/tui'
+import { mount, signal, each, box, text } from '@rlabs-inc/tui'
 
 const todos = signal([
   { id: '1', text: 'Learn TUI', done: false },
   { id: '2', text: 'Build app', done: false },
 ])
 
-box({
-  children: () => {
-    each(
-      () => todos.value,                      // Reactive array getter
-      (getItem, key) => box({                 // Render function: getItem() + stable key
-        id: `todo-${key}`,                    // Use key for stable ID
-        children: () => {
-          text({ content: () => getItem().text })  // Call getItem() to access value
-        }
-      }),
-      { key: (todo) => todo.id }              // Key function for efficient updates
-    )
-  }
+mount(() => {
+  box({
+    children: () => {
+      each(
+        () => todos.value,                      // Reactive array getter
+        (getItem, key) => box({                 // Render function: getItem() + stable key
+          id: `todo-${key}`,                    // Use key for stable ID
+          children: () => {
+            text({ content: () => getItem().text })  // Call getItem() to access value
+          }
+        }),
+        { key: (todo) => todo.id }              // Key function for efficient updates
+      )
+    }
+  })
 })
 
 // Add item - UI updates automatically
@@ -178,22 +179,24 @@ todos.value = todos.value.filter(t => t.id !== '1')
 Shows or hides components based on a reactive condition.
 
 ```typescript
-import { show, box, text, signal } from '@rlabs-inc/tui'
+import { mount, show, box, text, signal } from '@rlabs-inc/tui'
 
 const isLoggedIn = signal(false)
 
-box({
-  children: () => {
-    show(
-      () => isLoggedIn.value,               // Condition getter
-      () => box({                           // Render when true
-        children: () => {
-          text({ content: 'Welcome back!' })
-        }
-      }),
-      () => text({ content: 'Please log in' })  // Optional: render when false
-    )
-  }
+mount(() => {
+  box({
+    children: () => {
+      show(
+        () => isLoggedIn.value,               // Condition getter
+        () => box({                           // Render when true
+          children: () => {
+            text({ content: 'Welcome back!' })
+          }
+        }),
+        () => text({ content: 'Please log in' })  // Optional: render when false
+      )
+    }
+  })
 })
 
 // Toggle - UI switches automatically
@@ -205,7 +208,7 @@ isLoggedIn.value = true
 Handles async operations with loading, success, and error states.
 
 ```typescript
-import { when, box, text, signal } from '@rlabs-inc/tui'
+import { mount, when, box, text, signal } from '@rlabs-inc/tui'
 
 const userId = signal('123')
 
@@ -213,25 +216,27 @@ const userId = signal('123')
 const fetchUser = (id: string) =>
   fetch(`/api/users/${id}`).then(r => r.json())
 
-box({
-  children: () => {
-    when(
-      () => fetchUser(userId.value),        // Promise getter (re-runs on userId change)
-      {
-        pending: () => text({ content: 'Loading...' }),
-        then: (user) => box({
-          children: () => {
-            text({ content: `Name: ${user.name}` })
-            text({ content: `Email: ${user.email}` })
-          }
-        }),
-        catch: (error) => text({
-          content: `Error: ${error.message}`,
-          fg: 'red'
-        })
-      }
-    )
-  }
+mount(() => {
+  box({
+    children: () => {
+      when(
+        () => fetchUser(userId.value),        // Promise getter (re-runs on userId change)
+        {
+          pending: () => text({ content: 'Loading...' }),
+          then: (user) => box({
+            children: () => {
+              text({ content: `Name: ${user.name}` })
+              text({ content: `Email: ${user.email}` })
+            }
+          }),
+          catch: (error) => text({
+            content: `Error: ${error.message}`,
+            fg: 'red'
+          })
+        }
+      )
+    }
+  })
 })
 
 // Change userId - triggers new fetch, shows loading, then result

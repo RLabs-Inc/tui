@@ -9,7 +9,7 @@ Create `src/index.ts`:
 ```typescript
 import { box, text, mount } from '@rlabs-inc/tui'
 
-mount(() => {
+await mount(() => {
   box({
     padding: 2,
     children: () => {
@@ -38,7 +38,7 @@ import { signal, derived, box, text, mount, keyboard } from '@rlabs-inc/tui'
 const count = signal(0)
 const label = derived(() => `Count: ${count.value}`)
 
-mount(() => {
+await mount(() => {
   box({
     padding: 2,
     gap: 1,
@@ -90,7 +90,7 @@ import { signal, box, text, mount, keyboard, t, BorderStyle } from '@rlabs-inc/t
 
 const count = signal(0)
 
-mount(() => {
+await mount(() => {
   box({
     padding: 2,
     gap: 1,
@@ -126,7 +126,7 @@ TUI uses a complete flexbox implementation:
 ```typescript
 import { box, text, mount, t, BorderStyle } from '@rlabs-inc/tui'
 
-mount(() => {
+await mount(() => {
   box({
     padding: 2,
     gap: 1,
@@ -173,13 +173,13 @@ TUI supports three render modes:
 
 ```typescript
 // Fullscreen - takes over the terminal (default)
-mount(() => { /* ... */ }, { mode: 'fullscreen' })
+await mount(() => { /* ... */ }, { mode: 'fullscreen' })
 
 // Inline - renders in place, clears on exit
-mount(() => { /* ... */ }, { mode: 'inline' })
+await mount(() => { /* ... */ }, { mode: 'inline' })
 
 // Append - chat-style, preserves history
-mount(() => { /* ... */ }, { mode: 'append' })
+await mount(() => { /* ... */ }, { mode: 'append' })
 ```
 
 ## What's Next?

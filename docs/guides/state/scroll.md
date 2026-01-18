@@ -65,7 +65,8 @@ scroll.scrollToBottom(index)
 scroll.scrollToStart(index)
 scroll.scrollToEnd(index)
 
-// Ensure element is visible
+// Ensure element is visible within a scrollable container
+// Parameters: childIndex, scrollableContainerIndex, childY position, childHeight, viewportHeight
 scroll.scrollIntoView(childIndex, scrollableIndex, childY, childHeight, viewportHeight)
 ```
 
@@ -117,15 +118,27 @@ scroll.PAGE_SCROLL_FACTOR // 0.9 - Page Up/Down as % of viewport
 ### Scrollable List with Selection
 
 ```typescript
+import { box, text, each, signal, derived, scroll } from '@rlabs-inc/tui'
+
 const items = signal([...])
 const selectedIndex = signal(0)
-const scrollableIndex = allocateIndex('list')
 
 box({
   id: 'list',
   height: 10,
   overflow: 'scroll',
   focusable: true,
+  // Keyboard navigation using box.onKey (recommended)
+  onKey: (event) => {
+    if (event.key === 'ArrowUp' && selectedIndex.value > 0) {
+      selectedIndex.value--
+      return true
+    }
+    if (event.key === 'ArrowDown' && selectedIndex.value < items.value.length - 1) {
+      selectedIndex.value++
+      return true
+    }
+  },
   children: () => {
     each(
       () => items.value,
@@ -144,26 +157,13 @@ box({
     )
   }
 })
-
-// Keyboard navigation
-keyboard.onFocused(scrollableIndex, (event) => {
-  if (event.key === 'ArrowUp' && selectedIndex.value > 0) {
-    selectedIndex.value--
-    // Ensure selected item is visible
-    scroll.scrollIntoView(/* ... */)
-    return true
-  }
-  if (event.key === 'ArrowDown' && selectedIndex.value < items.value.length - 1) {
-    selectedIndex.value++
-    scroll.scrollIntoView(/* ... */)
-    return true
-  }
-})
 ```
 
 ### Scroll Indicator
 
 ```typescript
+import { allocateIndex, box, text, scroll, derived } from '@rlabs-inc/tui'
+
 const scrollableIndex = allocateIndex('content')
 
 box({
@@ -218,6 +218,8 @@ scroll.scrollByWithChaining(index, 0, deltaY, (idx) => parentIndex[idx])
 ### Infinite Scroll / Load More
 
 ```typescript
+import { signal, effect, scroll } from '@rlabs-inc/tui'
+
 const items = signal([...])
 const isLoading = signal(false)
 
@@ -245,6 +247,8 @@ async function loadMoreItems() {
 Keep two containers in sync:
 
 ```typescript
+import { allocateIndex, scroll, effect } from '@rlabs-inc/tui'
+
 const leftIndex = allocateIndex('left')
 const rightIndex = allocateIndex('right')
 
@@ -258,6 +262,8 @@ effect(() => {
 ### Scroll to New Content
 
 ```typescript
+import { signal, effect, scroll } from '@rlabs-inc/tui'
+
 const messages = signal([...])
 
 // When new message added, scroll to bottom

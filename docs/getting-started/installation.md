@@ -82,7 +82,7 @@ Create `src/index.ts`:
 ```typescript
 import { box, text, mount } from '@rlabs-inc/tui'
 
-mount(() => {
+await mount(() => {
   box({
     padding: 1,
     children: () => {

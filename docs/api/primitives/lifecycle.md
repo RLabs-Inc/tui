@@ -5,7 +5,7 @@
 ## Import
 
 ```typescript
-import { onMount, onDestroy, scoped, useAnimation } from '@rlabs-inc/tui'
+import { onMount, onDestroy, scoped, onCleanup, useAnimation } from '@rlabs-inc/tui'
 ```
 
 ## onMount()
@@ -134,25 +134,21 @@ type Cleanup = () => void  // Function to cleanup all registered cleanups
 ### Example
 
 ```typescript
-import { scoped, onDestroy, box, text } from '@rlabs-inc/tui'
+import { scoped, onCleanup, box, text, signal } from '@rlabs-inc/tui'
 
-function MyComponent() {
-  const cleanup = scoped(() => {
-    // Anything registered with onDestroy() in here
-    // will be cleaned up when cleanup() is called
+function Counter(): Cleanup {
+  return scoped(() => {
+    const count = signal(0)
 
-    const interval = setInterval(() => {
-      // Update something
-    }, 1000)
+    // Manual cleanup for timers
+    const interval = setInterval(() => count.value++, 1000)
+    onCleanup(() => clearInterval(interval))
 
-    onDestroy(() => clearInterval(interval))
-
+    // box/text automatically register their cleanups with scope
     box({
-      children: () => text({ content: 'Hello' })
+      children: () => text({ content: () => `Count: ${count.value}` })
     })
   })
-
-  return cleanup  // Return to allow parent to cleanup
 }
 ```
 
@@ -164,197 +160,212 @@ function MyComponent() {
 
 ---
 
-## useAnimation()
+## onCleanup()
 
-Create an animation frame loop.
+Register a cleanup callback with the current scope. Used inside `scoped()` for manual cleanup of timers, subscriptions, etc.
 
 ### Signature
 
 ```typescript
-function useAnimation(
-  callback: (frame: AnimationFrames) => void,
-  options?: AnimationOptions
-): Cleanup
+function onCleanup(cleanup: Cleanup): void
 ```
 
 ### Parameters
 
 | Name | Type | Description |
 |------|------|-------------|
-| `callback` | `(frame: AnimationFrames) => void` | Called each frame |
-| `options` | `AnimationOptions` | Animation configuration |
+| `cleanup` | `Cleanup` | Function to run when scope is disposed |
 
-### AnimationFrames
+### Example
 
 ```typescript
-interface AnimationFrames {
-  deltaTime: number  // Time since last frame (ms)
-  totalTime: number  // Total time since start (ms)
-  frameCount: number // Number of frames since start
+import { scoped, onCleanup, signal, text } from '@rlabs-inc/tui'
+
+function Timer(): Cleanup {
+  return scoped(() => {
+    const elapsed = signal(0)
+
+    // Register manual cleanup for the timer
+    const interval = setInterval(() => elapsed.value++, 1000)
+    onCleanup(() => clearInterval(interval))
+
+    text({ content: () => `${elapsed.value}s` })
+  })
 }
+```
+
+### Notes
+
+- Only works inside `scoped()` - does nothing outside a scope
+- `box()` and `text()` automatically register with active scope
+- Use for timers, event listeners, and other resources that need cleanup
+
+---
+
+## useAnimation()
+
+Create an animated signal that cycles through frames automatically.
+
+### Signature
+
+```typescript
+function useAnimation<T>(
+  frames: readonly T[],
+  options?: AnimationOptions
+): DerivedSignal<T>
+```
+
+### Parameters
+
+| Name | Type | Description |
+|------|------|-------------|
+| `frames` | `readonly T[]` | Array of frame values to cycle through |
+| `options` | `AnimationOptions` | Animation configuration |
+
+### Returns
+
+```typescript
+DerivedSignal<T>  // Reactive signal containing current frame value
 ```
 
 ### AnimationOptions
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `fps` | `number` | `60` | Target frames per second |
-| `autoStart` | `boolean` | `true` | Start immediately |
+| `fps` | `number` | `12` | Frames per second |
+| `active` | `boolean \| (() => boolean) \| { value: boolean }` | `true` | Whether animation is active (can be reactive) |
+| `startFrame` | `number` | `0` | Starting frame index |
 
 ### Example
 
 ```typescript
-import { useAnimation, signal, text } from '@rlabs-inc/tui'
+import { useAnimation, scoped, text } from '@rlabs-inc/tui'
 
 function Spinner() {
-  const frame = signal(0)
-  const frames = ['|', '/', '-', '\\']
+  return scoped(() => {
+    const SPINNER = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
+    const frame = useAnimation(SPINNER)
 
-  useAnimation(({ frameCount }) => {
-    frame.value = frameCount % frames.length
-  }, { fps: 10 })
-
-  return text({
-    content: () => frames[frame.value]
+    text({ content: frame })  // Animates automatically
   })
 }
 ```
 
-### Progress Animation
+### Conditional Animation
 
 ```typescript
-function AnimatedProgress() {
-  const progress = signal(0)
+function LoadingSpinner(props: { loading: Signal<boolean> }) {
+  return scoped(() => {
+    const SPINNER = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
+    const frame = useAnimation(SPINNER, {
+      fps: 12,
+      active: () => props.loading.value,  // Only animate when loading
+    })
 
-  useAnimation(({ deltaTime }) => {
-    progress.value = Math.min(1, progress.value + deltaTime / 3000)
-  })
-
-  return box({
-    children: () => {
-      const width = Math.floor(progress.value * 20)
-      text({ content: () => '█'.repeat(width) + '░'.repeat(20 - width) })
-      text({ content: () => `${Math.floor(progress.value * 100)}%` })
-    }
+    text({ content: frame, fg: t.warning })
   })
 }
 ```
 
-### Controlled Animation
+### Built-in Animation Frames
 
 ```typescript
-function PausableAnimation() {
-  const position = signal(0)
-  const isPaused = signal(false)
+import { AnimationFrames } from '@rlabs-inc/tui'
 
-  useAnimation(({ deltaTime }) => {
-    if (!isPaused.value) {
-      position.value = (position.value + deltaTime * 0.01) % 40
-    }
-  })
+// Available presets:
+AnimationFrames.spinner  // ['⠋', '⠙', '⠹', ...] - Braille spinner
+AnimationFrames.dots     // ['⣾', '⣽', '⣻', ...] - Braille dots
+AnimationFrames.line     // ['|', '/', '-', '\\'] - Simple line
+AnimationFrames.bar      // ['▏', '▎', '▍', ...] - Growing bar
+AnimationFrames.bounce   // ['⠁', '⠂', '⠄', ...] - Bouncing ball
+AnimationFrames.clock    // ['🕐', '🕑', ...] - Clock emoji
+AnimationFrames.pulse    // ['◯', '◔', '◑', ...] - Pulse circle
+```
 
-  keyboard.onKey('space', () => {
-    isPaused.value = !isPaused.value
-  })
+### Custom FPS
 
-  return box({
-    flexDirection: 'row',
-    children: () => {
-      text({ content: ' '.repeat(Math.floor(position.value)) })
-      text({ content: '*' })
-    }
+```typescript
+function SlowSpinner() {
+  return scoped(() => {
+    const frame = useAnimation(AnimationFrames.line, { fps: 4 })
+    text({ content: frame })
   })
 }
 ```
 
-### Low FPS for Status Updates
+### With Scope Auto-Cleanup
 
 ```typescript
-function StatusBar() {
-  const time = signal(new Date())
-
-  // Only update once per second
-  useAnimation(() => {
-    time.value = new Date()
-  }, { fps: 1 })
-
-  return text({
-    content: () => time.value.toLocaleTimeString()
+function Timer() {
+  return scoped(() => {
+    // Animation automatically cleans up when scope is disposed
+    const frame = useAnimation(AnimationFrames.spinner)
+    text({ content: frame, fg: t.primary })
   })
-}
-```
-
-### Easing
-
-```typescript
-function EasedTransition() {
-  const value = signal(0)
-  const target = signal(100)
-
-  useAnimation(({ deltaTime }) => {
-    // Ease towards target
-    const diff = target.value - value.value
-    value.value += diff * Math.min(1, deltaTime / 200)
-  })
-
-  keyboard.onKey('space', () => {
-    target.value = target.value === 100 ? 0 : 100
-  })
-
-  return text({ content: () => value.value.toFixed(1) })
 }
 ```
 
 ## componentScope
+
+> **@deprecated** - Use `scoped()` for automatic cleanup instead.
 
 Low-level scope access (advanced).
 
 ### Signature
 
 ```typescript
-const componentScope: {
-  current: Scope | null
-  push(scope: Scope): void
-  pop(): void
+function componentScope(): ComponentScopeResult
+
+interface ComponentScopeResult {
+  onCleanup: <T extends Cleanup>(cleanup: T) => T
+  cleanup: Cleanup
+  scope: EffectScope
 }
 ```
 
 ### Example
 
 ```typescript
-// Advanced: manual scope management
-const scope = new Scope()
-componentScope.push(scope)
+// DEPRECATED: Use scoped() instead
+const { onCleanup, cleanup, scope } = componentScope()
 
-try {
-  // Code here can use onCleanup()
-  const cleanup = myComponent()
-} finally {
-  componentScope.pop()
-}
+scope.run(() => {
+  const c1 = box({ ... })
+  onCleanup(c1)
+})
+
+// Later
+cleanup()
 ```
 
+---
+
 ## cleanupCollector
+
+> **@deprecated** - Use `scoped()` for automatic cleanup instead.
 
 Collect cleanups without a scope (advanced).
 
 ### Signature
 
 ```typescript
-function cleanupCollector<T>(fn: () => T): { result: T, cleanups: Cleanup[] }
+function cleanupCollector(): {
+  add: <T extends Cleanup>(cleanup: T) => T
+  cleanup: Cleanup
+}
 ```
 
 ### Example
 
 ```typescript
-const { result, cleanups } = cleanupCollector(() => {
-  const c1 = box({ ... })
-  const c2 = text({ ... })
-  return [c1, c2]
-})
+// DEPRECATED: Use scoped() instead
+const collector = cleanupCollector()
+
+collector.add(box({ ... }))
+collector.add(text({ ... }))
 
 // Later, cleanup all
-cleanups.forEach(c => c())
+collector.cleanup()
 ```
 
 ## See Also

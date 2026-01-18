@@ -37,30 +37,30 @@ const unsub = keyboard.on((event) => {
 
 ### keyboard.onKey()
 
-Subscribe to specific key(s).
+Subscribe to specific key(s). Handler receives no arguments - check `lastEvent` if needed.
 
 ```typescript
 keyboard.onKey(
   key: string | string[],
-  handler: KeyHandler
+  handler: () => void | boolean | Promise<void>
 ): Cleanup
 ```
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `key` | `string \| string[]` | Key or keys to listen for |
-| `handler` | `KeyHandler` | Called when key is pressed |
+| `handler` | `() => void \| boolean \| Promise<void>` | Called when key is pressed (no arguments) |
 
 **Returns**: Cleanup function
 
 ```typescript
 // Single key
-keyboard.onKey('Enter', (event) => {
+keyboard.onKey('Enter', () => {
   console.log('Enter pressed')
 })
 
 // Multiple keys
-keyboard.onKey(['ArrowUp', 'k'], (event) => {
+keyboard.onKey(['ArrowUp', 'k'], () => {
   moveUp()
 })
 ```
@@ -94,20 +94,20 @@ keyboard.onFocused(myIndex, (event) => {
 })
 ```
 
-### keyboard.dispatch()
+### keyboard.cleanupIndex()
 
-Manually dispatch a key event (for testing).
+Remove all focused handlers for a component index. Called automatically when components are released.
 
 ```typescript
-keyboard.dispatch(event: KeyboardEvent): void
+keyboard.cleanupIndex(index: number): void
 ```
 
 ### keyboard.cleanup()
 
-Remove all handlers for a component index.
+Clear all state and handlers (internal, called on unmount).
 
 ```typescript
-keyboard.cleanupIndex(index: number): void
+keyboard.cleanup(): void
 ```
 
 ## Types
@@ -117,10 +117,9 @@ keyboard.cleanupIndex(index: number): void
 ```typescript
 interface KeyboardEvent {
   key: string           // Key name ('a', 'Enter', 'ArrowUp', etc.)
-  char: string          // Character if printable, empty otherwise
   modifiers: Modifiers  // Modifier keys state
   state: KeyState       // 'press' | 'repeat' | 'release'
-  raw: string           // Raw escape sequence
+  raw?: string          // Raw escape sequence (optional)
 }
 ```
 
@@ -144,7 +143,12 @@ type KeyState = 'press' | 'repeat' | 'release'
 ### KeyHandler
 
 ```typescript
+// For keyboard.on() and keyboard.onFocused() - receives event
 type KeyHandler = (event: KeyboardEvent) => boolean | void
+
+// For keyboard.onKey() - no arguments
+type KeyHandler = () => void | boolean | Promise<void>
+
 // Return true to consume the event (prevent further handlers)
 ```
 
@@ -265,9 +269,9 @@ keyboard.onKey('m', () => {
 const inputText = signal('')
 
 keyboard.on((event) => {
-  if (event.char && event.char.length === 1) {
-    // Printable character
-    inputText.value += event.char
+  // Single character keys are printable
+  if (event.key.length === 1) {
+    inputText.value += event.key
     return true
   }
 

@@ -44,6 +44,8 @@ keyboard.onFocused(index, handler) // When component has focus
 
 ## onKey() - Key-Specific Handlers
 
+Handlers for `onKey()` receive **no arguments**. If you need event details, use `keyboard.on()` instead or read `lastEvent`.
+
 ### Single Key
 
 ```typescript
@@ -80,6 +82,8 @@ Common key names:
 | **Special** | `Escape`, `Ctrl`, `Alt`, `Shift`, `Meta` |
 
 ## on() - All Keyboard Events
+
+Unlike `onKey()`, the `on()` handler **receives the full event object**:
 
 ```typescript
 keyboard.on((event) => {
@@ -171,26 +175,28 @@ This is preferred over `keyboard.onFocused()` because:
 
 ### keyboard.onFocused()
 
-For advanced cases where you need to register handlers separately from box creation, use `keyboard.onFocused()`:
+For advanced cases where you need to register handlers separately from box creation (e.g., dynamic handler logic, or handlers set up after the component is created), use `keyboard.onFocused()`:
 
 ```typescript
-import { keyboard } from '@rlabs-inc/tui'
+import { keyboard, allocateIndex } from '@rlabs-inc/tui'
 
-// Inside a component
+// Allocate index before creating the box
+const inputIndex = allocateIndex('my-input')
+
 box({
   id: 'my-input',
   focusable: true,
   children: () => {
-    // Get the component index after creation
-    const index = getIndex('my-input')
+    text({ content: 'Press Enter to submit' })
+  }
+})
 
-    // This handler only fires when this component is focused
-    keyboard.onFocused(index, (event) => {
-      if (event.key === 'Enter') {
-        submitInput()
-        return true
-      }
-    })
+// Register handler after box creation
+// This handler only fires when this component is focused
+keyboard.onFocused(inputIndex, (event) => {
+  if (event.key === 'Enter') {
+    submitInput()
+    return true
   }
 })
 ```
@@ -383,11 +389,13 @@ keyboard.on((event) => {
 Handlers are automatically cleaned up when components unmount (if using `onFocused`). Global handlers persist for the application lifetime.
 
 ```typescript
+import { keyboard, allocateIndex } from '@rlabs-inc/tui'
+
 // Global handlers - persist until app exits
 keyboard.onKey('q', () => process.exit(0))
 
 // Focused handlers - cleaned up with component
-const index = allocateIndex()
+const index = allocateIndex('my-component')
 keyboard.onFocused(index, handler)
 // Handler removed when component is released
 ```

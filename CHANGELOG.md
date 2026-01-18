@@ -5,6 +5,19 @@ All notable changes to the TUI Framework will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2025-01-18
+
+### Added
+- **Box keyboard/focus props** - `onKey`, `onFocus`, `onBlur` props for self-contained focusable components
+  - `onKey` fires only when box has focus (no need for external keyboard handler)
+  - `onFocus`/`onBlur` callbacks for focus state changes
+  - Makes custom focusable components fully self-contained
+
+### Fixed
+- **Documentation fixes** - Fixed imports, `each()` signatures, and added lifecycle hooks across guides
+- **Package names and API references** - Corrected throughout documentation
+- **README examples** - All examples now properly wrapped in `mount()`
+
 ## [0.6.0] - 2025-01-17
 
 ### Added

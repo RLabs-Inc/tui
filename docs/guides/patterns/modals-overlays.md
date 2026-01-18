@@ -70,51 +70,79 @@ keyboard.onKey('Escape', () => {
 
 ## Modal with Focus Trapping
 
-Prevent focus from leaving the modal:
+Prevent focus from leaving the modal using `pushFocusTrap` and `popFocusTrap`:
 
 ```typescript
-import { signal, box, text, show, allocateIndex, focusManager } from '@rlabs-inc/tui'
+import { signal, box, text, show, focusManager, pushFocusTrap, popFocusTrap, BorderStyle, t } from '@rlabs-inc/tui'
 
 const isModalOpen = signal(false)
-const modalContainerIndex = allocateIndex('modal-container')
 
 function openModal() {
   isModalOpen.value = true
-
-  // Save current focus and trap
-  focusManager.saveFocusToHistory()
-  focusManager.pushFocusTrap(modalContainerIndex)
-  focusManager.focusFirst()
+  // Focus trapping is set up inside the modal component when it mounts
 }
 
 function closeModal() {
-  isModalOpen.value = false
-
-  // Release trap and restore focus
-  focusManager.popFocusTrap()
+  popFocusTrap()  // Release trap
   focusManager.restoreFocusFromHistory()
+  isModalOpen.value = false
 }
 
 show(
   () => isModalOpen.value,
   () => box({
-    id: 'modal-container',
     zIndex: 100,
-    // ... overlay styles
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    bg: { r: 0, g: 0, b: 0, a: 128 },
     children: () => {
+      // Modal dialog - this box will be the focus trap container
       box({
-        // Modal content
+        width: 40,
+        border: BorderStyle.DOUBLE,
+        borderColor: t.primary,
+        bg: t.background,
+        padding: 2,
+        gap: 1,
         children: () => {
-          // Focusable elements inside modal
+          text({ content: 'Modal Title', fg: t.primary })
+
+          // Focusable buttons inside modal
           box({
-            focusable: true,
-            tabIndex: 1,
-            children: () => text({ content: 'OK' })
-          })
-          box({
-            focusable: true,
-            tabIndex: 2,
-            children: () => text({ content: 'Cancel' })
+            flexDirection: 'row',
+            gap: 2,
+            children: () => {
+              box({
+                focusable: true,
+                tabIndex: 1,
+                border: BorderStyle.ROUNDED,
+                paddingLeft: 2,
+                paddingRight: 2,
+                onKey: (e) => {
+                  if (e.key === 'Enter') {
+                    closeModal()
+                    return true
+                  }
+                },
+                children: () => text({ content: 'OK' })
+              })
+              box({
+                focusable: true,
+                tabIndex: 2,
+                border: BorderStyle.ROUNDED,
+                paddingLeft: 2,
+                paddingRight: 2,
+                onKey: (e) => {
+                  if (e.key === 'Enter' || e.key === 'Escape') {
+                    closeModal()
+                    return true
+                  }
+                },
+                children: () => text({ content: 'Cancel' })
+              })
+            }
           })
         }
       })
@@ -138,8 +166,11 @@ interface ConfirmDialogProps {
 function ConfirmDialog(props: ConfirmDialogProps): Cleanup {
   const selectedButton = signal<'confirm' | 'cancel'>('cancel')
 
-  // Global keyboard handler is appropriate for modal dialogs
-  // since they capture ALL input regardless of focus
+  // NOTE: keyboard.on() is the correct choice for modal dialogs!
+  // Unlike box.onKey (which only fires when focused), keyboard.on()
+  // captures ALL keyboard input globally. This is what modals need -
+  // they should intercept all keys while open, regardless of focus.
+  // The handler is automatically cleaned up when this component is destroyed.
   keyboard.on((event) => {
     if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
       selectedButton.value = selectedButton.value === 'confirm' ? 'cancel' : 'confirm'

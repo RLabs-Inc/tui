@@ -23,7 +23,7 @@ bun install
 bun test
 
 # Run an example
-bun run examples/hello.ts
+bun run dev
 ```
 
 ## Project Structure
@@ -79,17 +79,15 @@ bunx tsc --watch --noEmit
 ### Examples
 
 ```bash
-# Basic examples
-bun run examples/hello.ts
-bun run examples/counter.ts
-bun run examples/list.ts
+# Run the default example (hello counter)
+bun run dev
 
-# Full showcase
-bun run examples/showcase/showcase.ts
-
-# Specific showcase modules
+# Specific showcase examples
 bun run examples/showcase/01-hello-counter.ts
-bun run examples/showcase/02-layout.ts
+bun run examples/showcase/02-live-clock.ts
+bun run examples/showcase/03-theme-gallery.ts
+bun run examples/showcase/04-dashboard.ts
+bun run examples/showcase/05-scrollable-list.ts
 ```
 
 ### Benchmarks
@@ -140,7 +138,7 @@ Add to `.vscode/launch.json`:
       "type": "bun",
       "request": "launch",
       "name": "Debug Example",
-      "program": "${workspaceFolder}/examples/hello.ts",
+      "program": "${workspaceFolder}/examples/showcase/01-hello-counter.ts",
       "cwd": "${workspaceFolder}"
     },
     {
@@ -237,7 +235,7 @@ rm test.ts
 For visual changes, use the showcase:
 
 ```bash
-bun run examples/showcase/showcase.ts
+bun run examples/showcase/01-hello-counter.ts
 ```
 
 ### Performance Testing

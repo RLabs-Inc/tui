@@ -12,6 +12,8 @@ When building reusable components, you need to handle props that might be:
 
 The `reactiveProps()` utility normalizes all input types to a consistent interface.
 
+**Key point**: TypeScript automatically infers the types from the object you pass - **no generic type parameter needed**.
+
 ## The Problem
 
 Without normalization, handling different prop types is verbose:
@@ -172,7 +174,8 @@ Button({
 
 ```typescript
 import {
-  box, text, reactiveProps, derived,
+  box, text, reactiveProps, derived, t,
+  BorderStyle, Attr,
   type PropInput, type Cleanup
 } from '@rlabs-inc/tui'
 
@@ -192,6 +195,7 @@ function Card(rawProps: CardProps): Cleanup {
   })
 
   // Create derived for computed borderColor
+  // t.primary and t.border are theme colors (reactive)
   const borderColor = derived(() =>
     props.highlighted.value ? t.primary.value : t.border.value
   )
@@ -248,6 +252,8 @@ function Button(rawProps: ButtonProps) {
 Create named deriveds for complex logic, then pass them directly:
 
 ```typescript
+import { box, text, reactiveProps, derived, t, type PropInput } from '@rlabs-inc/tui'
+
 function Progress(rawProps: { value: PropInput<number> }) {
   const props = reactiveProps({ value: rawProps.value })
 

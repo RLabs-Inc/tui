@@ -125,25 +125,9 @@ box({
 
 ## Focus-Aware Keyboard Handlers
 
-Register handlers that only fire when a component has focus:
+### Box onKey Prop (Recommended)
 
-```typescript
-import { keyboard } from '@rlabs-inc/tui'
-
-const componentIndex = allocateIndex('my-input')
-
-// Only fires when this component is focused
-keyboard.onFocused(componentIndex, (event) => {
-  if (event.key === 'Enter') {
-    submit()
-    return true
-  }
-})
-```
-
-## Focus Callbacks on Primitives
-
-Box primitives can handle focus events directly via props, which is simpler than using `keyboard.onFocused()` manually:
+The simplest way to handle keyboard input for focusable components is using the `onKey` prop directly on the box. This keeps the component self-contained:
 
 ```typescript
 box({
@@ -158,13 +142,47 @@ box({
   },
   onKey: (e) => {
     // Only fires when this box has focus
-    if (e.key === 'Enter') handleSubmit()
+    if (e.key === 'Enter') {
+      handleSubmit()
+      return true  // consume event
+    }
   },
-  children: () => {...}
+  children: () => text({ content: 'Press Enter' })
 })
 ```
 
-This declarative approach keeps focus logic co-located with the component definition, making it easier to understand and maintain.
+Benefits of this approach:
+- **Self-contained** - keyboard behavior is defined with the component
+- **No index management** - framework handles it internally
+- **Automatic cleanup** - no manual unsubscribe needed
+
+### keyboard.onFocused() (Advanced)
+
+For cases where you need to register handlers separately from box creation (e.g., dynamic handlers, conditional registration), use `keyboard.onFocused()`:
+
+```typescript
+import { keyboard, allocateIndex, box, text } from '@rlabs-inc/tui'
+
+// Allocate index before creating the component
+const componentIndex = allocateIndex('my-input')
+
+box({
+  id: 'my-input',
+  focusable: true,
+  children: () => text({ content: 'My input' })
+})
+
+// Register handler after component creation
+// Only fires when this component is focused
+keyboard.onFocused(componentIndex, (event) => {
+  if (event.key === 'Enter') {
+    submit()
+    return true
+  }
+})
+```
+
+> **Note:** Prefer the `onKey` prop for most use cases. Use `keyboard.onFocused()` only when you need to decouple handler registration from component creation.
 
 ## Focus Trapping (Modals)
 

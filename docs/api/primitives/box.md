@@ -337,13 +337,17 @@ type Overflow = 'visible' | 'hidden' | 'scroll' | 'auto'
 
 ```typescript
 const BorderStyle = {
-  NONE: 0,
-  SINGLE: 1,
-  DOUBLE: 2,
-  ROUNDED: 3,
-  THICK: 4,
-  DASHED: 5,
-  DOTTED: 6,
+  NONE: 0,        // No border
+  SINGLE: 1,      // ─ │ ┌ ┐ └ ┘
+  DOUBLE: 2,      // ═ ║ ╔ ╗ ╚ ╝
+  ROUNDED: 3,     // ─ │ ╭ ╮ ╰ ╯
+  BOLD: 4,        // ━ ┃ ┏ ┓ ┗ ┛
+  DASHED: 5,      // ┄ ┆ ┌ ┐ └ ┘
+  DOTTED: 6,      // · · · · · ·
+  ASCII: 7,       // - | + + + +
+  BLOCK: 8,       // █ █ █ █ █ █
+  DOUBLE_HORZ: 9, // ═ │ ╒ ╕ ╘ ╛ (double horizontal, single vertical)
+  DOUBLE_VERT: 10,// ─ ║ ╓ ╖ ╙ ╜ (single horizontal, double vertical)
 }
 ```
 

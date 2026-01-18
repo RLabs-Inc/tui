@@ -27,7 +27,7 @@ const widthValue = width.value  // 40 - static!
 `bind()` creates a tracked reference that stays connected:
 
 ```typescript
-import { bind } from '@rlabs-inc/signals'
+import { bind } from '@rlabs-inc/tui'
 
 const width = signal(40)
 const boundWidth = bind(width)  // Stays connected to signal
@@ -72,57 +72,6 @@ text({ content: () => message.value.toUpperCase() })
 If you already have a signal or derived, just pass it directly - no wrapper needed.
 
 **In most cases, you don't need explicit `bind()`** - TUI handles it automatically. But understanding it helps with debugging and advanced patterns.
-
-## When TUI Uses bind()
-
-Internally, TUI primitives use bind-like behavior with `setSource()`:
-
-```typescript
-// Inside box.ts (simplified)
-if (props.width !== undefined) {
-  dimensions.width.setSource(index, props.width)
-}
-```
-
-This keeps the binding stable - the slot (array cell) stays the same, but its source can change.
-
-## The Binding Types
-
-```typescript
-import type {
-  Binding,
-  ReadonlyBinding,
-  WritableSignal
-} from '@rlabs-inc/signals'
-
-// Binding - can read and write
-const bound: Binding<number> = bind(mySignal)
-bound.value = 10  // Writes to mySignal
-
-// ReadonlyBinding - can only read
-const readonly: ReadonlyBinding<number> = bind(() => computed.value)
-
-// WritableSignal - the underlying signal
-const sig: WritableSignal<number> = signal(0)
-```
-
-## Reactive Prop Type
-
-TUI uses a union type for props:
-
-```typescript
-type Reactive<T> = T | WritableSignal<T> | Binding<T> | ReadonlyBinding<T>
-
-interface TextProps {
-  content: Reactive<string>  // Accepts all forms
-}
-```
-
-This means you can pass:
-- `'Hello'` - Static string
-- `signal('Hello')` - Writable signal
-- `bind(signal('Hello'))` - Explicit binding
-- `() => computed.value` - Getter function
 
 ## Two-Way Binding
 

@@ -26,6 +26,8 @@ HelloWorld()
 
 ## Components with Props
 
+Use `reactiveProps` to normalize any input (static values, getters, signals) to a consistent reactive interface. TypeScript infers the output type automatically - no generic needed!
+
 ```typescript
 import { box, text, type Cleanup, type PropInput, reactiveProps } from '@rlabs-inc/tui'
 
@@ -34,6 +36,8 @@ interface GreetingProps {
 }
 
 function Greeting(rawProps: GreetingProps): Cleanup {
+  // TypeScript infers: { name: DerivedSignal<string> }
+  // No generic required - just pass your props object!
   const props = reactiveProps(rawProps)
 
   return box({
@@ -120,8 +124,9 @@ function Button(rawProps: ButtonProps): Cleanup {
     onKey: (event) => {
       if (event.key === 'Enter' || event.key === ' ') {
         rawProps.onPress?.()
-        return true  // Mark as handled
+        return true  // Event consumed - stops propagation
       }
+      // Return nothing (undefined) to let event bubble up
     },
     children: () => {
       text({ content: props.label })
@@ -162,12 +167,13 @@ function Counter(rawProps: CounterProps): Cleanup {
     onKey: (event) => {
       if (event.key === 'ArrowUp') {
         count.value++
-        return true  // Mark as handled
+        return true  // Event consumed - stops propagation
       }
       if (event.key === 'ArrowDown') {
         count.value--
-        return true
+        return true  // Event consumed
       }
+      // Unhandled keys bubble up (return undefined)
     },
     children: () => {
       text({ content: () => `Count: ${count.value}` })
@@ -177,7 +183,11 @@ function Counter(rawProps: CounterProps): Cleanup {
 }
 ```
 
-The `onKey` prop automatically handles focus-aware keyboard events - the handler only fires when the component has focus. Return `true` to mark the event as handled.
+**Key points about `onKey`:**
+- Handler only fires when the component has focus (unlike global `keyboard.on()`)
+- Return `true` to mark event as consumed (stops propagation)
+- Return nothing (`undefined`) to let event bubble to other handlers
+- Cleanup is automatic when the component is destroyed
 
 ## Composition Pattern
 

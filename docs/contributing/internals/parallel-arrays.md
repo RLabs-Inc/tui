@@ -7,7 +7,7 @@
 TUI uses an Entity Component System (ECS) inspired architecture where:
 - Each **index** represents a component (entity)
 - Each **array** stores one property type (component data)
-- Components write via `bind()` to preserve reactivity
+- Components write via `setSource()` to preserve reactivity
 
 This is fundamentally different from traditional component trees.
 
@@ -36,9 +36,9 @@ const component = {
 ```typescript
 // TUI: Flat arrays, index-based
 componentType[0] = 'box'
-width[0] = bind(40)
-height[0] = bind(10)
-bgColor[0] = bind({ r: 255, g: 0, b: 0, a: 255 })
+width.setSource(0, 40)
+height.setSource(0, 10)
+bgColor.setSource(0, { r: 255, g: 0, b: 0, a: 255 })
 
 // Benefits:
 // - Cache-friendly iteration
@@ -75,15 +75,20 @@ export const maxHeight: SlotArray<Dimension>
 
 ```typescript
 // engine/arrays/spacing.ts
-export const padding: SlotArray<number>
+// Per-side margin (no general margin array)
+export const marginTop: SlotArray<number>
+export const marginRight: SlotArray<number>
+export const marginBottom: SlotArray<number>
+export const marginLeft: SlotArray<number>
+// Per-side padding (no general padding array)
 export const paddingTop: SlotArray<number>
 export const paddingRight: SlotArray<number>
 export const paddingBottom: SlotArray<number>
 export const paddingLeft: SlotArray<number>
-export const margin: SlotArray<number>
-export const marginTop: SlotArray<number>
-// ... etc
+// Gap
 export const gap: SlotArray<number>
+export const rowGap: SlotArray<number>
+export const columnGap: SlotArray<number>
 ```
 
 ### Layout Arrays
@@ -106,10 +111,10 @@ export const zIndex: SlotArray<number>
 
 ```typescript
 // engine/arrays/visual.ts
-export const fg: SlotArray<RGBA | null>
-export const bg: SlotArray<RGBA | null>
+export const fgColor: SlotArray<RGBA | null>
+export const bgColor: SlotArray<RGBA | null>
 export const opacity: SlotArray<number>
-export const border: SlotArray<number>
+export const borderStyle: SlotArray<number>
 export const borderColor: SlotArray<RGBA | null>
 export const borderTop: SlotArray<number>
 // ... per-side borders
@@ -167,7 +172,7 @@ export function box(props: BoxProps): Cleanup {
   // Set sources - preserves reactivity
   dimensions.width.setSource(index, props.width ?? 0)
   dimensions.height.setSource(index, props.height ?? 0)
-  visual.bg.setSource(index, props.bg ?? null)
+  visual.bgColor.setSource(index, props.bg ?? null)
 
   // ...
 
