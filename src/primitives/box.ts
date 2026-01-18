@@ -35,7 +35,8 @@ import {
   popCurrentComponent,
   runMountCallbacks,
 } from '../engine/lifecycle'
-import { cleanupIndex as cleanupKeyboardListeners } from '../state/keyboard'
+import { cleanupIndex as cleanupKeyboardListeners, onFocused } from '../state/keyboard'
+import { registerFocusCallbacks } from '../state/focus'
 import { getVariantStyle } from '../state/theme'
 import { getActiveScope } from './scope'
 import { enumSource } from './utils'
@@ -233,6 +234,28 @@ export function box(props: BoxProps = {}): Cleanup {
   }
 
   // ==========================================================================
+  // FOCUS CALLBACKS & KEYBOARD HANDLER
+  // Only registered when focusable AND callbacks provided
+  // ==========================================================================
+  let unsubKeyboard: (() => void) | undefined
+  let unsubFocusCallbacks: (() => void) | undefined
+
+  if (shouldBeFocusable) {
+    // Register keyboard handler (fires only when this box has focus)
+    if (props.onKey) {
+      unsubKeyboard = onFocused(index, props.onKey)
+    }
+
+    // Register focus/blur callbacks (fires at the source - focus manager)
+    if (props.onFocus || props.onBlur) {
+      unsubFocusCallbacks = registerFocusCallbacks(index, {
+        onFocus: props.onFocus,
+        onBlur: props.onBlur,
+      })
+    }
+  }
+
+  // ==========================================================================
   // VISUAL - Colors and borders (only bind what's passed)
   // ==========================================================================
   if (props.variant && props.variant !== 'default') {
@@ -284,6 +307,8 @@ export function box(props: BoxProps = {}): Cleanup {
 
   // Cleanup function
   const cleanup = () => {
+    unsubFocusCallbacks?.()
+    unsubKeyboard?.()
     cleanupKeyboardListeners(index)  // Remove any focused key handlers
     releaseIndex(index)
   }

@@ -8,6 +8,7 @@
 import type { RGBA, CellAttrs, Dimension } from '../types'
 import type { WritableSignal, Binding, ReadonlyBinding } from '@rlabs-inc/signals'
 import type { Variant } from '../state/theme'
+import type { KeyHandler } from '../state/keyboard'
 
 // =============================================================================
 // REACTIVE PROP TYPES
@@ -138,6 +139,16 @@ export interface BoxProps extends StyleProps, BorderProps, DimensionProps, Spaci
    * Variants: 'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info' | 'ghost' | 'outline'
    */
   variant?: Variant
+  /**
+   * Keyboard handler - fires only when this box has focus.
+   * Return true to consume the event (prevent propagation).
+   * Requires focusable: true or overflow: 'scroll'.
+   */
+  onKey?: KeyHandler
+  /** Called when this box receives focus */
+  onFocus?: () => void
+  /** Called when this box loses focus */
+  onBlur?: () => void
 }
 
 // =============================================================================

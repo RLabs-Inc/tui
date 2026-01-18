@@ -1,6 +1,6 @@
 {
   "name": "@rlabs-inc/tui",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "description": "The Terminal UI Framework for TypeScript/Bun - Blazing-fast, fine-grained reactive terminal UI with complete flexbox layout",
   "module": "index.ts",
   "main": "index.ts",

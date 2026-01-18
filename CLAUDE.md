@@ -62,6 +62,32 @@ keyboard.on((event) => { ... })
 keyboard.onFocused(componentIndex, handler)
 ```
 
+### Box Primitive (Focusable)
+
+Boxes can be made focusable for keyboard interaction:
+
+```typescript
+box({
+  focusable: true,
+  onKey: (e) => {
+    // Only fires when this box has focus
+    if (e.key === 'Enter') handleAction()
+    return true  // consume event
+  },
+  onFocus: () => console.log('Focused'),
+  onBlur: () => console.log('Blurred'),
+  children: () => text({ content: 'Press Enter' })
+})
+```
+
+**Features:**
+- `focusable: true` - Enables Tab navigation
+- `onKey` - Keyboard handler (fires only when focused)
+- `onFocus`/`onBlur` - Focus state callbacks
+- Self-contained - no external keyboard handler registration needed
+
+This makes custom focusable components fully self-contained.
+
 ### TITAN Layout Engine
 Complete flexbox: direction, wrap, grow, shrink, basis, justify-content, align-items, align-self, gap, min/max constraints, percentage dimensions. Skips `visible=false` components (takes no space).
 

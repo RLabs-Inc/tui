@@ -98,6 +98,9 @@ All props accept **static values, signals, deriveds, or getter functions**.
 |------|------|---------|-------------|
 | `focusable` | `Reactive<boolean>` | `false` | Can receive focus |
 | `tabIndex` | `Reactive<number>` | `-1` | Tab order (-1 = not in tab order) |
+| `onKey` | `(event: KeyboardEvent) => boolean \| void` | - | Keyboard handler - fires only when this box has focus. Return true to consume the event. Requires `focusable: true` |
+| `onFocus` | `() => void` | - | Called when this box receives focus |
+| `onBlur` | `() => void` | - | Called when this box loses focus |
 
 ## Returns
 
@@ -209,6 +212,26 @@ box({
   children: () => {
     text({ content: 'Tab to focus' })
   }
+})
+```
+
+### Self-Contained Focusable Component
+
+```typescript
+// Self-contained button with keyboard handling
+box({
+  focusable: true,
+  border: BorderStyle.SINGLE,
+  padding: 1,
+  onKey: (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      handleClick()
+      return true  // consume event
+    }
+  },
+  onFocus: () => console.log('Button focused'),
+  onBlur: () => console.log('Button blurred'),
+  children: () => text({ content: 'Click Me' })
 })
 ```
 

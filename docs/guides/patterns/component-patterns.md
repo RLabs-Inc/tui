@@ -145,25 +145,22 @@ function Counter(rawProps: CounterProps): Cleanup {
   // Internal state
   const count = signal(props.initial.value)
 
-  const counterIndex = allocateIndex()
-
-  // Internal keyboard handler
-  keyboard.onFocused(counterIndex, (event) => {
-    if (event.key === 'ArrowUp') {
-      count.value++
-      return true
-    }
-    if (event.key === 'ArrowDown') {
-      count.value--
-      return true
-    }
-  })
-
+  // Self-contained component with keyboard handling via onKey prop
   return box({
     focusable: true,
     tabIndex: 1,
     border: BorderStyle.SINGLE,
     padding: 1,
+    onKey: (event) => {
+      if (event.key === 'ArrowUp') {
+        count.value++
+        return true  // Mark as handled
+      }
+      if (event.key === 'ArrowDown') {
+        count.value--
+        return true
+      }
+    },
     children: () => {
       text({ content: () => `Count: ${count.value}` })
       text({ content: '[Up/Down to change]', fg: t.textDim })
@@ -171,6 +168,8 @@ function Counter(rawProps: CounterProps): Cleanup {
   })
 }
 ```
+
+The `onKey` prop automatically handles focus-aware keyboard events - the handler only fires when the component has focus. Return `true` to mark the event as handled.
 
 ## Composition Pattern
 

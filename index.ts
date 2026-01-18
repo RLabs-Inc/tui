@@ -21,6 +21,7 @@ export type { Context } from './src/state/context'
 
 // State modules - Input handling
 export { keyboard, lastKey, lastEvent } from './src/state/keyboard'
+export type { KeyHandler, KeyboardEvent as TuiKeyboardEvent, Modifiers } from './src/state/keyboard'
 export {
   mouse,
   hitGrid,

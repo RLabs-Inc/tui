@@ -145,7 +145,33 @@ keyboard.on((event) => {
 
 ## Focus-Aware Handlers
 
-Register handlers that only fire when a specific component has focus:
+### Box-Level Keyboard Handling (Recommended)
+
+For focusable components, the simplest approach is using `onKey` directly on the box:
+
+```typescript
+box({
+  focusable: true,
+  onKey: (e) => {
+    if (e.key === 'Enter') {
+      doAction()
+      return true  // consume event
+    }
+  },
+  children: () => {
+    text({ content: 'Press Enter to activate' })
+  }
+})
+```
+
+This is preferred over `keyboard.onFocused()` because:
+- **Self-contained** - component owns its keyboard behavior
+- **No index management** - framework handles it internally
+- **Automatic cleanup** - no manual unsubscribe needed
+
+### keyboard.onFocused()
+
+For advanced cases where you need to register handlers separately from box creation, use `keyboard.onFocused()`:
 
 ```typescript
 import { keyboard } from '@rlabs-inc/tui'
@@ -168,6 +194,8 @@ box({
   }
 })
 ```
+
+> **Note:** For most use cases, the `onKey` prop on box is simpler and recommended.
 
 ## Handler Return Values
 

@@ -297,14 +297,158 @@ Hidden boxes take **no space** in layout (not just invisible).
 
 ## Focus
 
+Boxes can receive keyboard focus and handle input events. This enables building fully self-contained interactive components without external keyboard subscriptions.
+
+### Basic Focus Setup
+
 ```typescript
 box({
   focusable: true,       // Can receive focus
-  tabIndex: 1,           // Order in tab navigation
+  tabIndex: 1,           // Order in tab navigation (lower = earlier)
 
   children: () => { /* ... */ }
 })
 ```
+
+### Focus and Blur Callbacks
+
+Track when a box gains or loses focus:
+
+```typescript
+const isFocused = signal(false)
+
+box({
+  focusable: true,
+  border: BorderStyle.ROUNDED,
+
+  // Style reactively based on focus state
+  borderColor: () => isFocused.value ? t.primary : t.border,
+
+  // Track focus state
+  onFocus: () => {
+    isFocused.value = true
+    console.log('Box focused!')
+  },
+  onBlur: () => {
+    isFocused.value = false
+    console.log('Box blurred!')
+  },
+
+  children: () => {
+    text({ content: () => isFocused.value ? 'Focused' : 'Not focused' })
+  }
+})
+```
+
+### Keyboard Handling with onKey
+
+Handle keyboard input when the box has focus:
+
+```typescript
+const selectedIndex = signal(0)
+const items = ['Apple', 'Banana', 'Cherry']
+
+box({
+  focusable: true,
+  border: BorderStyle.SINGLE,
+
+  // Handle keys only when this box is focused
+  onKey: (event) => {
+    if (event.key === 'ArrowDown') {
+      selectedIndex.value = Math.min(selectedIndex.value + 1, items.length - 1)
+      return true  // Consume the event
+    }
+    if (event.key === 'ArrowUp') {
+      selectedIndex.value = Math.max(selectedIndex.value - 1, 0)
+      return true
+    }
+    if (event.key === 'Enter') {
+      console.log('Selected:', items[selectedIndex.value])
+      return true
+    }
+    // Return nothing or false to let event propagate
+  },
+
+  children: () => {
+    items.forEach((item, i) => {
+      text({
+        content: () => selectedIndex.value === i ? `> ${item}` : `  ${item}`
+      })
+    })
+  }
+})
+```
+
+The `onKey` handler receives a `KeyboardEvent` with:
+- `key` - The key name (`'Enter'`, `'ArrowUp'`, `'a'`, `'Escape'`, etc.)
+- `modifiers` - Object with `ctrl`, `alt`, `shift`, `meta` booleans
+- `state` - `'press'`, `'repeat'`, or `'release'`
+
+Return `true` to consume the event (prevent propagation to other handlers).
+
+### Complete Self-Contained Component Example
+
+Here is a complete focusable toggle component that handles its own keyboard input:
+
+```typescript
+import { signal, box, text, BorderStyle, t } from '@rlabs-inc/tui'
+import type { Cleanup } from '@rlabs-inc/tui'
+
+interface ToggleProps {
+  label: string
+  value: WritableSignal<boolean>
+  tabIndex?: number
+}
+
+function Toggle({ label, value, tabIndex }: ToggleProps): Cleanup {
+  const isFocused = signal(false)
+
+  return box({
+    focusable: true,
+    tabIndex,
+    flexDirection: 'row',
+    gap: 1,
+    padding: 1,
+    border: BorderStyle.ROUNDED,
+
+    // Reactive styling based on focus
+    borderColor: () => isFocused.value ? t.primary : t.border,
+    bg: () => isFocused.value ? t.surface : null,
+
+    // Self-contained focus tracking
+    onFocus: () => { isFocused.value = true },
+    onBlur: () => { isFocused.value = false },
+
+    // Self-contained keyboard handling
+    onKey: (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        value.value = !value.value
+        return true
+      }
+    },
+
+    children: () => {
+      text({ content: () => value.value ? '[x]' : '[ ]' })
+      text({ content: label })
+    }
+  })
+}
+
+// Usage - component is fully self-contained!
+const darkMode = signal(false)
+const notifications = signal(true)
+
+Toggle({ label: 'Dark Mode', value: darkMode, tabIndex: 1 })
+Toggle({ label: 'Notifications', value: notifications, tabIndex: 2 })
+```
+
+This pattern is powerful because:
+- **No external wiring** - The component handles its own keyboard events
+- **Clean API** - Users just pass a value signal and label
+- **Proper focus** - Tab navigation works automatically
+- **Visual feedback** - Focus state is tracked internally for styling
+
+Compare this to the older approach that required external `keyboard.onFocused()` calls - the new props make components truly self-contained.
 
 ## Overflow
 

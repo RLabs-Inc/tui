@@ -141,6 +141,31 @@ keyboard.onFocused(componentIndex, (event) => {
 })
 ```
 
+## Focus Callbacks on Primitives
+
+Box primitives can handle focus events directly via props, which is simpler than using `keyboard.onFocused()` manually:
+
+```typescript
+box({
+  focusable: true,
+  onFocus: () => {
+    // Called when this box receives focus
+    highlightActive.value = true
+  },
+  onBlur: () => {
+    // Called when this box loses focus
+    highlightActive.value = false
+  },
+  onKey: (e) => {
+    // Only fires when this box has focus
+    if (e.key === 'Enter') handleSubmit()
+  },
+  children: () => {...}
+})
+```
+
+This declarative approach keeps focus logic co-located with the component definition, making it easier to understand and maintain.
+
 ## Focus Trapping (Modals)
 
 Keep focus contained within a modal:
