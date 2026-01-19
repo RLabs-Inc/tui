@@ -40,4 +40,4 @@ Run with `bun run your-file.ts`.
 
 ## Next Steps
 
-- [Quick Start Guide](./getting-started/quickstart.md) - Build your first app step by step
+- [Quick Start Guide](./docs/getting-started/quickstart.md) - Build your first app step by step
