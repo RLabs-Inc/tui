@@ -20,6 +20,7 @@ import { getAllocatedIndices } from '../../engine/registry'
 import { computeLayoutTitan, resetTitanArrays } from './titan-engine'
 import type { ComputedLayout } from './types'
 import type { RenderMode } from '../../types'
+import { dirtyText } from '../../engine/arrays/dirty'
 
 // Re-export reset function for memory cleanup
 export { resetTitanArrays }
@@ -67,6 +68,10 @@ export function updateTerminalSize(): void {
  * Reads from all component arrays and produces computed positions/sizes.
  * Automatically re-runs when any dependency changes.
  *
+ * NOTE: Dirty tracking is now integrated via trackedSlotArray.
+ * When text properties change, they automatically mark dirtyText.
+ * Future optimization: Add caching logic to skip layout when dirtyText.size === 0.
+ *
  * This is where the magic happens - reactive layout computation!
  */
 export const layoutDerived = derived((): ComputedLayout => {
@@ -86,6 +91,7 @@ export const layoutDerived = derived((): ComputedLayout => {
 
   // TITAN ENGINE: Read arrays, compute, return.
   // Reactivity tracks dependencies as we read - no manual tracking needed.
+  // Future: Check dirtyText.size here to skip layout when nothing changed
   return computeLayoutTitan(tw, th, indices, constrainHeight)
 }, { equals: neverEquals })
 

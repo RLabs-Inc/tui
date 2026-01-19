@@ -214,16 +214,22 @@ export async function mount(
 
     const totalNs = Bun.nanoseconds() - start
 
-    // Show all timing stats in window title
+    // Show all timing stats in window title (human readable, normalized to ms)
     const layoutMs = layoutNs / 1_000_000
     const bufferMs = bufferNs / 1_000_000
     const renderMs = renderNs / 1_000_000
     const totalMs = totalNs / 1_000_000
-    // DEBUG: Internal breakdown + mount.ts comparison
-    const buffer_us = bufferNs / 1000
-    const internal = _dbg_layout_us + _dbg_buf_us + _dbg_map_us + _dbg_render_us
-    const gap = buffer_us - internal
-    process.stdout.write(`\x1b]0;l:${_dbg_layout_us.toFixed(0)} b:${_dbg_buf_us.toFixed(0)} m:${_dbg_map_us.toFixed(0)} r:${_dbg_render_us.toFixed(0)} | buf:${buffer_us.toFixed(0)} int:${internal.toFixed(0)} gap:${gap.toFixed(0)} μs\x07`)
+    const fps = totalMs > 0 ? Math.round(1000 / totalMs) : 0
+    const lines = buffer.height
+    
+    // Format: [24 lines] Layout: 0.18ms | Buffer: 0.20ms | Render: 1.31ms | Total: 2.15ms (465 FPS)
+    process.stdout.write(
+      `\x1b]0;[${lines} lines] ` +
+      `Layout: ${layoutMs.toFixed(2)}ms | ` +
+      `Buffer: ${bufferMs.toFixed(2)}ms | ` +
+      `Render: ${renderMs.toFixed(2)}ms | ` +
+      `Total: ${totalMs.toFixed(2)}ms (${fps} FPS)\x07`
+    )
     } catch (err) {
       console.error('[TUI] Render effect error:', err)
     }
