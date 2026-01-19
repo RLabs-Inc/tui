@@ -87,8 +87,19 @@ export interface FrameBufferResult {
  * - FrameBufferResult containing buffer, hitRegions, and terminal size
  * - hitRegions should be applied to HitGrid by the render effect (no side effects here!)
  */
+// DEBUG: Export timing for mount.ts to display
+export let _dbg_layout_us = 0
+export let _dbg_buf_us = 0
+export let _dbg_map_us = 0
+export let _dbg_render_us = 0
+
 export const frameBufferDerived = derived((): FrameBufferResult => {
+  // DEBUG TIMING
+  const t0 = Bun.nanoseconds()
+
   const computedLayout = layoutDerived.value
+  const t1 = Bun.nanoseconds()
+
   const tw = terminalWidth.value
   const th = terminalHeight.value
   const mode = renderMode.value
@@ -106,6 +117,7 @@ export const frameBufferDerived = derived((): FrameBufferResult => {
 
   // Create fresh buffer with terminal default background
   const buffer = createBuffer(bufferWidth, bufferHeight, TERMINAL_DEFAULT)
+  const t2 = Bun.nanoseconds()
 
   const indices = getAllocatedIndices()
   if (indices.size === 0) {
@@ -141,6 +153,7 @@ export const frameBufferDerived = derived((): FrameBufferResult => {
   for (const children of childMap.values()) {
     children.sort((a, b) => (layout.zIndex[a] || 0) - (layout.zIndex[b] || 0))
   }
+  const t3 = Bun.nanoseconds()
 
   // Render tree recursively
   for (const rootIdx of rootIndices) {
@@ -155,6 +168,13 @@ export const frameBufferDerived = derived((): FrameBufferResult => {
       0            // No parent scroll X
     )
   }
+  const t4 = Bun.nanoseconds()
+
+  // Store timing in exported vars for mount.ts to display
+  _dbg_layout_us = (t1 - t0) / 1000
+  _dbg_buf_us = (t2 - t1) / 1000
+  _dbg_map_us = (t3 - t2) / 1000
+  _dbg_render_us = (t4 - t3) / 1000
 
   return { buffer, hitRegions, terminalSize: { width: bufferWidth, height: bufferHeight } }
 })

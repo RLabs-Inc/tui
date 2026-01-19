@@ -31,7 +31,7 @@ import {
 import { AppendRegionRenderer } from '../renderer/append-region'
 import { HistoryWriter, createRenderToHistory } from './history'
 import * as ansi from '../renderer/ansi'
-import { frameBufferDerived } from '../pipeline/frameBuffer'
+import { frameBufferDerived, _dbg_layout_us, _dbg_buf_us, _dbg_map_us, _dbg_render_us } from '../pipeline/frameBuffer'
 import { layoutDerived, terminalWidth, terminalHeight, updateTerminalSize, renderMode } from '../pipeline/layout'
 import { resetRegistry } from '../engine/registry'
 import { hitGrid, clearHitGrid, mouse } from '../state/mouse'
@@ -219,7 +219,11 @@ export async function mount(
     const bufferMs = bufferNs / 1_000_000
     const renderMs = renderNs / 1_000_000
     const totalMs = totalNs / 1_000_000
-    process.stdout.write(`\x1b]0;TUI | h:${computedLayout.contentHeight} | layout: ${layoutMs.toFixed(3)}ms | buffer: ${bufferMs.toFixed(3)}ms | render: ${renderMs.toFixed(3)}ms | total: ${totalMs.toFixed(3)}ms\x07`)
+    // DEBUG: Internal breakdown + mount.ts comparison
+    const buffer_us = bufferNs / 1000
+    const internal = _dbg_layout_us + _dbg_buf_us + _dbg_map_us + _dbg_render_us
+    const gap = buffer_us - internal
+    process.stdout.write(`\x1b]0;l:${_dbg_layout_us.toFixed(0)} b:${_dbg_buf_us.toFixed(0)} m:${_dbg_map_us.toFixed(0)} r:${_dbg_render_us.toFixed(0)} | buf:${buffer_us.toFixed(0)} int:${internal.toFixed(0)} gap:${gap.toFixed(0)} μs\x07`)
     } catch (err) {
       console.error('[TUI] Render effect error:', err)
     }
