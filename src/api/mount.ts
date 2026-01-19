@@ -176,15 +176,9 @@ export async function mount(
     try {
     const start = Bun.nanoseconds()
 
-    // Time layout separately (reading .value triggers computation if needed)
-    const layoutStart = Bun.nanoseconds()
+    // Read derived values (triggers computation if needed)
     const computedLayout = layoutDerived.value
-    const layoutNs = Bun.nanoseconds() - layoutStart
-
-    // Time buffer computation (layout is cached, so this is just framebuffer)
-    const bufferStart = Bun.nanoseconds()
     const { buffer, hitRegions, terminalSize } = frameBufferDerived.value
-    const bufferNs = Bun.nanoseconds() - bufferStart
 
     // Apply hit regions to HitGrid (side effect happens in effect, not derived!)
     if (hitGrid.width !== terminalSize.width || hitGrid.height !== terminalSize.height) {
@@ -196,7 +190,7 @@ export async function mount(
       hitGrid.fillRect(region.x, region.y, region.width, region.height, region.componentIndex)
     }
 
-    // Time render to terminal
+    // Time render to terminal (actual I/O work)
     const renderStart = Bun.nanoseconds()
     if (mode === 'fullscreen') {
       diffRenderer.render(buffer)
@@ -211,14 +205,14 @@ export async function mount(
       inlineRenderer.render(buffer)
     }
     const renderNs = Bun.nanoseconds() - renderStart
-
     const totalNs = Bun.nanoseconds() - start
 
-    // Show all timing stats in window title (human readable, normalized to ms)
-    const layoutMs = layoutNs / 1_000_000
-    const bufferMs = bufferNs / 1_000_000
-    const renderMs = renderNs / 1_000_000
-    const totalMs = totalNs / 1_000_000
+    // Use REAL timing from inside the deriveds (not cached read times!)
+    // These are exported from frameBuffer.ts and represent actual computation
+    const layoutMs = _dbg_layout_us / 1000  // Convert μs to ms
+    const bufferMs = (_dbg_buf_us + _dbg_map_us + _dbg_render_us) / 1000  // Total buffer work
+    const renderMs = renderNs / 1_000_000  // Terminal render
+    const totalMs = totalNs / 1_000_000  // Total frame time
     const fps = totalMs > 0 ? Math.round(1000 / totalMs) : 0
     const lines = buffer.height
     
