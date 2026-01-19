@@ -259,6 +259,186 @@ bun run index.ts
 - **t** - Cycle themes
 - **q** - Quit
 
+<details>
+<summary><strong>Complete Code</strong> (click to expand)</summary>
+
+```typescript
+import {
+  signal,
+  derived,
+  box,
+  text,
+  each,
+  keyboard,
+  mount,
+  t,
+  themes,
+  setTheme,
+  BorderStyle,
+} from "@rlabs-inc/tui"
+
+// =============================================================================
+// STATE
+// =============================================================================
+
+const count = signal(0)
+
+// Log entries with unique IDs for each() keys
+interface LogEntry {
+  id: number
+  text: string
+}
+let logId = 0
+const logs = signal<LogEntry[]>([])
+
+// Available themes for cycling
+const themeNames = Object.keys(themes) as (keyof typeof themes)[]
+const currentThemeIndex = signal(0)
+const currentThemeName = derived(() => themeNames[currentThemeIndex.value])
+
+// Counter color - changes based on value
+// Note: use .value to get actual RGBA from theme colors in derived
+const counterColor = derived(() =>
+  count.value >= 0 ? t.success.value : t.error.value
+)
+
+// =============================================================================
+// HELPERS
+// =============================================================================
+
+function addLog(action: string) {
+  logs.value = [
+    ...logs.value,
+    { id: logId++, text: `${action} → ${count.value}` },
+  ]
+}
+
+function cycleTheme() {
+  currentThemeIndex.value = (currentThemeIndex.value + 1) % themeNames.length
+  setTheme(themeNames[currentThemeIndex.value])
+}
+
+// =============================================================================
+// APP
+// =============================================================================
+
+const cleanup = await mount(() => {
+  box({
+    flexDirection: "column",
+    width: "100%",
+    height: "100%",
+    padding: 1,
+    gap: 1,
+    justifyContent: "space-between",
+    children: () => {
+      // Title
+      text({ content: "TUI Quick Start", fg: t.primary })
+
+      // Counter box - focusable with local keyboard handling
+      box({
+        focusable: true,
+        border: BorderStyle.ROUNDED,
+        borderColor: t.primary,
+        padding: 1,
+        flexDirection: "column",
+        gap: 1,
+        alignItems: "center",
+        onKey: (e) => {
+          if (e.key === "ArrowUp" || e.key === "+" || e.key === "=") {
+            count.value++
+            addLog("+1")
+            return true
+          }
+          if (e.key === "ArrowDown" || e.key === "-" || e.key === "_") {
+            count.value--
+            addLog("-1")
+            return true
+          }
+          if (e.key === "r" || e.key === "R") {
+            const old = count.value
+            count.value = 0
+            addLog(`reset from ${old}`)
+            return true
+          }
+          return false
+        },
+        children: () => {
+          box({
+            flexDirection: "row",
+            alignItems: "center",
+            children: () => {
+              text({ content: "Count: ", fg: t.textMuted })
+              text({
+                content: () => count.value.toString(),
+                fg: counterColor,
+              })
+            },
+          })
+          text({ content: "↑/↓ or +/-  r Reset", fg: t.textMuted })
+        },
+      })
+
+      // History box
+      box({
+        flexDirection: "column",
+        gap: 1,
+        border: BorderStyle.SINGLE,
+        borderColor: t.border,
+        padding: 1,
+        width: "50%",
+        alignSelf: "center",
+        children: () => {
+          text({
+            content: () => `History (${logs.value.length})`,
+            fg: t.textDim,
+          })
+
+          // Scrollable logs - focusable, auto-scrolls, NO onKey needed!
+          box({
+            focusable: true,
+            height: 8,
+            overflow: "scroll",
+            borderTop: BorderStyle.SINGLE,
+            borderBottom: BorderStyle.SINGLE,
+            borderColor: t.border,
+            children: () => {
+              each(
+                () => logs.value,
+                (getItem) => text({ content: () => getItem().text, fg: t.text }),
+                { key: (item) => String(item.id) }
+              )
+            },
+          })
+
+          text({ align: "center", content: "↑/↓ to scroll", fg: t.textMuted })
+        },
+      })
+
+      // Status bar
+      box({
+        flexDirection: "row",
+        justifyContent: "space-evenly",
+        children: () => {
+          text({
+            content: () => `Theme: ${currentThemeName.value}`,
+            fg: t.textMuted,
+          })
+          text({ content: "t switch theme", fg: t.textMuted })
+          text({ content: "Tab to switch focus", fg: t.textMuted })
+          text({ content: "q Quit", fg: t.textMuted })
+        },
+      })
+    },
+  })
+})
+
+// Global keyboard handlers
+keyboard.onKey("t", () => cycleTheme())
+keyboard.onKey("q", () => cleanup())
+```
+
+</details>
+
 ## What You Learned
 
 | Feature | Pattern |

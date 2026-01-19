@@ -287,3 +287,21 @@ MyComponent({ title: () => getTitle(), count: countSignal })
 **Not Done**: textarea, select, progress, canvas primitives; modal/overlay component; grid layout; CLI scaffolding tool
 
 **Deprecated**: .tui compiler moved to `.backup/` - focusing on bulletproof raw TypeScript API instead
+
+## Known Limitations
+
+### TITAN Layout: Auto Height + Flex Wrap
+Current limitation: When `flexWrap: 'wrap'` is used, parent containers with `height: 'auto'` don't expand to fit wrapped content. The intrinsic size calculation (Pass 3) computes as single line, then Pass 4 divides crossSize by lineCount instead of expanding.
+
+**Root cause**: TITAN uses a single top-down pass, but auto-height with wrapping requires bidirectional constraint propagation (available width → wrap calculation → needed height → parent expansion).
+
+**Workaround**: Use explicit heights when using flex wrap, or limit wrapped content.
+
+## Research Documents
+
+- **`docs/research/bun-ffi-analysis.md`** - Comprehensive analysis of Bun's FFI for potential native layout engine:
+  - Bun FFI provides zero-copy TypedArray passing (direct pointer extraction from JSC)
+  - 2-6x faster than Node.js FFI
+  - Key patterns: type tagging for dispatch, BabyList (32-bit length/capacity), memory pooling
+  - "Native derived" concept: Reactivity boundary at JS, computation inside is native black box
+  - Recommendation: Prototype correct algorithm in TS first, port to Zig if performance requires
